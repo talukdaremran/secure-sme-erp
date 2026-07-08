@@ -32,3 +32,18 @@ The first version will focus on a simple but working ERP core before adding AI a
 - Multi-language support
 - Microservices
 - Advanced deep learning
+
+## Development Workflow
+
+The project will be developed one feature at a time.
+
+For each feature:
+
+1. Create a GitHub Issue
+2. Create a feature branch from `dev`
+3. Implement the feature
+4. Test the feature
+5. Commit changes with a meaningful message
+6. Open a Pull Request into `dev`
+7. Merge after review
+8. Keep `main` stable for completed versions
