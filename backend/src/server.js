@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 
-dotenv.config();
+import pool from "./config/db.js";
+
 
 const app = express();
 
@@ -16,6 +16,23 @@ app.get("/api/health", (req, res) => {
     status: "success",
     message: "Secure SME ERP backend is running",
   });
+});
+
+app.get("/api/health/db", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT NOW()");
+
+        res.status(200).json({
+            status: "success",
+            message: "Database connection successful",
+            time: result.rows[0].now,
+        });
+    } catch (err) {
+        res.status(500).json({
+            status: "error",
+            message: "Database connection failed",
+        });
+    }
 });
 
 app.listen(PORT, () => {
