@@ -155,3 +155,12 @@ export async function loginUser(req, res, next) {
     next(error);
   }
 }
+
+export async function getCurrentUser(req, res) {
+  res.status(200).json({
+    status: "success",
+    data: {
+      user: req.user,
+    },
+  });
+}
