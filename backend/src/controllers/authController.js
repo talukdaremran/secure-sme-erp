@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 import pool from "../config/db.js";
+import { createAuditLog } from "../utils/auditLogger.js";
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -67,6 +68,15 @@ export async function registerUser(req, res, next) {
       [name.trim(), normalisedEmail, passwordHash, roleResult.rows[0].id, "active"]
     );
 
+    await createAuditLog({
+      userId: newUser.rows[0].id,
+      action: "REGISTER_USER",
+      module: "auth",
+      entityType: "user",
+      entityId: newUser.rows[0].id,
+      result: "success",
+    });
+
     res.status(201).json({
       status: "success",
       message: "User registered successfully",
@@ -102,6 +112,13 @@ export async function loginUser(req, res, next) {
     );
 
     if (result.rows.length === 0) {
+      await createAuditLog({
+        action: "LOGIN_FAILED",
+        module: "auth",
+        entityType: "user",
+        result: "failed",
+      });
+
       return res.status(401).json({
         status: "error",
         message: "Invalid email or password",
@@ -113,6 +130,15 @@ export async function loginUser(req, res, next) {
     const passwordMatches = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordMatches) {
+      await createAuditLog({
+        userId: user.id,
+        action: "LOGIN_FAILED",
+        module: "auth",
+        entityType: "user",
+        entityId: user.id,
+        result: "failed",
+      });
+
       return res.status(401).json({
         status: "error",
         message: "Invalid email or password",
@@ -136,6 +162,15 @@ export async function loginUser(req, res, next) {
         expiresIn: process.env.JWT_EXPIRES_IN || "1d",
       }
     );
+
+    await createAuditLog({
+      userId: user.id,
+      action: "LOGIN_SUCCESS",
+      module: "auth",
+      entityType: "user",
+      entityId: user.id,
+      result: "success",
+    });
 
     res.status(200).json({
       status: "success",
