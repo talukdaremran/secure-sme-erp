@@ -51,3 +51,23 @@ export async function protect(req, res, next) {
     });
   }
 }
+
+export function authorizeRoles(...allowedRoles) {
+  return function (req, res, next) {
+    if (!req.user) {
+      return res.status(401).json({
+        status: "error",
+        message: "Not authorised, user missing",
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        status: "error",
+        message: "Forbidden: insufficient permissions",
+      });
+    }
+
+    next();
+  };
+}
