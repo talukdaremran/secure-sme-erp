@@ -2,6 +2,7 @@ import express from "express";
 
 import pool from "../config/db.js";
 import authRoutes from "./authRoutes.js";
+import productRoutes from "./productRoutes.js";
 
 const router = express.Router();
 
@@ -31,5 +32,7 @@ router.get("/health/db", async (req, res) => {
 });
 
 router.use("/auth", authRoutes);
+
+router.use("/products", productRoutes);
 
 export default router;
