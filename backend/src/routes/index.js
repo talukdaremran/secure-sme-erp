@@ -4,6 +4,7 @@ import pool from "../config/db.js";
 import authRoutes from "./authRoutes.js";
 import productRoutes from "./productRoutes.js";
 import customerRoutes from "./customerRoutes.js";
+import salesOrderRoutes from "./salesOrderRoutes.js";
 
 const router = express.Router();
 
@@ -37,5 +38,7 @@ router.use("/auth", authRoutes);
 router.use("/products", productRoutes);
 
 router.use("/customers", customerRoutes);
+
+router.use("/sales-orders", salesOrderRoutes);
 
 export default router;
