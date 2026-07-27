@@ -191,3 +191,98 @@ export async function createInvoice(req, res, next) {
     client.release();
   }
 }
+
+export async function updateInvoicePaymentStatus(req, res, next) {
+  const client = await pool.connect();
+
+  try {
+    const { id } = req.params;
+    const { status, payment_method } = req.body;
+
+    const allowedStatuses = ["pending", "paid", "failed", "cancelled"];
+
+    if (!status) {
+      return res.status(400).json({
+        status: "error",
+        message: "Payment status is required",
+      });
+    }
+
+    const normalisedStatus = status.toLowerCase().trim();
+
+    if (!allowedStatuses.includes(normalisedStatus)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid payment status",
+      });
+    }
+
+    await client.query("BEGIN");
+
+    const invoiceResult = await client.query(
+      `SELECT id, total_amount
+       FROM invoices
+       WHERE id = $1`,
+      [id]
+    );
+
+    if (invoiceResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        status: "error",
+        message: "Invoice not found",
+      });
+    }
+
+    const invoice = invoiceResult.rows[0];
+
+    const paymentResult = await client.query(
+      `INSERT INTO payments
+        (invoice_id, status, amount, payment_method, paid_at)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, invoice_id, status, amount, payment_method, paid_at, created_at`,
+      [
+        invoice.id,
+        normalisedStatus,
+        invoice.total_amount,
+        payment_method || null,
+        normalisedStatus === "paid" ? new Date() : null,
+      ]
+    );
+
+    const updatedInvoiceResult = await client.query(
+      `UPDATE invoices
+       SET status = $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING id, sales_order_id, invoice_number, subtotal, gst_amount, total_amount, status, issued_at, created_at, updated_at`,
+      [normalisedStatus, invoice.id]
+    );
+
+    await createAuditLog({
+      userId: req.user.id,
+      action: "UPDATE_PAYMENT_STATUS",
+      module: "invoices",
+      entityType: "invoice",
+      entityId: invoice.id,
+      result: "success",
+    }, client);
+
+    await client.query("COMMIT");
+
+    res.status(200).json({
+      status: "success",
+      message: "Payment status updated successfully",
+      data: {
+        invoice: updatedInvoiceResult.rows[0],
+        payment: paymentResult.rows[0],
+      },
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    next(error);
+  } finally {
+    client.release();
+  }
+}
