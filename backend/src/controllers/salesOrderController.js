@@ -204,13 +204,45 @@ export async function createSalesOrder(req, res, next) {
       await client.query(
         `INSERT INTO sales_order_items
           (sales_order_id, product_id, quantity, unit_price, line_total)
-         VALUES ($1, $2, $3, $4, $5)`,
+        VALUES ($1, $2, $3, $4, $5)`,
         [
           salesOrder.id,
           item.product_id,
           item.quantity,
           item.unit_price,
           item.line_total,
+        ]
+      );
+
+      const stockUpdateResult = await client.query(
+        `UPDATE products
+        SET stock_quantity = stock_quantity - $1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2 AND stock_quantity >= $1
+        RETURNING id, stock_quantity`,
+        [item.quantity, item.product_id]
+      );
+
+      if (stockUpdateResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+
+        return res.status(400).json({
+          status: "error",
+          message: "Insufficient stock while finalising sales order",
+        });
+      }
+
+      await client.query(
+        `INSERT INTO inventory_movements
+          (product_id, movement_type, quantity_change, reason, related_sales_order_id, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          item.product_id,
+          "sale",
+          -item.quantity,
+          "Stock deducted after sales order creation",
+          salesOrder.id,
+          req.user.id,
         ]
       );
     }
