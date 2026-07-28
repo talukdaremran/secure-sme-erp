@@ -8,6 +8,7 @@ import salesOrderRoutes from "./salesOrderRoutes.js";
 import invoiceRoutes from "./invoiceRoutes.js";
 import auditLogRoutes from "./auditLogRoutes.js";
 import inventoryMovementRoutes from "./inventoryMovementRoutes.js";
+import dashboardRoutes from "./dashboardRoutes.js";
 
 const router = express.Router();
 
@@ -49,5 +50,7 @@ router.use("/invoices", invoiceRoutes);
 router.use("/audit-logs", auditLogRoutes);
 
 router.use("/inventory-movements", inventoryMovementRoutes);
+
+router.use("/dashboard", dashboardRoutes);
 
 export default router;
