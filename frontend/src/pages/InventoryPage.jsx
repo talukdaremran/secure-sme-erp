@@ -1,10 +1,23 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
 
+const initialFormData = {
+  product_id: "",
+  quantity_change: "",
+  reason: "",
+};
+
 function InventoryPage() {
   const [inventoryMovements, setInventoryMovements] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [formData, setFormData] = useState(initialFormData);
+
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+
   const [error, setError] = useState("");
+  const [createError, setCreateError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchInventoryMovements() {
     try {
@@ -22,36 +35,143 @@ function InventoryPage() {
     }
   }
 
-  useEffect(() => {
-    fetchInventoryMovements();
-  }, []);
-
-  if (loading) {
-    return (
-      <section>
-        <h1>Inventory</h1>
-        <p>Loading inventory movements...</p>
-      </section>
-    );
+  async function fetchProducts() {
+    try {
+      const response = await apiClient.get("/products");
+      setProducts(response.data.data.products);
+    } catch (error) {
+      setCreateError(
+        error.response?.data?.message || "Failed to load product options."
+      );
+    }
   }
 
-  if (error) {
-    return (
-      <section>
-        <h1>Inventory</h1>
-        <p>{error}</p>
-        <button type="button" onClick={fetchInventoryMovements}>
-          Try again
-        </button>
-      </section>
-    );
+  useEffect(() => {
+    fetchInventoryMovements();
+    fetchProducts();
+  }, []);
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
+  }
+
+  async function handleCreateAdjustment(event) {
+    event.preventDefault();
+
+    try {
+      setCreating(true);
+      setCreateError("");
+      setSuccessMessage("");
+
+      const adjustmentData = {
+        product_id: Number(formData.product_id),
+        quantity_change: Number(formData.quantity_change),
+        reason: formData.reason || null,
+      };
+
+      await apiClient.post("/inventory-movements", adjustmentData);
+
+      setFormData(initialFormData);
+      setSuccessMessage("Inventory adjustment created successfully.");
+
+      await fetchInventoryMovements();
+      await fetchProducts();
+    } catch (error) {
+      setCreateError(
+        error.response?.data?.message || "Failed to create inventory adjustment."
+      );
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
     <section>
-      <h1>Inventory Movements</h1>
+      <h1>Inventory</h1>
 
-      {inventoryMovements.length === 0 ? (
+      <section>
+        <h2>Create Inventory Adjustment</h2>
+
+        <form onSubmit={handleCreateAdjustment}>
+          <div>
+            <label htmlFor="product_id">Product</label>
+            <br />
+            <select
+              id="product_id"
+              name="product_id"
+              value={formData.product_id}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select product</option>
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name} — {product.sku} — Current stock:{" "}
+                  {product.stock_quantity}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="quantity_change">Quantity Change</label>
+            <br />
+            <input
+              id="quantity_change"
+              name="quantity_change"
+              type="number"
+              step="1"
+              value={formData.quantity_change}
+              onChange={handleChange}
+              required
+            />
+            <p>
+              Use a positive number to increase stock, or a negative number to
+              decrease stock.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="reason">Reason</label>
+            <br />
+            <textarea
+              id="reason"
+              name="reason"
+              value={formData.reason}
+              onChange={handleChange}
+              rows="3"
+              placeholder="Example: Stock count correction"
+            />
+          </div>
+
+          {createError && <p>{createError}</p>}
+          {successMessage && <p>{successMessage}</p>}
+
+          <button type="submit" disabled={creating}>
+            {creating ? "Creating..." : "Create Adjustment"}
+          </button>
+        </form>
+      </section>
+
+      <hr />
+
+      <h2>Inventory Movement List</h2>
+
+      {loading ? (
+        <p>Loading inventory movements...</p>
+      ) : error ? (
+        <div>
+          <p>{error}</p>
+          <button type="button" onClick={fetchInventoryMovements}>
+            Try again
+          </button>
+        </div>
+      ) : inventoryMovements.length === 0 ? (
         <p>No inventory movements found.</p>
       ) : (
         <table border="1" cellPadding="8">
