@@ -30,8 +30,13 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await login(formData.email, formData.password);
-      navigate("/dashboard");
+      const loggedInUser = await login(formData.email, formData.password);
+
+      if (loggedInUser.role === "Admin") {
+        navigate("/dashboard");
+      } else {
+        navigate("/products");
+      }
     } catch (error) {
       setError(
         error.response?.data?.message || "Login failed. Please try again."
