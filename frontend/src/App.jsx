@@ -1,7 +1,9 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import HomeRedirect from "./components/HomeRedirect";
 
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -17,19 +19,22 @@ import NotFoundPage from "./pages/NotFoundPage";
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/sales-orders" element={<SalesOrdersPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/audit-logs" element={<AuditLogsPage />} />
-          <Route path="/users" element={<UsersPage />} />
+
+          <Route element={<AdminRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/audit-logs" element={<AuditLogsPage />} />
+            <Route path="/users" element={<UsersPage />} />
+          </Route>
         </Route>
       </Route>
 

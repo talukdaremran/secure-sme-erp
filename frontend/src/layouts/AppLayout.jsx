@@ -5,6 +5,8 @@ function AppLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const isAdmin = user?.role === "Admin";
+
   function handleLogout() {
     logout();
     navigate("/login");
@@ -22,14 +24,25 @@ function AppLayout() {
         )}
 
         <nav>
-          <Link to="/dashboard">Dashboard</Link>{" | "}
+          {isAdmin && (
+            <>
+              <Link to="/dashboard">Dashboard</Link>{" | "}
+            </>
+          )}
+
           <Link to="/products">Products</Link>{" | "}
           <Link to="/customers">Customers</Link>{" | "}
           <Link to="/sales-orders">Sales Orders</Link>{" | "}
           <Link to="/invoices">Invoices</Link>{" | "}
-          <Link to="/inventory">Inventory</Link>{" | "}
-          <Link to="/audit-logs">Audit Logs</Link>{" | "}
-          <Link to="/users">Users</Link>
+          <Link to="/inventory">Inventory</Link>
+
+          {isAdmin && (
+            <>
+              {" | "}
+              <Link to="/audit-logs">Audit Logs</Link>{" | "}
+              <Link to="/users">Users</Link>
+            </>
+          )}
         </nav>
 
         <br />
