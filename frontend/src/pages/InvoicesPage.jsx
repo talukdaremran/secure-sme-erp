@@ -5,15 +5,21 @@ const initialFormData = {
   sales_order_id: "",
 };
 
+const paymentStatusOptions = ["pending", "paid", "failed", "cancelled"];
+
 function InvoicesPage() {
   const [invoices, setInvoices] = useState([]);
   const [salesOrders, setSalesOrders] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
+  const [selectedStatuses, setSelectedStatuses] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [updatingInvoiceId, setUpdatingInvoiceId] = useState(null);
+
   const [error, setError] = useState("");
   const [createError, setCreateError] = useState("");
+  const [updateError, setUpdateError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchInvoices() {
@@ -55,12 +61,20 @@ function InvoicesPage() {
     }));
   }
 
+  function handleStatusChange(invoiceId, status) {
+    setSelectedStatuses((previousStatuses) => ({
+      ...previousStatuses,
+      [invoiceId]: status,
+    }));
+  }
+
   async function handleGenerateInvoice(event) {
     event.preventDefault();
 
     try {
       setCreating(true);
       setCreateError("");
+      setUpdateError("");
       setSuccessMessage("");
 
       const invoiceData = {
@@ -80,6 +94,32 @@ function InvoicesPage() {
       );
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleUpdatePaymentStatus(invoice) {
+    const selectedStatus = selectedStatuses[invoice.id] || invoice.status;
+
+    try {
+      setUpdatingInvoiceId(invoice.id);
+      setCreateError("");
+      setUpdateError("");
+      setSuccessMessage("");
+
+      await apiClient.patch(`/invoices/${invoice.id}/payment-status`, {
+        status: selectedStatus,
+        payment_method: "manual",
+      });
+
+      setSuccessMessage("Invoice payment status updated successfully.");
+
+      await fetchInvoices();
+    } catch (error) {
+      setUpdateError(
+        error.response?.data?.message || "Failed to update payment status."
+      );
+    } finally {
+      setUpdatingInvoiceId(null);
     }
   }
 
@@ -122,7 +162,6 @@ function InvoicesPage() {
           )}
 
           {createError && <p>{createError}</p>}
-          {successMessage && <p>{successMessage}</p>}
 
           <button
             type="submit"
@@ -134,6 +173,9 @@ function InvoicesPage() {
       </section>
 
       <hr />
+
+      {updateError && <p>{updateError}</p>}
+      {successMessage && <p>{successMessage}</p>}
 
       <h2>Invoice List</h2>
 
@@ -161,6 +203,7 @@ function InvoicesPage() {
               <th>GST</th>
               <th>Total</th>
               <th>Issued At</th>
+              <th>Update Status</th>
             </tr>
           </thead>
 
@@ -176,6 +219,28 @@ function InvoicesPage() {
                 <td>${Number(invoice.gst_amount || 0).toFixed(2)}</td>
                 <td>${Number(invoice.total_amount || 0).toFixed(2)}</td>
                 <td>{new Date(invoice.issued_at).toLocaleString()}</td>
+                <td>
+                  <select
+                    value={selectedStatuses[invoice.id] || invoice.status}
+                    onChange={(event) =>
+                      handleStatusChange(invoice.id, event.target.value)
+                    }
+                  >
+                    {paymentStatusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => handleUpdatePaymentStatus(invoice)}
+                    disabled={updatingInvoiceId === invoice.id}
+                  >
+                    {updatingInvoiceId === invoice.id ? "Updating..." : "Update"}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
