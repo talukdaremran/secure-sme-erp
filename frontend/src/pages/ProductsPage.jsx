@@ -17,9 +17,11 @@ function ProductsPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState(null);
 
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchProducts() {
@@ -52,6 +54,7 @@ function ProductsPage() {
   function handleEditProduct(product) {
     setEditingProductId(product.id);
     setFormError("");
+    setDeleteError("");
     setSuccessMessage("");
 
     setFormData({
@@ -77,6 +80,7 @@ function ProductsPage() {
     try {
       setSaving(true);
       setFormError("");
+      setDeleteError("");
       setSuccessMessage("");
 
       const productData = {
@@ -107,6 +111,40 @@ function ProductsPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteProduct(product) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${product.name}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingProductId(product.id);
+      setFormError("");
+      setDeleteError("");
+      setSuccessMessage("");
+
+      await apiClient.delete(`/products/${product.id}`);
+
+      if (editingProductId === product.id) {
+        setEditingProductId(null);
+        setFormData(initialFormData);
+      }
+
+      setSuccessMessage("Product deleted successfully.");
+
+      await fetchProducts();
+    } catch (error) {
+      setDeleteError(
+        error.response?.data?.message || "Failed to delete product."
+      );
+    } finally {
+      setDeletingProductId(null);
     }
   }
 
@@ -224,6 +262,8 @@ function ProductsPage() {
 
       <h2>Product List</h2>
 
+      {deleteError && <p>{deleteError}</p>}
+
       {loading ? (
         <p>Loading products...</p>
       ) : error ? (
@@ -266,6 +306,16 @@ function ProductsPage() {
                     onClick={() => handleEditProduct(product)}
                   >
                     Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProduct(product)}
+                    disabled={deletingProductId === product.id}
+                  >
+                    {deletingProductId === product.id
+                      ? "Deleting..."
+                      : "Delete"}
                   </button>
                 </td>
               </tr>
