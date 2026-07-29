@@ -13,11 +13,13 @@ const initialFormData = {
 function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
+  const [editingProductId, setEditingProductId] = useState(null);
 
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState("");
-  const [createError, setCreateError] = useState("");
+  const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchProducts() {
@@ -47,12 +49,34 @@ function ProductsPage() {
     }));
   }
 
-  async function handleCreateProduct(event) {
+  function handleEditProduct(product) {
+    setEditingProductId(product.id);
+    setFormError("");
+    setSuccessMessage("");
+
+    setFormData({
+      name: product.name || "",
+      sku: product.sku || "",
+      category: product.category || "",
+      price: product.price || "",
+      stock_quantity: product.stock_quantity || 0,
+      low_stock_level: product.low_stock_level || 0,
+    });
+  }
+
+  function handleCancelEdit() {
+    setEditingProductId(null);
+    setFormData(initialFormData);
+    setFormError("");
+    setSuccessMessage("");
+  }
+
+  async function handleSubmitProduct(event) {
     event.preventDefault();
 
     try {
-      setCreating(true);
-      setCreateError("");
+      setSaving(true);
+      setFormError("");
       setSuccessMessage("");
 
       const productData = {
@@ -64,18 +88,25 @@ function ProductsPage() {
         low_stock_level: Number(formData.low_stock_level || 0),
       };
 
-      await apiClient.post("/products", productData);
+      if (editingProductId) {
+        await apiClient.put(`/products/${editingProductId}`, productData);
+        setSuccessMessage("Product updated successfully.");
+      } else {
+        await apiClient.post("/products", productData);
+        setSuccessMessage("Product created successfully.");
+      }
 
       setFormData(initialFormData);
-      setSuccessMessage("Product created successfully.");
+      setEditingProductId(null);
 
       await fetchProducts();
     } catch (error) {
-      setCreateError(
-        error.response?.data?.message || "Failed to create product."
+      setFormError(
+        error.response?.data?.message ||
+          `Failed to ${editingProductId ? "update" : "create"} product.`
       );
     } finally {
-      setCreating(false);
+      setSaving(false);
     }
   }
 
@@ -84,9 +115,9 @@ function ProductsPage() {
       <h1>Products</h1>
 
       <section>
-        <h2>Create Product</h2>
+        <h2>{editingProductId ? "Edit Product" : "Create Product"}</h2>
 
-        <form onSubmit={handleCreateProduct}>
+        <form onSubmit={handleSubmitProduct}>
           <div>
             <label htmlFor="name">Name</label>
             <br />
@@ -168,12 +199,24 @@ function ProductsPage() {
             />
           </div>
 
-          {createError && <p>{createError}</p>}
+          {formError && <p>{formError}</p>}
           {successMessage && <p>{successMessage}</p>}
 
-          <button type="submit" disabled={creating}>
-            {creating ? "Creating..." : "Create Product"}
+          <button type="submit" disabled={saving}>
+            {saving
+              ? editingProductId
+                ? "Updating..."
+                : "Creating..."
+              : editingProductId
+              ? "Update Product"
+              : "Create Product"}
           </button>
+
+          {editingProductId && (
+            <button type="button" onClick={handleCancelEdit}>
+              Cancel Edit
+            </button>
+          )}
         </form>
       </section>
 
@@ -203,6 +246,7 @@ function ProductsPage() {
               <th>Price</th>
               <th>Stock</th>
               <th>Low Stock Level</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -213,9 +257,17 @@ function ProductsPage() {
                 <td>{product.name}</td>
                 <td>{product.sku}</td>
                 <td>{product.category || "-"}</td>
-                <td>${Number(product.price).toFixed(2)}</td>
+                <td>${Number(product.price || 0).toFixed(2)}</td>
                 <td>{product.stock_quantity}</td>
                 <td>{product.low_stock_level}</td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => handleEditProduct(product)}
+                  >
+                    Edit
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
