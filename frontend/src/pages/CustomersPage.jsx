@@ -15,9 +15,11 @@ function CustomersPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingCustomerId, setDeletingCustomerId] = useState(null);
 
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchCustomers() {
@@ -50,6 +52,7 @@ function CustomersPage() {
   function handleEditCustomer(customer) {
     setEditingCustomerId(customer.id);
     setFormError("");
+    setDeleteError("");
     setSuccessMessage("");
 
     setFormData({
@@ -73,6 +76,7 @@ function CustomersPage() {
     try {
       setSaving(true);
       setFormError("");
+      setDeleteError("");
       setSuccessMessage("");
 
       const customerData = {
@@ -101,6 +105,40 @@ function CustomersPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteCustomer(customer) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${customer.name}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingCustomerId(customer.id);
+      setFormError("");
+      setDeleteError("");
+      setSuccessMessage("");
+
+      await apiClient.delete(`/customers/${customer.id}`);
+
+      if (editingCustomerId === customer.id) {
+        setEditingCustomerId(null);
+        setFormData(initialFormData);
+      }
+
+      setSuccessMessage("Customer deleted successfully.");
+
+      await fetchCustomers();
+    } catch (error) {
+      setDeleteError(
+        error.response?.data?.message || "Failed to delete customer."
+      );
+    } finally {
+      setDeletingCustomerId(null);
     }
   }
 
@@ -186,6 +224,8 @@ function CustomersPage() {
 
       <h2>Customer List</h2>
 
+      {deleteError && <p>{deleteError}</p>}
+
       {loading ? (
         <p>Loading customers...</p>
       ) : error ? (
@@ -224,6 +264,16 @@ function CustomersPage() {
                     onClick={() => handleEditCustomer(customer)}
                   >
                     Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCustomer(customer)}
+                    disabled={deletingCustomerId === customer.id}
+                  >
+                    {deletingCustomerId === customer.id
+                      ? "Deleting..."
+                      : "Delete"}
                   </button>
                 </td>
               </tr>
