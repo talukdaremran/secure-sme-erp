@@ -11,11 +11,13 @@ const initialFormData = {
 function CustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
+  const [editingCustomerId, setEditingCustomerId] = useState(null);
 
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState("");
-  const [createError, setCreateError] = useState("");
+  const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchCustomers() {
@@ -45,12 +47,32 @@ function CustomersPage() {
     }));
   }
 
-  async function handleCreateCustomer(event) {
+  function handleEditCustomer(customer) {
+    setEditingCustomerId(customer.id);
+    setFormError("");
+    setSuccessMessage("");
+
+    setFormData({
+      name: customer.name || "",
+      email: customer.email || "",
+      phone: customer.phone || "",
+      address: customer.address || "",
+    });
+  }
+
+  function handleCancelEdit() {
+    setEditingCustomerId(null);
+    setFormData(initialFormData);
+    setFormError("");
+    setSuccessMessage("");
+  }
+
+  async function handleSubmitCustomer(event) {
     event.preventDefault();
 
     try {
-      setCreating(true);
-      setCreateError("");
+      setSaving(true);
+      setFormError("");
       setSuccessMessage("");
 
       const customerData = {
@@ -60,18 +82,25 @@ function CustomersPage() {
         address: formData.address || null,
       };
 
-      await apiClient.post("/customers", customerData);
+      if (editingCustomerId) {
+        await apiClient.put(`/customers/${editingCustomerId}`, customerData);
+        setSuccessMessage("Customer updated successfully.");
+      } else {
+        await apiClient.post("/customers", customerData);
+        setSuccessMessage("Customer created successfully.");
+      }
 
       setFormData(initialFormData);
-      setSuccessMessage("Customer created successfully.");
+      setEditingCustomerId(null);
 
       await fetchCustomers();
     } catch (error) {
-      setCreateError(
-        error.response?.data?.message || "Failed to create customer."
+      setFormError(
+        error.response?.data?.message ||
+          `Failed to ${editingCustomerId ? "update" : "create"} customer.`
       );
     } finally {
-      setCreating(false);
+      setSaving(false);
     }
   }
 
@@ -80,9 +109,9 @@ function CustomersPage() {
       <h1>Customers</h1>
 
       <section>
-        <h2>Create Customer</h2>
+        <h2>{editingCustomerId ? "Edit Customer" : "Create Customer"}</h2>
 
-        <form onSubmit={handleCreateCustomer}>
+        <form onSubmit={handleSubmitCustomer}>
           <div>
             <label htmlFor="name">Name</label>
             <br />
@@ -132,12 +161,24 @@ function CustomersPage() {
             />
           </div>
 
-          {createError && <p>{createError}</p>}
+          {formError && <p>{formError}</p>}
           {successMessage && <p>{successMessage}</p>}
 
-          <button type="submit" disabled={creating}>
-            {creating ? "Creating..." : "Create Customer"}
+          <button type="submit" disabled={saving}>
+            {saving
+              ? editingCustomerId
+                ? "Updating..."
+                : "Creating..."
+              : editingCustomerId
+              ? "Update Customer"
+              : "Create Customer"}
           </button>
+
+          {editingCustomerId && (
+            <button type="button" onClick={handleCancelEdit}>
+              Cancel Edit
+            </button>
+          )}
         </form>
       </section>
 
@@ -165,6 +206,7 @@ function CustomersPage() {
               <th>Email</th>
               <th>Phone</th>
               <th>Address</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -176,6 +218,14 @@ function CustomersPage() {
                 <td>{customer.email || "-"}</td>
                 <td>{customer.phone || "-"}</td>
                 <td>{customer.address || "-"}</td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => handleEditCustomer(customer)}
+                  >
+                    Edit
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
