@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
+import ConfirmModal from "../components/ConfirmModal";
 
 const initialFormData = {
   name: "",
@@ -10,6 +11,8 @@ const initialFormData = {
 };
 
 function CustomersPage() {
+  const [customerToDelete, setCustomerToDelete] = useState(null);
+
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
 
@@ -112,29 +115,30 @@ function CustomersPage() {
     }
   }
 
-  async function handleDeleteCustomer(customer) {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${customer.name}"?`
-    );
+  function handleDeleteCustomer(customer) {
+    setCustomerToDelete(customer);
+  }
 
-    if (!confirmed) {
+  async function confirmDeleteCustomer() {
+    if (!customerToDelete) {
       return;
     }
 
     try {
-      setDeletingCustomerId(customer.id);
+      setDeletingCustomerId(customerToDelete.id);
       setFormError("");
       setDeleteError("");
       setSuccessMessage("");
 
-      await apiClient.delete(`/customers/${customer.id}`);
+      await apiClient.delete(`/customers/${customerToDelete.id}`);
 
-      if (editingCustomerId === customer.id) {
+      if (editingCustomerId === customerToDelete.id) {
         setEditingCustomerId(null);
         setFormData(initialFormData);
       }
 
       setSuccessMessage("Customer deleted successfully.");
+      setCustomerToDelete(null);
 
       await fetchCustomers();
     } catch (error) {
@@ -337,6 +341,20 @@ function CustomersPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(customerToDelete)}
+        title="Delete customer?"
+        message={
+          customerToDelete
+            ? `Are you sure you want to delete "${customerToDelete.name}"? This action cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete Customer"
+        isLoading={deletingCustomerId === customerToDelete?.id}
+        onConfirm={confirmDeleteCustomer}
+        onCancel={() => setCustomerToDelete(null)}
+      />
     </section>
   );
 }
