@@ -648,6 +648,51 @@ td select {
   color: var(--primary-dark);
 }
 
+/* Confirm Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e6eaf0;
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+}
+
+.modal-card h2 {
+  margin-bottom: 8px;
+  color: #172033;
+  font-size: 22px;
+  font-weight: 850;
+}
+
+.modal-card p {
+  margin-bottom: 22px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-actions button {
+  margin-left: 0;
+}
+
 
 /* Dashboard metrics */
 

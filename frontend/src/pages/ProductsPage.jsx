@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
+import ConfirmModal from "../components/ConfirmModal";
 
 const initialFormData = {
   name: "",
@@ -12,6 +13,8 @@ const initialFormData = {
 };
 
 function ProductsPage() {
+  const [productToDelete, setProductToDelete] = useState(null);
+
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
 
@@ -118,29 +121,30 @@ function ProductsPage() {
     }
   }
 
-  async function handleDeleteProduct(product) {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${product.name}"?`
-    );
+  function handleDeleteProduct(product) {
+    setProductToDelete(product);
+  }
 
-    if (!confirmed) {
+  async function confirmDeleteProduct() {
+    if (!productToDelete) {
       return;
     }
 
     try {
-      setDeletingProductId(product.id);
+      setDeletingProductId(productToDelete.id);
       setFormError("");
       setDeleteError("");
       setSuccessMessage("");
 
-      await apiClient.delete(`/products/${product.id}`);
+      await apiClient.delete(`/products/${productToDelete.id}`);
 
-      if (editingProductId === product.id) {
+      if (editingProductId === productToDelete.id) {
         setEditingProductId(null);
         setFormData(initialFormData);
       }
 
       setSuccessMessage("Product deleted successfully.");
+      setProductToDelete(null);
 
       await fetchProducts();
     } catch (error) {
@@ -349,6 +353,20 @@ function ProductsPage() {
           </tbody>
         </table>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(productToDelete)}
+        title="Delete product?"
+        message={
+          productToDelete
+            ? `Are you sure you want to delete "${productToDelete.name}"? This action cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete Product"
+        isLoading={deletingProductId === productToDelete?.id}
+        onConfirm={confirmDeleteProduct}
+        onCancel={() => setProductToDelete(null)}
+      />
     </section>
   );
 }
