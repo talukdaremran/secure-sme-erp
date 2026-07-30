@@ -12,14 +12,17 @@ function InvoicesPage() {
   const [salesOrders, setSalesOrders] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
   const [selectedStatuses, setSelectedStatuses] = useState({});
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const [error, setError] = useState("");
   const [createError, setCreateError] = useState("");
   const [updateError, setUpdateError] = useState("");
+  const [detailError, setDetailError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchInvoices() {
@@ -44,6 +47,23 @@ function InvoicesPage() {
       setCreateError(
         error.response?.data?.message || "Failed to load sales order options."
       );
+    }
+  }
+
+  async function fetchInvoiceDetails(invoiceId) {
+    try {
+      setDetailLoading(true);
+      setDetailError("");
+      setSelectedInvoice(null);
+
+      const response = await apiClient.get(`/invoices/${invoiceId}`);
+      setSelectedInvoice(response.data.data.invoice);
+    } catch (error) {
+      setDetailError(
+        error.response?.data?.message || "Failed to load invoice details."
+      );
+    } finally {
+      setDetailLoading(false);
     }
   }
 
@@ -75,6 +95,7 @@ function InvoicesPage() {
       setCreating(true);
       setCreateError("");
       setUpdateError("");
+      setDetailError("");
       setSuccessMessage("");
 
       const invoiceData = {
@@ -104,6 +125,7 @@ function InvoicesPage() {
       setUpdatingInvoiceId(invoice.id);
       setCreateError("");
       setUpdateError("");
+      setDetailError("");
       setSuccessMessage("");
 
       await apiClient.patch(`/invoices/${invoice.id}/payment-status`, {
@@ -114,6 +136,10 @@ function InvoicesPage() {
       setSuccessMessage("Invoice payment status updated successfully.");
 
       await fetchInvoices();
+
+      if (selectedInvoice?.id === invoice.id) {
+        await fetchInvoiceDetails(invoice.id);
+      }
     } catch (error) {
       setUpdateError(
         error.response?.data?.message || "Failed to update payment status."
@@ -121,6 +147,11 @@ function InvoicesPage() {
     } finally {
       setUpdatingInvoiceId(null);
     }
+  }
+
+  function handleCloseDetails() {
+    setSelectedInvoice(null);
+    setDetailError("");
   }
 
   const availableSalesOrders = salesOrders.filter((order) => {
@@ -177,6 +208,73 @@ function InvoicesPage() {
       {updateError && <p>{updateError}</p>}
       {successMessage && <p>{successMessage}</p>}
 
+      <section>
+        <h2>Invoice Details</h2>
+
+        {detailLoading && <p>Loading invoice details...</p>}
+
+        {detailError && <p>{detailError}</p>}
+
+        {!detailLoading && !detailError && !selectedInvoice && (
+          <p>Select an invoice to view details.</p>
+        )}
+
+        {selectedInvoice && (
+          <div>
+            <button type="button" onClick={handleCloseDetails}>
+              Close Details
+            </button>
+
+            <h3>{selectedInvoice.invoice_number}</h3>
+
+            <p>Invoice ID: {selectedInvoice.id}</p>
+            <p>Sales Order ID: {selectedInvoice.sales_order_id}</p>
+            <p>Customer: {selectedInvoice.customer_name}</p>
+            <p>Status: {selectedInvoice.status}</p>
+            <p>
+              Subtotal: ${Number(selectedInvoice.subtotal || 0).toFixed(2)}
+            </p>
+            <p>GST: ${Number(selectedInvoice.gst_amount || 0).toFixed(2)}</p>
+            <p>Total: ${Number(selectedInvoice.total_amount || 0).toFixed(2)}</p>
+            <p>
+              Issued At: {new Date(selectedInvoice.issued_at).toLocaleString()}
+            </p>
+
+            <h4>Line Items</h4>
+
+            {(selectedInvoice.items || []).length === 0 ? (
+              <p>No line items found.</p>
+            ) : (
+              <table border="1" cellPadding="8">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>SKU</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Line Total</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {(selectedInvoice.items || []).map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.product_name}</td>
+                      <td>{item.sku}</td>
+                      <td>{item.quantity}</td>
+                      <td>${Number(item.unit_price || 0).toFixed(2)}</td>
+                      <td>${Number(item.line_total || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </section>
+
+      <hr />
+
       <h2>Invoice List</h2>
 
       {loading ? (
@@ -204,6 +302,7 @@ function InvoicesPage() {
               <th>Total</th>
               <th>Issued At</th>
               <th>Update Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -238,7 +337,17 @@ function InvoicesPage() {
                     onClick={() => handleUpdatePaymentStatus(invoice)}
                     disabled={updatingInvoiceId === invoice.id}
                   >
-                    {updatingInvoiceId === invoice.id ? "Updating..." : "Update"}
+                    {updatingInvoiceId === invoice.id
+                      ? "Updating..."
+                      : "Update"}
+                  </button>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => fetchInvoiceDetails(invoice.id)}
+                  >
+                    View Details
                   </button>
                 </td>
               </tr>
