@@ -13,46 +13,39 @@ function AppLayout() {
   }
 
   return (
-    <div>
-      <aside>
-        <h2>Secure SME ERP</h2>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <h2 className="sidebar-title">Secure SME ERP</h2>
 
         {user && (
-          <p>
-            Logged in as {user.name} ({user.role})
+          <p className="user-badge">
+            {user.name} <span>({user.role})</span>
           </p>
         )}
 
-        <nav>
-          {isAdmin && (
-            <>
-              <Link to="/dashboard">Dashboard</Link>{" | "}
-            </>
-          )}
+        <nav className="sidebar-nav">
+          {isAdmin && <Link to="/dashboard">Dashboard</Link>}
 
-          <Link to="/products">Products</Link>{" | "}
-          <Link to="/customers">Customers</Link>{" | "}
-          <Link to="/sales-orders">Sales Orders</Link>{" | "}
-          <Link to="/invoices">Invoices</Link>{" | "}
+          <Link to="/products">Products</Link>
+          <Link to="/customers">Customers</Link>
+          <Link to="/sales-orders">Sales Orders</Link>
+          <Link to="/invoices">Invoices</Link>
           <Link to="/inventory">Inventory</Link>
 
           {isAdmin && (
             <>
-              {" | "}
-              <Link to="/audit-logs">Audit Logs</Link>{" | "}
+              <Link to="/audit-logs">Audit Logs</Link>
               <Link to="/users">Users</Link>
             </>
           )}
         </nav>
 
-        <br />
-
-        <button type="button" onClick={handleLogout}>
+        <button type="button" onClick={handleLogout} className="logout-button">
           Logout
         </button>
       </aside>
 
-      <main>
+      <main className="main-content">
         <Outlet />
       </main>
     </div>
