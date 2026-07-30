@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
+import { exportCSV } from "../utils/exportCSV";
 
 const initialFormData = {
   name: "",
@@ -9,6 +10,9 @@ const initialFormData = {
 };
 
 function CustomersPage() {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+
   const [customers, setCustomers] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
   const [editingCustomerId, setEditingCustomerId] = useState(null);
@@ -142,9 +146,31 @@ function CustomersPage() {
     }
   }
 
+  async function handleExportCustomers() {
+    try {
+      setExporting(true);
+      setExportError("");
+      setSuccessMessage("");
+
+      await exportCSV("/exports/customers", "customers.csv");
+
+      setSuccessMessage("Customers CSV exported successfully.");
+    } catch (error) {
+      setExportError("Failed to export customers CSV.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <section>
       <h1>Customers</h1>
+
+      <button type="button" onClick={handleExportCustomers} disabled={exporting}>
+        {exporting ? "Exporting..." : "Export Customers CSV"}
+      </button>
+
+      {exportError && <p>{exportError}</p>}
 
       <section>
         <h2>{editingCustomerId ? "Edit Customer" : "Create Customer"}</h2>

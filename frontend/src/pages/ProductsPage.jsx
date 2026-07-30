@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
+import { exportCSV } from "../utils/exportCSV";
 
 const initialFormData = {
   name: "",
@@ -11,6 +12,9 @@ const initialFormData = {
 };
 
 function ProductsPage() {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
   const [editingProductId, setEditingProductId] = useState(null);
@@ -148,9 +152,31 @@ function ProductsPage() {
     }
   }
 
+  async function handleExportProducts() {
+    try {
+      setExporting(true);
+      setExportError("");
+      setSuccessMessage("");
+
+      await exportCSV("/exports/products", "products.csv");
+
+      setSuccessMessage("Products CSV exported successfully.");
+    } catch (error) {
+      setExportError("Failed to export products CSV.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <section>
       <h1>Products</h1>
+
+      <button type="button" onClick={handleExportProducts} disabled={exporting}>
+        {exporting ? "Exporting..." : "Export Products CSV"}
+      </button>
+
+      {exportError && <p>{exportError}</p>}
 
       <section>
         <h2>{editingProductId ? "Edit Product" : "Create Product"}</h2>

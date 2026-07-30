@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
+import { exportCSV } from "../utils/exportCSV";
 
 const initialFormData = {
   customer_id: "",
@@ -12,6 +13,9 @@ const initialFormData = {
 };
 
 function SalesOrdersPage() {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+
   const [salesOrders, setSalesOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -190,9 +194,31 @@ function SalesOrdersPage() {
     setDetailError("");
   }
 
+  async function handleExportSalesOrders() {
+    try {
+      setExporting(true);
+      setExportError("");
+      setSuccessMessage("");
+
+      await exportCSV("/exports/sales-orders", "sales-orders.csv");
+
+      setSuccessMessage("Sales orders CSV exported successfully.");
+    } catch (error) {
+      setExportError("Failed to export sales orders CSV.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <section>
       <h1>Sales Orders</h1>
+
+      <button type="button" onClick={handleExportSalesOrders} disabled={exporting}>
+        {exporting ? "Exporting..." : "Export Sales Orders CSV"}
+      </button>
+
+      {exportError && <p>{exportError}</p>}
 
       <section>
         <h2>Create Sales Order</h2>
