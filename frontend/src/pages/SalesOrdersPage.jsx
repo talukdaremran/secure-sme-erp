@@ -13,10 +13,15 @@ function SalesOrdersPage() {
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
 
+  const [selectedSalesOrder, setSelectedSalesOrder] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+
   const [error, setError] = useState("");
   const [createError, setCreateError] = useState("");
+  const [detailError, setDetailError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   async function fetchSalesOrders() {
@@ -51,6 +56,23 @@ function SalesOrdersPage() {
     }
   }
 
+  async function fetchSalesOrderDetails(salesOrderId) {
+    try {
+      setDetailLoading(true);
+      setDetailError("");
+      setSelectedSalesOrder(null);
+
+      const response = await apiClient.get(`/sales-orders/${salesOrderId}`);
+      setSelectedSalesOrder(response.data.data.salesOrder);
+    } catch (error) {
+      setDetailError(
+        error.response?.data?.message || "Failed to load sales order details."
+      );
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
   useEffect(() => {
     fetchSalesOrders();
     fetchFormOptions();
@@ -71,6 +93,7 @@ function SalesOrdersPage() {
     try {
       setCreating(true);
       setCreateError("");
+      setDetailError("");
       setSuccessMessage("");
 
       const salesOrderData = {
@@ -97,6 +120,11 @@ function SalesOrdersPage() {
     } finally {
       setCreating(false);
     }
+  }
+
+  function handleCloseDetails() {
+    setSelectedSalesOrder(null);
+    setDetailError("");
   }
 
   return (
@@ -172,6 +200,77 @@ function SalesOrdersPage() {
 
       <hr />
 
+      <section>
+        <h2>Sales Order Details</h2>
+
+        {detailLoading && <p>Loading sales order details...</p>}
+
+        {detailError && <p>{detailError}</p>}
+
+        {!detailLoading && !detailError && !selectedSalesOrder && (
+          <p>Select a sales order to view details.</p>
+        )}
+
+        {selectedSalesOrder && (
+          <div>
+            <button type="button" onClick={handleCloseDetails}>
+              Close Details
+            </button>
+
+            <h3>Order #{selectedSalesOrder.id}</h3>
+
+            <p>Customer: {selectedSalesOrder.customer_name}</p>
+            <p>Created By: {selectedSalesOrder.created_by_name || "-"}</p>
+            <p>Status: {selectedSalesOrder.status}</p>
+            <p>
+              Subtotal: ${Number(selectedSalesOrder.subtotal || 0).toFixed(2)}
+            </p>
+            <p>
+              GST: ${Number(selectedSalesOrder.gst_amount || 0).toFixed(2)}
+            </p>
+            <p>
+              Total: ${Number(selectedSalesOrder.total_amount || 0).toFixed(2)}
+            </p>
+            <p>
+              Created At:{" "}
+              {new Date(selectedSalesOrder.created_at).toLocaleString()}
+            </p>
+
+            <h4>Line Items</h4>
+
+            {selectedSalesOrder.items.length === 0 ? (
+              <p>No line items found.</p>
+            ) : (
+              <table border="1" cellPadding="8">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>SKU</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Line Total</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {selectedSalesOrder.items.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.product_name}</td>
+                      <td>{item.sku}</td>
+                      <td>{item.quantity}</td>
+                      <td>${Number(item.unit_price || 0).toFixed(2)}</td>
+                      <td>${Number(item.line_total || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </section>
+
+      <hr />
+
       <h2>Sales Order List</h2>
 
       {loading ? (
@@ -197,6 +296,7 @@ function SalesOrdersPage() {
               <th>GST</th>
               <th>Total</th>
               <th>Created At</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -211,6 +311,14 @@ function SalesOrdersPage() {
                 <td>${Number(order.gst_amount || 0).toFixed(2)}</td>
                 <td>${Number(order.total_amount || 0).toFixed(2)}</td>
                 <td>{new Date(order.created_at).toLocaleString()}</td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => fetchSalesOrderDetails(order.id)}
+                  >
+                    View Details
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
