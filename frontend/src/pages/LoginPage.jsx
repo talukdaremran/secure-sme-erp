@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FiLock, FiMail, FiShield } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 
 function LoginPage() {
@@ -47,47 +48,65 @@ function LoginPage() {
   }
 
   return (
-    <section>
-      <h1>Login</h1>
+    <main className="auth-page">
+      <section className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-logo">
+            <FiShield />
+          </div>
 
-      <form onSubmit={handleSubmit}>
-        <div>
+          <div>
+            <h1>SME ERP</h1>
+            <p>Secure business management portal</p>
+          </div>
+        </div>
+
+        <div className="auth-heading">
+          <h2>Log In</h2>
+          <p>Access your ERP dashboard and business tools.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="auth-form">
           <label htmlFor="email">Email</label>
-          <br />
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
+          <div className="input-with-icon">
+            <FiMail />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="example@email.com"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <div>
           <label htmlFor="password">Password</label>
-          <br />
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
+          <div className="input-with-icon">
+            <FiLock />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        {error && <p>{error}</p>}
+          {error && <p className="message error-message">{error}</p>}
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          <button type="submit" disabled={isSubmitting} className="primary-button">
+            {isSubmitting ? "Logging in..." : "Log In"}
+          </button>
+        </form>
 
-      <p>
-        Need an account? <Link to="/register">Register</Link>
-      </p>
-    </section>
+        <p className="auth-switch">
+          Need an account? <Link to="/register">Create account</Link>
+        </p>
+      </section>
+    </main>
   );
 }
 

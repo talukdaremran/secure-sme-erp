@@ -77,7 +77,7 @@ function DashboardPage() {
       {summary.lowStockProducts.length === 0 ? (
         <p>No low-stock products found.</p>
       ) : (
-        <table border="1" cellPadding="8">
+        <table>
           <thead>
             <tr>
               <th>ID</th>
@@ -107,7 +107,7 @@ function DashboardPage() {
       {summary.recentActivity.length === 0 ? (
         <p>No recent activity found.</p>
       ) : (
-        <table border="1" cellPadding="8">
+        <table>
           <thead>
             <tr>
               <th>ID</th>

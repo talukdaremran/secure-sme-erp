@@ -1,4 +1,17 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  FiActivity,
+  FiArchive,
+  FiBarChart2,
+  FiBox,
+  FiClipboard,
+  FiFileText,
+  FiLogOut,
+  FiShoppingCart,
+  FiShield,
+  FiUsers,
+  FiLayers,
+} from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 
 function AppLayout() {
@@ -15,39 +28,107 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <h2 className="sidebar-title">Secure SME ERP</h2>
+        <div className="brand">
+          <div className="brand-icon">
+            <FiLayers />
+          </div>
 
-        {user && (
-          <p className="user-badge">
-            {user.name} <span>({user.role})</span>
-          </p>
-        )}
+          <div>
+            <h2>SME ERP</h2>
+            <p>Secure Business Portal</p>
+          </div>
+        </div>
 
         <nav className="sidebar-nav">
-          {isAdmin && <Link to="/dashboard">Dashboard</Link>}
+          {isAdmin && (
+            <NavLink to="/dashboard">
+              <FiBarChart2 />
+              <span>Dashboard</span>
+            </NavLink>
+          )}
 
-          <Link to="/products">Products</Link>
-          <Link to="/customers">Customers</Link>
-          <Link to="/sales-orders">Sales Orders</Link>
-          <Link to="/invoices">Invoices</Link>
-          <Link to="/inventory">Inventory</Link>
+          <NavLink to="/products">
+            <FiBox />
+            <span>Products</span>
+          </NavLink>
+
+          <NavLink to="/customers">
+            <FiUsers />
+            <span>Customers</span>
+          </NavLink>
+
+          <NavLink to="/sales-orders">
+            <FiShoppingCart />
+            <span>Sales Orders</span>
+          </NavLink>
+
+          <NavLink to="/invoices">
+            <FiFileText />
+            <span>Invoices</span>
+          </NavLink>
+
+          <NavLink to="/inventory">
+            <FiArchive />
+            <span>Inventory</span>
+          </NavLink>
 
           {isAdmin && (
             <>
-              <Link to="/audit-logs">Audit Logs</Link>
-              <Link to="/users">Users</Link>
+              <NavLink to="/audit-logs">
+                <FiActivity />
+                <span>Audit Logs</span>
+              </NavLink>
+
+              <NavLink to="/users">
+                <FiClipboard />
+                <span>Users</span>
+              </NavLink>
             </>
           )}
         </nav>
 
-        <button type="button" onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+        <div className="sidebar-footer">
+          {user && (
+            <div className="user-card">
+              <div className="user-avatar">
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+
+              <div>
+                <strong>{user.name}</strong>
+                <span>{user.role}</span>
+              </div>
+            </div>
+          )}
+
+          <button type="button" onClick={handleLogout} className="logout-button">
+            <FiLogOut />
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
 
-      <main className="main-content">
-        <Outlet />
-      </main>
+      <div className="content-shell">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Secure SME ERP</p>
+            <h1>Business Management System</h1>
+          </div>
+
+          {user && (
+            <div className="topbar-user">
+              <span>{user.role}</span>
+              <div className="topbar-avatar">
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+            </div>
+          )}
+        </header>
+
+        <main className="main-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

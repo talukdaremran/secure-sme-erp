@@ -302,7 +302,7 @@ function ProductsPage() {
       ) : products.length === 0 ? (
         <p>No products found.</p>
       ) : (
-        <table border="1" cellPadding="8">
+        <table>
           <thead>
             <tr>
               <th>ID</th>

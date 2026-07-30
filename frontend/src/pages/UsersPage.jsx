@@ -94,7 +94,7 @@ function UsersPage() {
       {users.length === 0 ? (
         <p>No users found.</p>
       ) : (
-        <table border="1" cellPadding="8">
+        <table>
           <thead>
             <tr>
               <th>ID</th>
