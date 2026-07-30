@@ -10,6 +10,7 @@ import auditLogRoutes from "./auditLogRoutes.js";
 import inventoryMovementRoutes from "./inventoryMovementRoutes.js";
 import dashboardRoutes from "./dashboardRoutes.js";
 import userRoutes from "./userRoutes.js";
+import exportRoutes from "./exportRoutes.js";
 
 const router = express.Router();
 
@@ -55,5 +56,7 @@ router.use("/inventory-movements", inventoryMovementRoutes);
 router.use("/dashboard", dashboardRoutes);
 
 router.use("/users", userRoutes);
+
+router.use("/exports", exportRoutes);
 
 export default router;
