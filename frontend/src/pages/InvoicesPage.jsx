@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
+import { exportCSV } from "../utils/exportCSV";
 
 const initialFormData = {
   sales_order_id: "",
@@ -8,6 +9,9 @@ const initialFormData = {
 const paymentStatusOptions = ["pending", "paid", "failed", "cancelled"];
 
 function InvoicesPage() {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+
   const [invoices, setInvoices] = useState([]);
   const [salesOrders, setSalesOrders] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
@@ -160,9 +164,31 @@ function InvoicesPage() {
     });
   });
 
+  async function handleExportInvoices() {
+  try {
+    setExporting(true);
+    setExportError("");
+    setSuccessMessage("");
+
+    await exportCSV("/exports/invoices", "invoices.csv");
+
+    setSuccessMessage("Invoices CSV exported successfully.");
+  } catch (error) {
+    setExportError("Failed to export invoices CSV.");
+  } finally {
+    setExporting(false);
+  }
+}
+
   return (
     <section>
       <h1>Invoices</h1>
+
+      <button type="button" onClick={handleExportInvoices} disabled={exporting}>
+        {exporting ? "Exporting..." : "Export Invoices CSV"}
+      </button>
+
+      {exportError && <p>{exportError}</p>}
 
       <section>
         <h2>Generate Invoice</h2>
