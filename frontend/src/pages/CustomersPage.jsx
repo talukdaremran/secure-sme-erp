@@ -164,149 +164,179 @@ function CustomersPage() {
 
   return (
     <section>
-      <h1>Customers</h1>
+      <div className="page-header">
+        <div>
+          <h1>Customers</h1>
+          <p>Manage customer records, contact details, and customer history.</p>
+        </div>
 
-      <button type="button" onClick={handleExportCustomers} disabled={exporting}>
-        {exporting ? "Exporting..." : "Export Customers CSV"}
-      </button>
+        <div className="page-actions">
+          <button type="button" onClick={handleExportCustomers} disabled={exporting}>
+            {exporting ? "Exporting..." : "Export CSV"}
+          </button>
+        </div>
+      </div>
 
       {exportError && <p>{exportError}</p>}
 
-      <section>
-        <h2>{editingCustomerId ? "Edit Customer" : "Create Customer"}</h2>
-
-        <form onSubmit={handleSubmitCustomer}>
-          <div>
-            <label htmlFor="name">Name</label>
-            <br />
-            <input
-              id="name"
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email">Email</label>
-            <br />
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone">Phone</label>
-            <br />
-            <input
-              id="phone"
-              name="phone"
-              type="text"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="address">Address</label>
-            <br />
-            <textarea
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              rows="3"
-            />
-          </div>
-
-          {formError && <p>{formError}</p>}
-          {successMessage && <p>{successMessage}</p>}
-
-          <button type="submit" disabled={saving}>
-            {saving
-              ? editingCustomerId
-                ? "Updating..."
-                : "Creating..."
-              : editingCustomerId
-              ? "Update Customer"
-              : "Create Customer"}
-          </button>
-
-          {editingCustomerId && (
-            <button type="button" onClick={handleCancelEdit}>
-              Cancel Edit
-            </button>
-          )}
-        </form>
-      </section>
-
-      <hr />
-
-      <h2>Customer List</h2>
-
-      {deleteError && <p>{deleteError}</p>}
-
-      {loading ? (
-        <p>Loading customers...</p>
-      ) : error ? (
-        <div>
-          <p>{error}</p>
-          <button type="button" onClick={fetchCustomers}>
-            Try again
-          </button>
+      <section className="panel form-panel">
+        <div className="panel-header">
+          <h2>{editingCustomerId ? "Edit Customer" : "Create Customer"}</h2>
+          <p>
+            {editingCustomerId
+              ? "Update an existing customer record."
+              : "Add a new customer to the ERP system."}
+          </p>
         </div>
-      ) : customers.length === 0 ? (
-        <p>No customers found.</p>
-      ) : (
-        <table border="1" cellPadding="8">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
 
-          <tbody>
-            {customers.map((customer) => (
-              <tr key={customer.id}>
-                <td>{customer.id}</td>
-                <td>{customer.name}</td>
-                <td>{customer.email || "-"}</td>
-                <td>{customer.phone || "-"}</td>
-                <td>{customer.address || "-"}</td>
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => handleEditCustomer(customer)}
-                  >
-                    Edit
-                  </button>
+        <div className="panel-body">
+          <form onSubmit={handleSubmitCustomer} className="form-grid">
+            <div className="form-field">
+              <label htmlFor="name">Name</label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteCustomer(customer)}
-                    disabled={deletingCustomerId === customer.id}
-                  >
-                    {deletingCustomerId === customer.id
-                      ? "Deleting..."
-                      : "Delete"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            <div className="form-field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="phone">Phone</label>
+              <input
+                id="phone"
+                name="phone"
+                type="text"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-field full-width">
+              <label htmlFor="address">Address</label>
+              <textarea
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                rows="3"
+              />
+            </div>
+
+            <div className="form-actions">
+              <button type="submit" disabled={saving}>
+                {saving
+                  ? editingCustomerId
+                    ? "Updating..."
+                    : "Creating..."
+                  : editingCustomerId
+                  ? "Update Customer"
+                  : "Create Customer"}
+              </button>
+
+              {editingCustomerId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="secondary-button"
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+
+            {formError && <p className="message error-message">{formError}</p>}
+            {successMessage && <p className="message badge-success">{successMessage}</p>}
+          </form>
+        </div>
+      </section>
+      
+
+      <div className="table-card">
+        <div className="table-card-header">
+          <div>
+            <h2>Customer List</h2>
+            <p>All registered customer records.</p>
+          </div>
+        </div>
+
+        <div className="panel-body">
+          {deleteError && <p className="message error-message">{deleteError}</p>}
+
+          {loading ? (
+            <p>Loading customers...</p>
+          ) : error ? (
+            <div>
+              <p className="message error-message">{error}</p>
+              <button type="button" onClick={fetchCustomers}>
+                Try again
+              </button>
+            </div>
+          ) : customers.length === 0 ? (
+            <p>No customers found.</p>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {customers.map((customer) => (
+                    <tr key={customer.id}>
+                      <td>{customer.id}</td>
+                      <td>{customer.name}</td>
+                      <td>{customer.email || "-"}</td>
+                      <td>{customer.phone || "-"}</td>
+                      <td>{customer.address || "-"}</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => handleEditCustomer(customer)}
+                          className="secondary-button"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCustomer(customer)}
+                          disabled={deletingCustomerId === customer.id}
+                          className="danger-button"
+                        >
+                          {deletingCustomerId === customer.id
+                            ? "Deleting..."
+                            : "Delete"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   );
 }

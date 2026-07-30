@@ -190,7 +190,7 @@ function InventoryPage() {
       ) : inventoryMovements.length === 0 ? (
         <p>No inventory movements found.</p>
       ) : (
-        <table border="1" cellPadding="8">
+        <table>
           <thead>
             <tr>
               <th>ID</th>
