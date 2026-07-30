@@ -3,8 +3,12 @@ import apiClient from "../api/apiClient";
 
 const initialFormData = {
   customer_id: "",
-  product_id: "",
-  quantity: "",
+  items: [
+    {
+      product_id: "",
+      quantity: "",
+    },
+  ],
 };
 
 function SalesOrdersPage() {
@@ -87,6 +91,55 @@ function SalesOrdersPage() {
     }));
   }
 
+  function handleItemChange(index, field, value) {
+    setFormData((previousData) => {
+      const updatedItems = previousData.items.map((item, itemIndex) => {
+        if (itemIndex === index) {
+          return {
+            ...item,
+            [field]: value,
+          };
+        }
+
+        return item;
+      });
+
+      return {
+        ...previousData,
+        items: updatedItems,
+      };
+    });
+  }
+
+  function handleAddItem() {
+    setFormData((previousData) => ({
+      ...previousData,
+      items: [
+        ...previousData.items,
+        {
+          product_id: "",
+          quantity: "",
+        },
+      ],
+    }));
+  }
+
+  function handleRemoveItem(index) {
+    setFormData((previousData) => {
+      const updatedItems = previousData.items.filter((item, itemIndex) => {
+        return itemIndex !== index;
+      });
+
+      return {
+        ...previousData,
+        items:
+          updatedItems.length > 0
+            ? updatedItems
+            : [{ product_id: "", quantity: "" }],
+      };
+    });
+  }
+
   async function handleCreateSalesOrder(event) {
     event.preventDefault();
 
@@ -96,14 +149,24 @@ function SalesOrdersPage() {
       setDetailError("");
       setSuccessMessage("");
 
+      const cleanedItems = formData.items.map((item) => ({
+        product_id: Number(item.product_id),
+        quantity: Number(item.quantity),
+      }));
+
+      const hasInvalidItem = cleanedItems.some((item) => {
+        return !item.product_id || !item.quantity || item.quantity <= 0;
+      });
+
+      if (hasInvalidItem) {
+        setCreateError("Each line item must have a product and valid quantity.");
+        setCreating(false);
+        return;
+      }
+
       const salesOrderData = {
         customer_id: Number(formData.customer_id),
-        items: [
-          {
-            product_id: Number(formData.product_id),
-            quantity: Number(formData.quantity),
-          },
-        ],
+        items: cleanedItems,
       };
 
       await apiClient.post("/sales-orders", salesOrderData);
@@ -154,40 +217,59 @@ function SalesOrdersPage() {
             </select>
           </div>
 
-          <div>
-            <label htmlFor="product_id">Product</label>
-            <br />
-            <select
-              id="product_id"
-              name="product_id"
-              value={formData.product_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select product</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name} — {product.sku} — Stock:{" "}
-                  {product.stock_quantity}
-                </option>
-              ))}
-            </select>
-          </div>
+          <h3>Line Items</h3>
 
-          <div>
-            <label htmlFor="quantity">Quantity</label>
-            <br />
-            <input
-              id="quantity"
-              name="quantity"
-              type="number"
-              min="1"
-              step="1"
-              value={formData.quantity}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          {formData.items.map((item, index) => (
+            <div key={index}>
+              <div>
+                <label htmlFor={`product_id_${index}`}>Product</label>
+                <br />
+                <select
+                  id={`product_id_${index}`}
+                  value={item.product_id}
+                  onChange={(event) =>
+                    handleItemChange(index, "product_id", event.target.value)
+                  }
+                  required
+                >
+                  <option value="">Select product</option>
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name} — {product.sku} — Stock: {product.stock_quantity}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor={`quantity_${index}`}>Quantity</label>
+                <br />
+                <input
+                  id={`quantity_${index}`}
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={item.quantity}
+                  onChange={(event) =>
+                    handleItemChange(index, "quantity", event.target.value)
+                  }
+                  required
+                />
+              </div>
+
+              {formData.items.length > 1 && (
+                <button type="button" onClick={() => handleRemoveItem(index)}>
+                  Remove Item
+                </button>
+              )}
+
+              <hr />
+            </div>
+          ))}
+
+          <button type="button" onClick={handleAddItem}>
+            Add Another Item
+          </button>
 
           {createError && <p>{createError}</p>}
           {successMessage && <p>{successMessage}</p>}
