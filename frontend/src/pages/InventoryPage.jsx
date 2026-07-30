@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/apiClient";
+import { useAuth } from "../context/AuthContext";
 
 const initialFormData = {
   product_id: "",
@@ -8,6 +9,9 @@ const initialFormData = {
 };
 
 function InventoryPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "Admin";
+
   const [inventoryMovements, setInventoryMovements] = useState([]);
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
@@ -48,8 +52,11 @@ function InventoryPage() {
 
   useEffect(() => {
     fetchInventoryMovements();
-    fetchProducts();
-  }, []);
+
+    if (isAdmin) {
+      fetchProducts();
+    }
+  }, [isAdmin]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -94,69 +101,78 @@ function InventoryPage() {
     <section>
       <h1>Inventory</h1>
 
-      <section>
-        <h2>Create Inventory Adjustment</h2>
+      {!isAdmin && (
+        <p>
+          You can view inventory movement history. Manual inventory adjustments
+          are available to Admin users only.
+        </p>
+      )}
 
-        <form onSubmit={handleCreateAdjustment}>
-          <div>
-            <label htmlFor="product_id">Product</label>
-            <br />
-            <select
-              id="product_id"
-              name="product_id"
-              value={formData.product_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select product</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name} — {product.sku} — Current stock:{" "}
-                  {product.stock_quantity}
-                </option>
-              ))}
-            </select>
-          </div>
+      {isAdmin && (
+        <section>
+          <h2>Create Inventory Adjustment</h2>
 
-          <div>
-            <label htmlFor="quantity_change">Quantity Change</label>
-            <br />
-            <input
-              id="quantity_change"
-              name="quantity_change"
-              type="number"
-              step="1"
-              value={formData.quantity_change}
-              onChange={handleChange}
-              required
-            />
-            <p>
-              Use a positive number to increase stock, or a negative number to
-              decrease stock.
-            </p>
-          </div>
+          <form onSubmit={handleCreateAdjustment}>
+            <div>
+              <label htmlFor="product_id">Product</label>
+              <br />
+              <select
+                id="product_id"
+                name="product_id"
+                value={formData.product_id}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select product</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name} — {product.sku} — Current stock:{" "}
+                    {product.stock_quantity}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label htmlFor="reason">Reason</label>
-            <br />
-            <textarea
-              id="reason"
-              name="reason"
-              value={formData.reason}
-              onChange={handleChange}
-              rows="3"
-              placeholder="Example: Stock count correction"
-            />
-          </div>
+            <div>
+              <label htmlFor="quantity_change">Quantity Change</label>
+              <br />
+              <input
+                id="quantity_change"
+                name="quantity_change"
+                type="number"
+                step="1"
+                value={formData.quantity_change}
+                onChange={handleChange}
+                required
+              />
+              <p>
+                Use a positive number to increase stock, or a negative number to
+                decrease stock.
+              </p>
+            </div>
 
-          {createError && <p>{createError}</p>}
-          {successMessage && <p>{successMessage}</p>}
+            <div>
+              <label htmlFor="reason">Reason</label>
+              <br />
+              <textarea
+                id="reason"
+                name="reason"
+                value={formData.reason}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Example: Stock count correction"
+              />
+            </div>
 
-          <button type="submit" disabled={creating}>
-            {creating ? "Creating..." : "Create Adjustment"}
-          </button>
-        </form>
-      </section>
+            {createError && <p>{createError}</p>}
+            {successMessage && <p>{successMessage}</p>}
+
+            <button type="submit" disabled={creating}>
+              {creating ? "Creating..." : "Create Adjustment"}
+            </button>
+          </form>
+        </section>
+      )}
 
       <hr />
 
