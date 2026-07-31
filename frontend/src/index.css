@@ -1283,6 +1283,30 @@ td select {
 td strong {
   color: #0f172a;
 }
+
+.stock-managed-note {
+  justify-content: end;
+}
+
+.readonly-stock-box {
+  min-height: 68px;
+  padding: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+
+.readonly-stock-box strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #1d4ed8;
+  font-size: 13px;
+}
+
+.readonly-stock-box p {
+  margin-bottom: 0;
+  font-size: 12px;
+}
 /* --- Product Page --- */
 
 /* === Sales Orders Page === */
