@@ -1789,40 +1789,86 @@ td strong {
 }
 /* --- Audit Logs Page --- */
 
+/* === Users Page === */
+
+.users-table-toolbar {
+  grid-template-columns: minmax(280px, 1fr) repeat(3, minmax(145px, 190px)) auto;
+}
+
+.user-account-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-account-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: var(--primary-dark);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 850;
+  flex-shrink: 0;
+}
+
+.user-account-cell strong {
+  display: block;
+  color: #172033;
+  font-size: 13px;
+}
+
+.user-account-cell span:not(.user-account-avatar) {
+  display: inline-flex;
+  margin-top: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.role-update-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.role-update-control select {
+  max-width: 120px;
+  min-width: 110px;
+  margin-right: 0;
+}
+
+.role-update-control button {
+  margin-left: 0;
+}
+/* --- Users Page --- */
+
 
 /* === Responsive styles for smaller devices === */
 @media (max-width: 1100px) {
-  /* Product page */
-  .product-summary-grid {
+  .product-summary-grid,
+  .table-toolbar,
+  .detail-summary-grid,
+  .invoice-table-toolbar,
+  .inventory-table-toolbar,
+  .audit-table-toolbar,
+  .users-table-toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .table-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  /* --- */
 
   /* Sales Orders page */
-  .detail-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .line-item-grid {
     grid-template-columns: 1fr;
   }
   /* --- */
 
-  /* --- Invoices Page --- */
-  .invoice-table-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  /* --- */
-
   /* --- Inventory Page --- */
-  .inventory-table-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .inventory-alert-header {
     align-items: flex-start;
     flex-direction: column;
@@ -1841,21 +1887,20 @@ td strong {
     justify-content: flex-start;
   }
   /* --- */
-
-  /* --- Audit Logs Page --- */
-  .audit-table-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  /* --- */
 }
 
 @media (max-width: 560px) {
-  /* Product page */
   .product-summary-grid,
-  .product-alert-list {
+  .product-alert-list,
+  .table-toolbar,
+  .detail-summary-grid,
+  .invoice-table-toolbar,
+  .inventory-table-toolbar,
+  .audit-table-toolbar {
     grid-template-columns: 1fr;
   }
-
+  
+  /* Product page */
   .product-alert-item {
     align-items: flex-start;
     flex-direction: column;
@@ -1869,10 +1914,6 @@ td strong {
     align-items: flex-start;
     flex-direction: column;
   }
-
-  .table-toolbar {
-    grid-template-columns: 1fr;
-  }
   /* --- */
 
   /* Sales orders page */
@@ -1880,17 +1921,9 @@ td strong {
     align-items: flex-start;
     flex-direction: column;
   }
-
-  .detail-summary-grid {
-    grid-template-columns: 1fr;
-  }
   /* --- */
 
   /* --- Invoices Page --- */
-  .invoice-table-toolbar {
-    grid-template-columns: 1fr;
-  }
-
   .payment-update-control {
     align-items: flex-start;
     flex-direction: column;
@@ -1898,19 +1931,10 @@ td strong {
   /* --- */
 
   /* --- Inventory Page --- */
-  .inventory-table-toolbar {
-    grid-template-columns: 1fr;
-  }
 
   .inventory-alert-bottom {
     align-items: flex-start;
     flex-direction: column;
-  }
-  /* --- */
-
-  /* --- Audit Logs Page --- */
-  .audit-table-toolbar {
-    grid-template-columns: 1fr;
   }
   /* --- */
 }
