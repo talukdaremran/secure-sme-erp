@@ -15,7 +15,6 @@ const initialFormData = {
   sku: "",
   category: "",
   price: "",
-  stock_quantity: "",
   low_stock_level: "",
 };
 
@@ -83,7 +82,6 @@ function ProductsPage() {
       sku: product.sku || "",
       category: product.category || "",
       price: product.price || "",
-      stock_quantity: product.stock_quantity || 0,
       low_stock_level: product.low_stock_level || 0,
     });
 
@@ -114,7 +112,6 @@ function ProductsPage() {
         sku: formData.sku,
         category: formData.category || null,
         price: Number(formData.price),
-        stock_quantity: Number(formData.stock_quantity || 0),
         low_stock_level: Number(formData.low_stock_level || 0),
       };
 
@@ -329,7 +326,7 @@ function ProductsPage() {
         <div>
           <h1>Products</h1>
           <p>
-            Manage products, pricing, stock quantity, and low stock thresholds.
+            Manage product details, pricing, and low stock thresholds. Stock changes are handled from Inventory.
           </p>
         </div>
 
@@ -430,17 +427,26 @@ function ProductsPage() {
                 />
               </div>
 
-              <div className="form-field">
-                <label htmlFor="stock_quantity">Stock Quantity</label>
-                <input
-                  id="stock_quantity"
-                  name="stock_quantity"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.stock_quantity}
-                  onChange={handleChange}
-                />
+              <div className="form-field stock-managed-note">
+                <label>Stock Quantity</label>
+
+                <div className="readonly-stock-box">
+                  {editingProductId ? (
+                    <>
+                      <strong>
+                        Current stock:{" "}
+                        {products.find((product) => product.id === editingProductId)
+                          ?.stock_quantity ?? 0}
+                      </strong>
+                      <p>Stock changes are managed through the Inventory page.</p>
+                    </>
+                  ) : (
+                    <>
+                      <strong>New products start with stock 0</strong>
+                      <p>Add opening stock using Inventory → New Adjustment.</p>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="form-field">

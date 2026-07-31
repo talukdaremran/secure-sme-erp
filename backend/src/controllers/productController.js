@@ -51,8 +51,15 @@ export async function getProductById(req, res, next) {
 
 export async function createProduct(req, res, next) {
   try {
-    const { name, sku, category, price, stock_quantity, low_stock_level } =
-      req.body;
+    const { name, sku, category, price, low_stock_level } = req.body;
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "stock_quantity")) {
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Stock quantity is managed through Inventory. Create the product first, then add stock using an inventory adjustment.",
+      });
+    }
 
     if (!name || !sku || price === undefined) {
       return res.status(400).json({
@@ -65,13 +72,6 @@ export async function createProduct(req, res, next) {
       return res.status(400).json({
         status: "error",
         message: "Price must be 0 or greater",
-      });
-    }
-
-    if (stock_quantity !== undefined && Number(stock_quantity) < 0) {
-      return res.status(400).json({
-        status: "error",
-        message: "Stock quantity cannot be negative",
       });
     }
 
@@ -89,14 +89,13 @@ export async function createProduct(req, res, next) {
 
     const result = await pool.query(
       `INSERT INTO products (name, sku, category, price, stock_quantity, low_stock_level)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       VALUES ($1, $2, $3, $4, 0, $5)
        RETURNING id, name, sku, category, price, stock_quantity, low_stock_level, created_at, updated_at`,
       [
         name.trim(),
         sku.trim(),
         category || null,
         price,
-        stock_quantity ?? 0,
         low_stock_level ?? 0,
       ]
     );
@@ -114,7 +113,8 @@ export async function createProduct(req, res, next) {
 
     res.status(201).json({
       status: "success",
-      message: "Product created successfully",
+      message:
+        "Product created successfully. Opening stock is 0 and can be updated from Inventory.",
       data: {
         product,
       },
@@ -127,8 +127,15 @@ export async function createProduct(req, res, next) {
 export async function updateProduct(req, res, next) {
   try {
     const { id } = req.params;
-    const { name, sku, category, price, stock_quantity, low_stock_level } =
-      req.body;
+    const { name, sku, category, price, low_stock_level } = req.body;
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "stock_quantity")) {
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Stock quantity cannot be updated from Products. Use Inventory adjustments for stock changes.",
+      });
+    }
 
     if (!name || !sku || price === undefined) {
       return res.status(400).json({
@@ -141,13 +148,6 @@ export async function updateProduct(req, res, next) {
       return res.status(400).json({
         status: "error",
         message: "Price must be 0 or greater",
-      });
-    }
-
-    if (stock_quantity !== undefined && Number(stock_quantity) < 0) {
-      return res.status(400).json({
-        status: "error",
-        message: "Stock quantity cannot be negative",
       });
     }
 
@@ -169,17 +169,15 @@ export async function updateProduct(req, res, next) {
            sku = $2,
            category = $3,
            price = $4,
-           stock_quantity = $5,
-           low_stock_level = $6,
+           low_stock_level = $5,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7
+       WHERE id = $6
        RETURNING id, name, sku, category, price, stock_quantity, low_stock_level, created_at, updated_at`,
       [
         name.trim(),
         sku.trim(),
         category || null,
         price,
-        stock_quantity ?? 0,
         low_stock_level ?? 0,
         id,
       ]
