@@ -1,4 +1,15 @@
 import { useEffect, useState } from "react";
+import {
+  FiClock,
+  FiDollarSign,
+  FiEye,
+  FiFileText,
+  FiPlus,
+  FiShoppingCart,
+  FiTrash2,
+  FiUsers,
+  FiX,
+} from "react-icons/fi";
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
 
@@ -13,6 +24,12 @@ const initialFormData = {
 };
 
 function SalesOrdersPage() {
+  const [isSalesOrderFormOpen, setIsSalesOrderFormOpen] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOption, setSortOption] = useState("newest");
+
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
 
@@ -38,7 +55,7 @@ function SalesOrdersPage() {
       setError("");
 
       const response = await apiClient.get("/sales-orders");
-      setSalesOrders(response.data.data.salesOrders);
+      setSalesOrders(response.data?.data?.salesOrders || []);
     } catch (error) {
       setError(
         error.response?.data?.message || "Failed to load sales orders."
@@ -55,8 +72,8 @@ function SalesOrdersPage() {
         apiClient.get("/products"),
       ]);
 
-      setCustomers(customersResponse.data.data.customers);
-      setProducts(productsResponse.data.data.products);
+      setCustomers(customersResponse.data?.data?.customers || []);
+      setProducts(productsResponse.data?.data?.products || []);
     } catch (error) {
       setCreateError(
         error.response?.data?.message || "Failed to load form options."
@@ -71,7 +88,7 @@ function SalesOrdersPage() {
       setSelectedSalesOrder(null);
 
       const response = await apiClient.get(`/sales-orders/${salesOrderId}`);
-      setSelectedSalesOrder(response.data.data.salesOrder);
+      setSelectedSalesOrder(response.data?.data?.salesOrder || null);
     } catch (error) {
       setDetailError(
         error.response?.data?.message || "Failed to load sales order details."
@@ -144,6 +161,19 @@ function SalesOrdersPage() {
     });
   }
 
+  function handleOpenCreateSalesOrder() {
+    setFormData(initialFormData);
+    setCreateError("");
+    setSuccessMessage("");
+    setIsSalesOrderFormOpen(true);
+  }
+
+  function handleCloseCreateSalesOrder() {
+    setFormData(initialFormData);
+    setCreateError("");
+    setIsSalesOrderFormOpen(false);
+  }
+
   async function handleCreateSalesOrder(event) {
     event.preventDefault();
 
@@ -152,6 +182,12 @@ function SalesOrdersPage() {
       setCreateError("");
       setDetailError("");
       setSuccessMessage("");
+
+      if (!formData.customer_id) {
+        setCreateError("Please select a customer.");
+        setCreating(false);
+        return;
+      }
 
       const cleanedItems = formData.items.map((item) => ({
         product_id: Number(item.product_id),
@@ -176,6 +212,7 @@ function SalesOrdersPage() {
       await apiClient.post("/sales-orders", salesOrderData);
 
       setFormData(initialFormData);
+      setIsSalesOrderFormOpen(false);
       setSuccessMessage("Sales order created successfully.");
 
       await fetchSalesOrders();
@@ -210,227 +247,649 @@ function SalesOrdersPage() {
     }
   }
 
+  function formatCurrency(value) {
+    return new Intl.NumberFormat("en-AU", {
+      style: "currency",
+      currency: "AUD",
+    }).format(Number(value || 0));
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return "-";
+    }
+
+    return new Date(value).toLocaleString();
+  }
+
+  function formatShortDate(value) {
+    if (!value) {
+      return "-";
+    }
+
+    return new Date(value).toLocaleDateString();
+  }
+
+  function formatStatus(status) {
+    if (!status) {
+      return "-";
+    }
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  function getStatusBadgeClass(status) {
+    const normalizedStatus = String(status || "").toLowerCase();
+
+    if (normalizedStatus === "confirmed" || normalizedStatus === "paid") {
+      return "badge badge-success";
+    }
+
+    if (normalizedStatus === "pending") {
+      return "badge badge-warning";
+    }
+
+    if (
+      normalizedStatus === "cancelled" ||
+      normalizedStatus === "failed" ||
+      normalizedStatus === "rejected"
+    ) {
+      return "badge badge-danger";
+    }
+
+    return "badge badge-info";
+  }
+
+  const totalOrders = salesOrders.length;
+
+  const totalSalesValue = salesOrders.reduce((total, order) => {
+    return total + Number(order.total_amount || 0);
+  }, 0);
+
+  const averageOrderValue =
+    totalOrders > 0 ? totalSalesValue / totalOrders : 0;
+
+  const uniqueCustomerCount = new Set(
+    salesOrders.map((order) => order.customer_name).filter(Boolean)
+  ).size;
+
+  const latestOrder = [...salesOrders].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  })[0];
+
+  const statusOptions = [
+    ...new Set(salesOrders.map((order) => order.status).filter(Boolean)),
+  ].sort();
+
+  const displayedSalesOrders = salesOrders
+    .filter((order) => {
+      const searchableText = `${order.id} ${order.customer_name} ${
+        order.created_by_name || ""
+      } ${order.status}`.toLowerCase();
+
+      const matchesSearch = searchableText.includes(searchQuery.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || order.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortOption === "newest") {
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
+
+      if (sortOption === "oldest") {
+        return new Date(a.created_at) - new Date(b.created_at);
+      }
+
+      if (sortOption === "total-desc") {
+        return Number(b.total_amount || 0) - Number(a.total_amount || 0);
+      }
+
+      if (sortOption === "total-asc") {
+        return Number(a.total_amount || 0) - Number(b.total_amount || 0);
+      }
+
+      if (sortOption === "customer-asc") {
+        return String(a.customer_name || "").localeCompare(
+          String(b.customer_name || "")
+        );
+      }
+
+      return 0;
+    });
+
+  const hasActiveSalesOrderFilters = searchQuery || statusFilter !== "all";
+
+  function resetSalesOrderFilters() {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setSortOption("newest");
+  }
+
+  const isDetailModalOpen =
+    detailLoading || Boolean(detailError) || Boolean(selectedSalesOrder);
+
   return (
     <section>
-      <h1>Sales Orders</h1>
+      <div className="page-header">
+        <div>
+          <h1>Sales Orders</h1>
+          <p>
+            Create customer orders, manage line items, and review sales order
+            details.
+          </p>
+        </div>
 
-      <button type="button" onClick={handleExportSalesOrders} disabled={exporting}>
-        {exporting ? "Exporting..." : "Export Sales Orders CSV"}
-      </button>
+        <div className="page-actions">
+          <button
+            type="button"
+            onClick={handleExportSalesOrders}
+            disabled={exporting}
+          >
+            {exporting ? "Exporting..." : "Export CSV"}
+          </button>
 
-      {exportError && <p>{exportError}</p>}
+          <button type="button" onClick={handleOpenCreateSalesOrder}>
+            + New Sales Order
+          </button>
+        </div>
+      </div>
 
-      <section>
-        <h2>Create Sales Order</h2>
+      {exportError && <p className="message error-message">{exportError}</p>}
+      {successMessage && (
+        <p className="message success-message">{successMessage}</p>
+      )}
 
-        <form onSubmit={handleCreateSalesOrder}>
-          <div>
-            <label htmlFor="customer_id">Customer</label>
-            <br />
-            <select
-              id="customer_id"
-              name="customer_id"
-              value={formData.customer_id}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select customer</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
+      <div className="dashboard-metric-grid">
+        <article className="dashboard-metric-card metric-blue">
+          <div className="metric-icon">
+            <FiShoppingCart />
           </div>
 
-          <h3>Line Items</h3>
+          <div>
+            <span>Total Orders</span>
+            <strong>{totalOrders}</strong>
+          </div>
+        </article>
 
-          {formData.items.map((item, index) => (
-            <div key={index}>
+        <article className="dashboard-metric-card metric-green">
+          <div className="metric-icon">
+            <FiDollarSign />
+          </div>
+
+          <div>
+            <span>Total Sales Value</span>
+            <strong>{formatCurrency(totalSalesValue)}</strong>
+          </div>
+        </article>
+
+        <article className="dashboard-metric-card metric-purple">
+          <div className="metric-icon">
+            <FiFileText />
+          </div>
+
+          <div>
+            <span>Average Order</span>
+            <strong>{formatCurrency(averageOrderValue)}</strong>
+          </div>
+        </article>
+
+        <article className="dashboard-metric-card metric-orange">
+          <div className="metric-icon">
+            <FiUsers />
+          </div>
+
+          <div>
+            <span>Customers Ordered</span>
+            <strong>{uniqueCustomerCount}</strong>
+          </div>
+        </article>
+
+        <article className="dashboard-metric-card metric-blue">
+          <div className="metric-icon">
+            <FiClock />
+          </div>
+
+          <div>
+            <span>Latest Order</span>
+            <strong>{latestOrder ? formatShortDate(latestOrder.created_at) : "-"}</strong>
+          </div>
+        </article>
+      </div>
+
+      <div className="table-card">
+        <div className="table-card-header">
+          <div>
+            <h2>All Sales Orders</h2>
+            <p>
+              {loading
+                ? "Loading sales orders..."
+                : `Showing ${displayedSalesOrders.length} of ${salesOrders.length} sales orders.`}
+            </p>
+          </div>
+        </div>
+
+        <div className="table-toolbar sales-table-toolbar">
+          <input
+            type="text"
+            placeholder="Search by order, customer, creator, or status..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            aria-label="Search sales orders"
+          />
+
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            aria-label="Filter sales orders by status"
+          >
+            <option value="all">All Statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {formatStatus(status)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={sortOption}
+            onChange={(event) => setSortOption(event.target.value)}
+            aria-label="Sort sales orders"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="total-desc">Total High-Low</option>
+            <option value="total-asc">Total Low-High</option>
+            <option value="customer-asc">Customer A-Z</option>
+          </select>
+
+          {hasActiveSalesOrderFilters && (
+            <button
+              type="button"
+              onClick={resetSalesOrderFilters}
+              className="secondary-button"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+
+        <div className="panel-body">
+          {loading ? (
+            <p>Loading sales orders...</p>
+          ) : error ? (
+            <div>
+              <p className="message error-message">{error}</p>
+
+              <button type="button" onClick={fetchSalesOrders}>
+                Try Again
+              </button>
+            </div>
+          ) : salesOrders.length === 0 ? (
+            <div className="empty-state">
+              <h3>No sales orders found</h3>
+              <p>Create the first sales order using the button above.</p>
+            </div>
+          ) : displayedSalesOrders.length === 0 ? (
+            <div className="empty-state">
+              <h3>No matching sales orders found</h3>
+              <p>Try changing your search, status filter, or sort option.</p>
+
+              <button
+                type="button"
+                onClick={resetSalesOrderFilters}
+                className="secondary-button"
+              >
+                Reset Filters
+              </button>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Created By</th>
+                    <th>Status</th>
+                    <th>Subtotal</th>
+                    <th>GST</th>
+                    <th>Total</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {displayedSalesOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td>
+                        <span className="code-pill">
+                          SO-{String(order.id).padStart(4, "0")}
+                        </span>
+                      </td>
+
+                      <td>
+                        <strong>{order.customer_name}</strong>
+                      </td>
+
+                      <td>{order.created_by_name || "-"}</td>
+
+                      <td>
+                        <span className={getStatusBadgeClass(order.status)}>
+                          {formatStatus(order.status)}
+                        </span>
+                      </td>
+
+                      <td>{formatCurrency(order.subtotal)}</td>
+                      <td>{formatCurrency(order.gst_amount)}</td>
+
+                      <td>
+                        <strong>{formatCurrency(order.total_amount)}</strong>
+                      </td>
+
+                      <td>{formatDate(order.created_at)}</td>
+
+                      <td>
+                        <div className="table-actions">
+                          <button
+                            type="button"
+                            onClick={() => fetchSalesOrderDetails(order.id)}
+                            className="secondary-button"
+                          >
+                            <FiEye />
+                            View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isSalesOrderFormOpen && (
+        <div className="modal-backdrop">
+          <section className="modal-card sales-order-form-modal">
+            <div className="modal-header">
               <div>
-                <label htmlFor={`product_id_${index}`}>Product</label>
-                <br />
+                <h2>Create Sales Order</h2>
+                <p>Select a customer and add one or more line items.</p>
+              </div>
+
+              <button
+                type="button"
+                className="icon-button modal-close-button"
+                onClick={handleCloseCreateSalesOrder}
+                aria-label="Close sales order form"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSalesOrder} className="form-grid">
+              <div className="form-field full-width">
+                <label htmlFor="customer_id">Customer</label>
                 <select
-                  id={`product_id_${index}`}
-                  value={item.product_id}
-                  onChange={(event) =>
-                    handleItemChange(index, "product_id", event.target.value)
-                  }
+                  id="customer_id"
+                  name="customer_id"
+                  value={formData.customer_id}
+                  onChange={handleChange}
                   required
                 >
-                  <option value="">Select product</option>
-                  {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name} — {product.sku} — Stock: {product.stock_quantity}
+                  <option value="">Select customer</option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <label htmlFor={`quantity_${index}`}>Quantity</label>
-                <br />
-                <input
-                  id={`quantity_${index}`}
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={item.quantity}
-                  onChange={(event) =>
-                    handleItemChange(index, "quantity", event.target.value)
-                  }
-                  required
-                />
-              </div>
+              <div className="line-items-section full-width">
+                <div className="line-items-header">
+                  <div>
+                    <h3>Line Items</h3>
+                    <p>Add products and quantities for this order.</p>
+                  </div>
 
-              {formData.items.length > 1 && (
-                <button type="button" onClick={() => handleRemoveItem(index)}>
-                  Remove Item
-                </button>
-              )}
-
-              <hr />
-            </div>
-          ))}
-
-          <button type="button" onClick={handleAddItem}>
-            Add Another Item
-          </button>
-
-          {createError && <p>{createError}</p>}
-          {successMessage && <p>{successMessage}</p>}
-
-          <button type="submit" disabled={creating}>
-            {creating ? "Creating..." : "Create Sales Order"}
-          </button>
-        </form>
-      </section>
-
-      <hr />
-
-      <section>
-        <h2>Sales Order Details</h2>
-
-        {detailLoading && <p>Loading sales order details...</p>}
-
-        {detailError && <p>{detailError}</p>}
-
-        {!detailLoading && !detailError && !selectedSalesOrder && (
-          <p>Select a sales order to view details.</p>
-        )}
-
-        {selectedSalesOrder && (
-          <div>
-            <button type="button" onClick={handleCloseDetails}>
-              Close Details
-            </button>
-
-            <h3>Order #{selectedSalesOrder.id}</h3>
-
-            <p>Customer: {selectedSalesOrder.customer_name}</p>
-            <p>Created By: {selectedSalesOrder.created_by_name || "-"}</p>
-            <p>Status: {selectedSalesOrder.status}</p>
-            <p>
-              Subtotal: ${Number(selectedSalesOrder.subtotal || 0).toFixed(2)}
-            </p>
-            <p>
-              GST: ${Number(selectedSalesOrder.gst_amount || 0).toFixed(2)}
-            </p>
-            <p>
-              Total: ${Number(selectedSalesOrder.total_amount || 0).toFixed(2)}
-            </p>
-            <p>
-              Created At:{" "}
-              {new Date(selectedSalesOrder.created_at).toLocaleString()}
-            </p>
-
-            <h4>Line Items</h4>
-
-            {selectedSalesOrder.items.length === 0 ? (
-              <p>No line items found.</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>SKU</th>
-                    <th>Quantity</th>
-                    <th>Unit Price</th>
-                    <th>Line Total</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {selectedSalesOrder.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.product_name}</td>
-                      <td>{item.sku}</td>
-                      <td>{item.quantity}</td>
-                      <td>${Number(item.unit_price || 0).toFixed(2)}</td>
-                      <td>${Number(item.line_total || 0).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
-      </section>
-
-      <hr />
-
-      <h2>Sales Order List</h2>
-
-      {loading ? (
-        <p>Loading sales orders...</p>
-      ) : error ? (
-        <div>
-          <p>{error}</p>
-          <button type="button" onClick={fetchSalesOrders}>
-            Try again
-          </button>
-        </div>
-      ) : salesOrders.length === 0 ? (
-        <p>No sales orders found.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Customer</th>
-              <th>Created By</th>
-              <th>Status</th>
-              <th>Subtotal</th>
-              <th>GST</th>
-              <th>Total</th>
-              <th>Created At</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {salesOrders.map((order) => (
-              <tr key={order.id}>
-                <td>{order.id}</td>
-                <td>{order.customer_name}</td>
-                <td>{order.created_by_name || "-"}</td>
-                <td>{order.status}</td>
-                <td>${Number(order.subtotal || 0).toFixed(2)}</td>
-                <td>${Number(order.gst_amount || 0).toFixed(2)}</td>
-                <td>${Number(order.total_amount || 0).toFixed(2)}</td>
-                <td>{new Date(order.created_at).toLocaleString()}</td>
-                <td>
                   <button
                     type="button"
-                    onClick={() => fetchSalesOrderDetails(order.id)}
+                    onClick={handleAddItem}
+                    className="secondary-button"
                   >
-                    View Details
+                    <FiPlus />
+                    Add Item
                   </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+
+                <div className="line-items-list">
+                  {formData.items.map((item, index) => (
+                    <div key={index} className="line-item-card">
+                      <div className="line-item-card-header">
+                        <strong>Item {index + 1}</strong>
+
+                        {formData.items.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(index)}
+                            className="icon-button danger-icon-button"
+                            aria-label={`Remove item ${index + 1}`}
+                          >
+                            <FiTrash2 />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="line-item-grid">
+                        <div className="form-field">
+                          <label htmlFor={`product_id_${index}`}>Product</label>
+                          <select
+                            id={`product_id_${index}`}
+                            value={item.product_id}
+                            onChange={(event) =>
+                              handleItemChange(
+                                index,
+                                "product_id",
+                                event.target.value
+                              )
+                            }
+                            required
+                          >
+                            <option value="">Select product</option>
+                            {products.map((product) => {
+                              const stockQuantity = Number(
+                                product.stock_quantity || 0
+                              );
+
+                              return (
+                                <option
+                                  key={product.id}
+                                  value={product.id}
+                                  disabled={stockQuantity <= 0}
+                                >
+                                  {product.name} — {product.sku} — Stock:{" "}
+                                  {product.stock_quantity}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+
+                        <div className="form-field">
+                          <label htmlFor={`quantity_${index}`}>Quantity</label>
+                          <input
+                            id={`quantity_${index}`}
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={item.quantity}
+                            onChange={(event) =>
+                              handleItemChange(
+                                index,
+                                "quantity",
+                                event.target.value
+                              )
+                            }
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {createError && (
+                <p className="message error-message full-width">
+                  {createError}
+                </p>
+              )}
+
+              <div className="form-actions">
+                <button type="submit" disabled={creating}>
+                  {creating ? "Creating..." : "Create Sales Order"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCloseCreateSalesOrder}
+                  className="secondary-button"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+
+      {isDetailModalOpen && (
+        <div className="modal-backdrop">
+          <section className="modal-card sales-order-detail-modal">
+            <div className="modal-header">
+              <div>
+                <h2>
+                  {selectedSalesOrder
+                    ? `Sales Order SO-${String(selectedSalesOrder.id).padStart(
+                        4,
+                        "0"
+                      )}`
+                    : "Sales Order Details"}
+                </h2>
+                <p>Review customer, totals, and line items.</p>
+              </div>
+
+              <button
+                type="button"
+                className="icon-button modal-close-button"
+                onClick={handleCloseDetails}
+                aria-label="Close sales order details"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            {detailLoading ? (
+              <p>Loading sales order details...</p>
+            ) : detailError ? (
+              <p className="message error-message">{detailError}</p>
+            ) : (
+              selectedSalesOrder && (
+                <>
+                  <div className="detail-summary-grid">
+                    <article className="detail-summary-card">
+                      <span>Customer</span>
+                      <strong>{selectedSalesOrder.customer_name}</strong>
+                    </article>
+
+                    <article className="detail-summary-card">
+                      <span>Created By</span>
+                      <strong>{selectedSalesOrder.created_by_name || "-"}</strong>
+                    </article>
+
+                    <article className="detail-summary-card">
+                      <span>Status</span>
+                      <strong>
+                        <span
+                          className={getStatusBadgeClass(
+                            selectedSalesOrder.status
+                          )}
+                        >
+                          {formatStatus(selectedSalesOrder.status)}
+                        </span>
+                      </strong>
+                    </article>
+
+                    <article className="detail-summary-card">
+                      <span>Created At</span>
+                      <strong>{formatDate(selectedSalesOrder.created_at)}</strong>
+                    </article>
+
+                    <article className="detail-summary-card">
+                      <span>Subtotal</span>
+                      <strong>{formatCurrency(selectedSalesOrder.subtotal)}</strong>
+                    </article>
+
+                    <article className="detail-summary-card">
+                      <span>GST</span>
+                      <strong>{formatCurrency(selectedSalesOrder.gst_amount)}</strong>
+                    </article>
+
+                    <article className="detail-summary-card detail-total-card">
+                      <span>Total</span>
+                      <strong>
+                        {formatCurrency(selectedSalesOrder.total_amount)}
+                      </strong>
+                    </article>
+                  </div>
+
+                  <h3>Line Items</h3>
+
+                  {selectedSalesOrder.items.length === 0 ? (
+                    <p>No line items found.</p>
+                  ) : (
+                    <div className="table-wrapper">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Line Total</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {selectedSalesOrder.items.map((item) => (
+                            <tr key={item.id}>
+                              <td>
+                                <strong>{item.product_name}</strong>
+                              </td>
+                              <td>
+                                <span className="code-pill">{item.sku}</span>
+                              </td>
+                              <td>{item.quantity}</td>
+                              <td>{formatCurrency(item.unit_price)}</td>
+                              <td>
+                                <strong>{formatCurrency(item.line_total)}</strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )
+            )}
+          </section>
+        </div>
       )}
     </section>
   );
