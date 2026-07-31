@@ -199,7 +199,7 @@ export async function updateInvoicePaymentStatus(req, res, next) {
     const { id } = req.params;
     const { status, payment_method } = req.body;
 
-    const allowedStatuses = ["pending", "paid", "failed", "cancelled"];
+    const allowedStatuses = ["pending", "paid", "failed", "cancelled", "refunded"];
 
     if (!status) {
       return res.status(400).json({
