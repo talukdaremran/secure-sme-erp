@@ -28,6 +28,18 @@ body {
   color: var(--text);
 }
 
+.secondary-button,
+.danger-button,
+.icon-button,
+.page-actions button,
+.table-card-header button,
+.table-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 a {
   color: inherit;
   text-decoration: none;

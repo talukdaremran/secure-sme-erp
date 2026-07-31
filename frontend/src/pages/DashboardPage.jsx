@@ -61,6 +61,19 @@ function DashboardPage() {
     return new Date(value).toLocaleString();
   }
 
+  function formatLabel(value) {
+    if (!value) {
+      return "-";
+    }
+
+    return String(value)
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  }
+
   if (loading) {
     return (
       <section>
@@ -234,7 +247,7 @@ function DashboardPage() {
                     <div className="activity-dot" />
 
                     <div>
-                      <strong>{activity.action}</strong>
+                      <strong>{formatLabel(activity.action)}</strong>
                       <p>
                         {activity.module} · {activity.result} ·{" "}
                         {formatDate(activity.created_at)}
