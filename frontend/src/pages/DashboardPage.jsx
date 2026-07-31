@@ -1,4 +1,14 @@
 import { useEffect, useState } from "react";
+import {
+  FiAlertTriangle,
+  FiBox,
+  FiCheckCircle,
+  FiClock,
+  FiDollarSign,
+  FiFileText,
+  FiShoppingCart,
+  FiUsers,
+} from "react-icons/fi";
 import apiClient from "../api/apiClient";
 
 function DashboardPage() {
@@ -13,16 +23,17 @@ function DashboardPage() {
 
       const response = await apiClient.get("/dashboard/summary");
 
-      const dashboardSummary = response.data.data.summary;
+      const dashboardSummary = response.data?.data?.summary;
 
-      setSummary({
-        ...dashboardSummary,
-        lowStockProducts: dashboardSummary.lowStockProducts || [],
-        recentActivity: dashboardSummary.recentActivity || [],
-      });
+      if (!dashboardSummary) {
+        throw new Error("Invalid dashboard summary response.");
+      }
+
+      setSummary(dashboardSummary);
     } catch (error) {
       setError(
-        error.response?.data?.message || "Failed to load dashboard summary."
+        error.response?.data?.message ||
+          "Failed to load dashboard summary."
       );
     } finally {
       setLoading(false);
@@ -33,11 +44,32 @@ function DashboardPage() {
     fetchDashboardSummary();
   }, []);
 
+  function formatCurrency(value) {
+    const numberValue = Number(value || 0);
+
+    return new Intl.NumberFormat("en-AU", {
+      style: "currency",
+      currency: "AUD",
+    }).format(numberValue);
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return "N/A";
+    }
+
+    return new Date(value).toLocaleString();
+  }
+
   if (loading) {
     return (
       <section>
-        <h1>Dashboard</h1>
-        <p>Loading dashboard summary...</p>
+        <div className="page-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Loading business summary...</p>
+          </div>
+        </div>
       </section>
     );
   }
@@ -45,94 +77,176 @@ function DashboardPage() {
   if (error) {
     return (
       <section>
-        <h1>Dashboard</h1>
-        <p>{error}</p>
+        <div className="page-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Something went wrong while loading the dashboard.</p>
+          </div>
+        </div>
+
+        <p className="message error-message">{error}</p>
+
         <button type="button" onClick={fetchDashboardSummary}>
-          Try again
+          Try Again
         </button>
       </section>
     );
   }
 
+  const lowStockCount = Number(summary?.lowStockProducts || 0);
+  const recentActivity = summary?.recentActivity || [];
+
+  const metricCards = [
+    {
+      label: "Total Products",
+      value: summary?.totalProducts || 0,
+      icon: FiBox,
+      variant: "blue",
+    },
+    {
+      label: "Total Customers",
+      value: summary?.totalCustomers || 0,
+      icon: FiUsers,
+      variant: "green",
+    },
+    {
+      label: "Sales Orders",
+      value: summary?.totalSalesOrders || 0,
+      icon: FiShoppingCart,
+      variant: "purple",
+    },
+    {
+      label: "Invoices",
+      value: summary?.totalInvoices || 0,
+      icon: FiFileText,
+      variant: "orange",
+    },
+    {
+      label: "Paid Revenue",
+      value: formatCurrency(summary?.totalPaidRevenue),
+      icon: FiDollarSign,
+      variant: "green",
+    },
+    {
+      label: "Pending Invoices",
+      value: summary?.pendingInvoices || 0,
+      icon: FiClock,
+      variant: "orange",
+    },
+    {
+      label: "Low Stock Items",
+      value: lowStockCount,
+      icon: FiAlertTriangle,
+      variant: lowStockCount > 0 ? "red" : "green",
+    },
+    {
+      label: "System Status",
+      value: "Active",
+      icon: FiCheckCircle,
+      variant: "green",
+    },
+  ];
+
   return (
     <section>
-      <h1>Dashboard</h1>
+      <div className="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>
+            Overview of sales, customers, inventory, invoices, and recent system
+            activity.
+          </p>
+        </div>
 
-      <h2>Summary</h2>
-
-      <div>
-        <p>Total Products: {summary.totalProducts}</p>
-        <p>Total Customers: {summary.totalCustomers}</p>
-        <p>Total Sales Orders: {summary.totalSalesOrders}</p>
-        <p>Total Invoices: {summary.totalInvoices}</p>
-        <p>
-          Total Paid Revenue: $
-          {Number(summary.totalPaidRevenue || 0).toFixed(2)}
-        </p>
-        <p>Pending Invoices: {summary.pendingInvoices}</p>
+        <div className="page-actions">
+          <button type="button" onClick={fetchDashboardSummary}>
+            Refresh
+          </button>
+        </div>
       </div>
 
-      <h2>Low Stock Products</h2>
+      <div className="dashboard-metric-grid">
+        {metricCards.map((card) => {
+          const Icon = card.icon;
 
-      {summary.lowStockProducts.length === 0 ? (
-        <p>No low-stock products found.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>SKU</th>
-              <th>Stock</th>
-              <th>Low Stock Level</th>
-            </tr>
-          </thead>
+          return (
+            <article
+              key={card.label}
+              className={`dashboard-metric-card metric-${card.variant}`}
+            >
+              <div className="metric-icon">
+                <Icon />
+              </div>
 
-          <tbody>
-            {summary.lowStockProducts.map((product) => (
-              <tr key={product.id}>
-                <td>{product.id}</td>
-                <td>{product.name}</td>
-                <td>{product.sku}</td>
-                <td>{product.stock_quantity}</td>
-                <td>{product.low_stock_level}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+              <div>
+                <span>{card.label}</span>
+                <strong>{card.value}</strong>
+              </div>
+            </article>
+          );
+        })}
+      </div>
 
-      <h2>Recent Activity</h2>
+      <div className="dashboard-grid">
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Low Stock Alert</h2>
+            <p>Inventory items that need attention.</p>
+          </div>
 
-      {summary.recentActivity.length === 0 ? (
-        <p>No recent activity found.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>User</th>
-              <th>Action</th>
-              <th>Module</th>
-              <th>Result</th>
-              <th>Created At</th>
-            </tr>
-          </thead>
+          <div className="panel-body">
+            {lowStockCount === 0 ? (
+              <div className="empty-state">
+                <FiCheckCircle />
+                <h3>Inventory looks healthy</h3>
+                <p>No products are currently below their low stock level.</p>
+              </div>
+            ) : (
+              <div className="empty-state warning-state">
+                <FiAlertTriangle />
+                <h3>{lowStockCount} low stock item(s)</h3>
+                <p>
+                  Some products have reached or passed their low stock level. Check the
+                  Products or Inventory page for details.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
 
-          <tbody>
-            {summary.recentActivity.map((activity) => (
-              <tr key={activity.id}>
-                <td>{activity.id}</td>
-                <td>{activity.user_name || "-"}</td>
-                <td>{activity.action}</td>
-                <td>{activity.module}</td>
-                <td>{activity.result}</td>
-                <td>{new Date(activity.created_at).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Recent Activity</h2>
+            <p>Latest security and system activity records.</p>
+          </div>
+
+          <div className="panel-body">
+            {recentActivity.length === 0 ? (
+              <div className="empty-state">
+                <FiClock />
+                <h3>No recent activity</h3>
+                <p>Recent audit events will appear here.</p>
+              </div>
+            ) : (
+              <div className="activity-list">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="activity-item">
+                    <div className="activity-dot" />
+
+                    <div>
+                      <strong>{activity.action}</strong>
+                      <p>
+                        {activity.module} · {activity.result} ·{" "}
+                        {formatDate(activity.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </section>
   );
 }
