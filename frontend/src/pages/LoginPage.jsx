@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiLock, FiMail, FiShield } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import appIcon from "../assets/favicon.svg";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ function LoginPage() {
       <section className="auth-card">
         <div className="auth-brand">
           <div className="auth-logo">
-            <FiShield />
+            <img src={appIcon} alt="SME ERP logo" />
           </div>
 
           <div>
