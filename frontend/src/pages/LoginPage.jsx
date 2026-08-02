@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FiLock, FiMail, FiShield } from "react-icons/fi";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { FiLock, FiMail } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import appIcon from "../assets/favicon.svg";
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const { login } = useAuth();
+
+  const isAddAccountMode = searchParams.get("mode") === "add-account";
 
   const [formData, setFormData] = useState({
     email: "",
@@ -24,6 +29,10 @@ function LoginPage() {
     }));
   }
 
+  function getDefaultRouteForRole(role) {
+    return role === "Admin" ? "/dashboard" : "/products";
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -33,11 +42,7 @@ function LoginPage() {
     try {
       const loggedInUser = await login(formData.email, formData.password);
 
-      if (loggedInUser.role === "Admin") {
-        navigate("/dashboard");
-      } else {
-        navigate("/products");
-      }
+      navigate(getDefaultRouteForRole(loggedInUser.role));
     } catch (error) {
       setError(
         error.response?.data?.message || "Login failed. Please try again."
@@ -52,7 +57,7 @@ function LoginPage() {
       <section className="auth-card">
         <div className="auth-brand">
           <div className="auth-logo">
-            <FiShield />
+            <img src={appIcon} alt="SME ERP logo" />
           </div>
 
           <div>
@@ -62,9 +67,20 @@ function LoginPage() {
         </div>
 
         <div className="auth-heading">
-          <h2>Log In</h2>
-          <p>Access your ERP dashboard and business tools.</p>
+          <h2>{isAddAccountMode ? "Add Account" : "Log In"}</h2>
+          <p>
+            {isAddAccountMode
+              ? "Log in with another account to save it for quick switching."
+              : "Access your ERP dashboard and business tools."}
+          </p>
         </div>
+
+        {isAddAccountMode && (
+          <p className="message info-message">
+            Admin account switching is intended for testing lower-privilege
+            access and reviewing the system from different user roles.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <label htmlFor="email">Email</label>
@@ -98,13 +114,25 @@ function LoginPage() {
           {error && <p className="message error-message">{error}</p>}
 
           <button type="submit" disabled={isSubmitting} className="primary-button">
-            {isSubmitting ? "Logging in..." : "Log In"}
+            {isSubmitting
+              ? isAddAccountMode
+                ? "Adding account..."
+                : "Logging in..."
+              : isAddAccountMode
+              ? "Add Account"
+              : "Log In"}
           </button>
         </form>
 
-        <p className="auth-switch">
-          Need an account? <Link to="/register">Create account</Link>
-        </p>
+        {isAddAccountMode ? (
+          <p className="auth-switch">
+            Changed your mind? <Link to="/">Back to app</Link>
+          </p>
+        ) : (
+          <p className="auth-switch">
+            Need an account? <Link to="/register">Create account</Link>
+          </p>
+        )}
       </section>
     </main>
   );

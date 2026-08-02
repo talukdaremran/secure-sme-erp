@@ -16,6 +16,7 @@ import AuditLogsPage from "./pages/AuditLogsPage";
 import UsersPage from "./pages/UsersPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/sales-orders" element={<SalesOrdersPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<AdminRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
