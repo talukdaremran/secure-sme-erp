@@ -22,48 +22,152 @@ import appIcon from "../assets/favicon.svg";
 
 function AppLayout() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, savedAccounts, logout, switchAccount, removeSavedAccount } =
+    useAuth();
 
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
+  const [isLogoutMenuOpen, setIsLogoutMenuOpen] = useState(false);
+  const [switchingAccount, setSwitchingAccount] = useState(null);
   const accountMenuRef = useRef(null);
 
   const isAdmin = user?.role === "Admin";
+  const canUseAccountSwitcher = isAdmin || savedAccounts.length > 1;
 
   function handleToggleAccountMenu() {
-    setIsAccountMenuOpen((currentValue) => {
-      if (currentValue) {
-        setIsAccountSwitcherOpen(false);
-      }
+    setIsAccountSwitcherOpen(false);
+    setIsLogoutMenuOpen(false);
+    setIsAccountMenuOpen((currentValue) => !currentValue);
+  }
 
-      return !currentValue;
-    });
+  function handleToggleLogoutMenu() {
+    if (savedAccounts.length <= 1) {
+      handleLogout();
+      return;
+    }
+
+    setIsAccountSwitcherOpen(false);
+    setIsLogoutMenuOpen((currentValue) => !currentValue);
   }
 
   function handleOpenProfile() {
     setIsAccountMenuOpen(false);
     setIsAccountSwitcherOpen(false);
+    setIsLogoutMenuOpen(false);
     navigate("/profile");
   }
 
   function handleToggleAccountSwitcher() {
-    if (!isAdmin) {
+    if (!canUseAccountSwitcher) {
       handleOpenProfile();
       return;
     }
 
+    setIsLogoutMenuOpen(false);
     setIsAccountSwitcherOpen((currentValue) => !currentValue);
   }
 
   function handleLogout() {
     setIsAccountMenuOpen(false);
     setIsAccountSwitcherOpen(false);
+    setIsLogoutMenuOpen(false);
     logout();
     navigate("/login");
   }
 
-  function handleCloseAccountSwitcher() {
+  async function handleLogoutSavedAccount(accountId) {
+    const accountToRemove = savedAccounts.find(
+      (account) => account.id === accountId
+    );
+
+    if (!accountToRemove) {
+      return;
+    }
+
+    try {
+      setSwitchingAccount({
+        ...accountToRemove,
+        switchingMessage: `Signing out ${accountToRemove.name}...`,
+      });
+
+      setIsAccountMenuOpen(false);
+      setIsAccountSwitcherOpen(false);
+      setIsLogoutMenuOpen(false);
+
+      await sleep(500);
+
+      const remainingActiveUser = await removeSavedAccount(accountId);
+
+      await sleep(250);
+
+      if (!remainingActiveUser) {
+        navigate("/login");
+        return;
+      }
+
+      navigate(getDefaultRouteForRole(remainingActiveUser.role));
+    } catch (error) {
+      console.error(error);
+      navigate("/login");
+    } finally {
+      setSwitchingAccount(null);
+    }
+  }
+
+  function handleCloseSideMenus() {
     setIsAccountSwitcherOpen(false);
+    setIsLogoutMenuOpen(false);
+  }
+
+  function getDefaultRouteForRole(role) {
+    return role === "Admin" ? "/dashboard" : "/products";
+  }
+
+  function handleAddAnotherAccount() {
+    if (!isAdmin) {
+      return;
+    }
+
+    setIsAccountMenuOpen(false);
+    setIsAccountSwitcherOpen(false);
+    navigate("/login?mode=add-account");
+  }
+
+  async function handleSwitchAccount(accountId) {
+    if (accountId === user?.id) {
+      return;
+    }
+
+    const accountToSwitch = savedAccounts.find(
+      (account) => account.id === accountId
+    );
+
+    if (!accountToSwitch) {
+      return;
+    }
+
+    try {
+      setSwitchingAccount(accountToSwitch);
+      setIsAccountMenuOpen(false);
+      setIsAccountSwitcherOpen(false);
+      setIsLogoutMenuOpen(false);
+
+      await sleep(650);
+
+      const switchedUser = await switchAccount(accountId);
+
+      await sleep(300);
+
+      navigate(getDefaultRouteForRole(switchedUser.role));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSwitchingAccount(null);
+    }
+  }
+
+  function sleep(milliseconds) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
   }
 
   useEffect(() => {
@@ -78,6 +182,7 @@ function AppLayout() {
       ) {
         setIsAccountMenuOpen(false);
         setIsAccountSwitcherOpen(false);
+        setIsLogoutMenuOpen(false);
       }
     }
 
@@ -85,6 +190,7 @@ function AppLayout() {
       if (event.key === "Escape") {
         setIsAccountMenuOpen(false);
         setIsAccountSwitcherOpen(false);
+        setIsLogoutMenuOpen(false);
       }
     }
 
@@ -190,6 +296,7 @@ function AppLayout() {
                         isAccountSwitcherOpen ? "account-menu-user-row-active" : ""
                       }`}
                       onClick={handleToggleAccountSwitcher}
+                      onMouseEnter={() => setIsLogoutMenuOpen(false)}
                     >
                       <div className="account-menu-user">
                         <div className="user-avatar">
@@ -202,36 +309,51 @@ function AppLayout() {
                         </div>
                       </div>
 
-                      {isAdmin && <FiChevronRight />}
+                      {canUseAccountSwitcher && <FiChevronRight />}
                     </button>
 
-                    {isAdmin && isAccountSwitcherOpen && (
+                    {canUseAccountSwitcher && isAccountSwitcherOpen && (
                       <div className="account-switcher-menu">
-                        <button
-                          type="button"
-                          className="account-switcher-account"
-                        >
-                          <div className="user-avatar">
-                            {user.name?.charAt(0).toUpperCase()}
-                          </div>
+                        {savedAccounts.map((account) => {
+                          const isActiveAccount = account.id === user.id;
 
-                          <div className="account-menu-text">
-                            <strong>{user.name}</strong>
-                            <span>{user.email}</span>
-                          </div>
+                          return (
+                            <button
+                              key={account.id}
+                              type="button"
+                              className={`account-switcher-account ${
+                                isActiveAccount ? "account-switcher-account-active" : ""
+                              }`}
+                              onClick={() => handleSwitchAccount(account.id)}
+                            >
+                              <div className="user-avatar">
+                                {account.name?.charAt(0).toUpperCase()}
+                              </div>
 
-                          <FiCheck className="account-check-icon" />
-                        </button>
+                              <div className="account-menu-text">
+                                <strong>{account.name}</strong>
+                                <span>{account.email}</span>
+                              </div>
 
-                        <button
-                          type="button"
-                          className="account-switcher-add"
-                          onClick={() => {}}
-                        >
-                          <FiPlusCircle />
-                          <span>Add another account</span>
-                          <small>Future</small>
-                        </button>
+                              {isActiveAccount && <FiCheck className="account-check-icon" />}
+                            </button>
+                          );
+                        })}
+
+                        {isAdmin && (
+                          <>
+                            <div className="account-menu-divider" />
+
+                            <button
+                              type="button"
+                              className="account-switcher-add"
+                              onClick={handleAddAnotherAccount}
+                            >
+                              <FiPlusCircle />
+                              <span>Add another account</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -241,7 +363,7 @@ function AppLayout() {
                   <button
                     type="button"
                     onClick={handleOpenProfile}
-                    onMouseEnter={handleCloseAccountSwitcher}
+                    onMouseEnter={handleCloseSideMenus}
                   >
                     <FiUser />
                     <span>Profile</span>
@@ -250,7 +372,7 @@ function AppLayout() {
                   <button
                     type="button"
                     disabled
-                    onMouseEnter={handleCloseAccountSwitcher}
+                    onMouseEnter={handleCloseSideMenus}
                   >
                     <FiSettings />
                     <span>Settings</span>
@@ -259,15 +381,64 @@ function AppLayout() {
 
                   <div className="account-menu-divider" />
 
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    onMouseEnter={handleCloseAccountSwitcher}
-                    className="account-menu-danger"
-                  >
-                    <FiLogOut />
-                    <span>Logout</span>
-                  </button>
+                  <div className="account-menu-logout-row-wrapper">
+                    <button
+                      type="button"
+                      onClick={handleToggleLogoutMenu}
+                      onMouseEnter={() => {
+                        setIsAccountSwitcherOpen(false);
+                      }}
+                      className={`account-menu-danger ${
+                        isLogoutMenuOpen ? "account-menu-logout-row-active" : ""
+                      }`}
+                    >
+                      <FiLogOut />
+                      <span>Logout</span>
+
+                      {savedAccounts.length > 1 && (
+                        <FiChevronRight className="account-menu-row-arrow" />
+                      )}
+                    </button>
+
+                    {isLogoutMenuOpen && savedAccounts.length > 1 && (
+                      <div className="account-logout-menu">
+                        {savedAccounts.map((account) => {
+                          const isActiveAccount = account.id === user.id;
+
+                          return (
+                            <button
+                              key={account.id}
+                              type="button"
+                              className="account-logout-option"
+                              onClick={() => handleLogoutSavedAccount(account.id)}
+                            >
+                              <div className="user-avatar">
+                                {account.name?.charAt(0).toUpperCase()}
+                              </div>
+
+                              <div className="account-menu-text">
+                                <strong>{account.name}</strong>
+                                <span>{account.email}</span>
+                              </div>
+
+                              <small>{isActiveAccount ? "Active" : "Sign out"}</small>
+                            </button>
+                          );
+                        })}
+
+                        <div className="account-menu-divider" />
+
+                        <button
+                          type="button"
+                          className="account-logout-all"
+                          onClick={handleLogout}
+                        >
+                          <FiLogOut />
+                          <span>Sign out all accounts</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -300,6 +471,22 @@ function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {switchingAccount && (
+        <div className="account-switch-feedback" role="status" aria-live="polite">
+          <div className="account-switch-feedback-card">
+            <div className="account-switch-spinner" />
+
+            <div>
+              <strong>
+                {switchingAccount.switchingMessage ||
+                  `Switching to ${switchingAccount.name}`}
+              </strong>
+              <p>{switchingAccount.email}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

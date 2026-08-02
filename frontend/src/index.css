@@ -210,8 +210,9 @@ p {
 
 .account-switcher-menu {
   position: absolute;
-  left: calc(100%);
-  top: -47px;
+  left: calc(100% + 2px);
+  top: auto;
+  bottom: -8px;
   z-index: 250;
   width: 320px;
   padding: 8px;
@@ -337,8 +338,153 @@ p {
   color: #991b1b;
 }
 
+/* Account switching feedback */
+
+.account-switch-feedback {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(2px);
+}
+
+.account-switch-feedback-card {
+  min-width: 300px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  animation: accountSwitchPop 0.18s ease-out;
+}
+
+.account-switch-feedback-card strong {
+  display: block;
+  color: #172033;
+  font-size: 14px;
+}
+
+.account-switch-feedback-card p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.account-switch-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #dbeafe;
+  border-top-color: var(--primary);
+  border-radius: 999px;
+  animation: accountSwitchSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes accountSwitchSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes accountSwitchPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Logout account submenu */
+
+.account-menu-logout-row-wrapper {
+  position: relative;
+}
+
+.account-menu-row-arrow {
+  margin-left: auto;
+  color: currentColor;
+}
+
+.account-menu-logout-row-active {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.account-logout-menu {
+  position: absolute;
+  left: calc(100% + 2px);
+  bottom: -8px;
+  z-index: 250;
+  width: 340px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.22);
+}
+
+.account-logout-menu button {
+  width: 100%;
+  min-height: 42px;
+  margin-left: 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: transparent;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.account-logout-menu button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: none;
+}
+
+.account-logout-option small {
+  margin-left: auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.account-logout-all {
+  color: #b91c1c !important;
+}
+
+.account-logout-all:hover {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
 .account-switcher-account {
   min-height: 56px !important;
+}
+
+.account-switcher-account-active {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.account-switcher-account-active .account-menu-text strong {
+  color: #0f172a;
 }
 
 .account-switcher-account:hover,
@@ -374,6 +520,13 @@ p {
     left: 0;
     right: 0;
     top: calc(100% + 10px);
+    width: 100%;
+  }
+
+  .account-logout-menu {
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 10px);
     width: 100%;
   }
 }
