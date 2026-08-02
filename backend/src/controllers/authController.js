@@ -103,7 +103,7 @@ export async function loginUser(req, res, next) {
     const normalisedEmail = email.toLowerCase().trim();
 
     const result = await pool.query(
-      `SELECT users.id, users.name, users.email, users.password_hash, users.status,
+      `SELECT users.id, users.name, users.email, users.password_hash, users.status, users.created_at,
               roles.name AS role
        FROM users
        JOIN roles ON users.role_id = roles.id
