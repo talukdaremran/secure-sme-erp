@@ -29,6 +29,13 @@ FROM roles
 WHERE roles.name = 'Admin'
 ON CONFLICT (email) DO NOTHING;
 
+INSERT INTO suppliers (name, email, phone, address, contact_person, status)
+VALUES
+    ('Sydney Tech Supplies', 'orders@sydneytechsupplies.com', '0400000010', 'Sydney, NSW', 'Sarah Johnson', 'active'),
+    ('OfficePro Wholesale', 'sales@officeprowholesale.com', '0400000011', 'Parramatta, NSW', 'Michael Lee', 'active'),
+    ('Metro Furniture Distributors', 'contact@metrofurniture.com', '0400000012', 'Auburn, NSW', 'Amina Khan', 'active')
+ON CONFLICT (email) DO NOTHING;
+
 INSERT INTO products (name, sku, category, price, stock_quantity, low_stock_level)
 VALUES
     ('Wireless Mouse', 'SKU-MOUSE-001', 'Electronics', 25.00, 50, 10),

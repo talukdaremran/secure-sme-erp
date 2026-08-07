@@ -17,6 +17,7 @@ import UsersPage from "./pages/UsersPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProfilePage from "./pages/ProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import SuppliersPage from "./pages/SuppliersPage";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/sales-orders" element={<SalesOrdersPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
