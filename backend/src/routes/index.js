@@ -11,6 +11,7 @@ import inventoryMovementRoutes from "./inventoryMovementRoutes.js";
 import dashboardRoutes from "./dashboardRoutes.js";
 import userRoutes from "./userRoutes.js";
 import exportRoutes from "./exportRoutes.js";
+import supplierRoutes from "./supplierRoutes.js";
 
 const router = express.Router();
 
@@ -58,5 +59,7 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/users", userRoutes);
 
 router.use("/exports", exportRoutes);
+
+router.use("/suppliers", supplierRoutes);
 
 export default router;
