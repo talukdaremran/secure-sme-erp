@@ -41,6 +41,10 @@ function LoginPage() {
 
     try {
       const loggedInUser = await login(formData.email, formData.password);
+      if (loggedInUser.must_change_password) {
+        navigate("/change-password");
+        return;
+      }
 
       navigate(getDefaultRouteForRole(loggedInUser.role));
     } catch (error) {
@@ -129,8 +133,8 @@ function LoginPage() {
             Changed your mind? <Link to="/">Back to app</Link>
           </p>
         ) : (
-          <p className="auth-switch">
-            Need an account? <Link to="/register">Create account</Link>
+          <p className="auth-note">
+            Accounts are created by an Admin inside the ERP system.
           </p>
         )}
       </section>

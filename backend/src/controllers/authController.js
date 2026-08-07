@@ -8,6 +8,7 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// registerUser feature is disabled (Only admin can create users)
 export async function registerUser(req, res, next) {
   try {
     const { name, email, password } = req.body;
@@ -103,8 +104,17 @@ export async function loginUser(req, res, next) {
     const normalisedEmail = email.toLowerCase().trim();
 
     const result = await pool.query(
-      `SELECT users.id, users.name, users.email, users.password_hash, users.status, users.created_at,
-              roles.name AS role
+      `SELECT 
+        users.id, 
+        users.name, 
+        users.email, 
+        users.password_hash, 
+        users.status, 
+        users.must_change_password,
+        users.password_changed_at,
+        users.last_login_at,
+        users.created_at, 
+        roles.name AS role
        FROM users
        JOIN roles ON users.role_id = roles.id
        WHERE users.email = $1`,
@@ -152,6 +162,17 @@ export async function loginUser(req, res, next) {
       });
     }
 
+    const loginUpdateResult = await pool.query(
+      `UPDATE users
+      SET last_login_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING last_login_at`,
+      [user.id]
+    );
+
+    const lastLoginAt = loginUpdateResult.rows[0].last_login_at;
+
     const token = jwt.sign(
       {
         id: user.id,
@@ -183,11 +204,138 @@ export async function loginUser(req, res, next) {
           email: user.email,
           role: user.role,
           status: user.status,
+          must_change_password: user.must_change_password,
+          password_changed_at: user.password_changed_at,
+          last_login_at: lastLoginAt,
+          created_at: user.created_at,
         },
       },
     });
   } catch (error) {
     next(error);
+  }
+}
+
+export async function changePassword(req, res, next) {
+  const client = await pool.connect();
+
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        status: "error",
+        message: "Current password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        status: "error",
+        message: "New password must be at least 8 characters long",
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        status: "error",
+        message: "New password must be different from current password",
+      });
+    }
+
+    await client.query("BEGIN");
+
+    const userResult = await client.query(
+      `SELECT
+         users.id,
+         users.name,
+         users.email,
+         users.password_hash,
+         users.status,
+         users.must_change_password,
+         users.created_at,
+         roles.name AS role
+       FROM users
+       JOIN roles ON users.role_id = roles.id
+       WHERE users.id = $1`,
+      [req.user.id]
+    );
+
+    if (userResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    const passwordMatches = await bcrypt.compare(
+      currentPassword,
+      user.password_hash
+    );
+
+    if (!passwordMatches) {
+      await client.query("ROLLBACK");
+
+      return res.status(401).json({
+        status: "error",
+        message: "Current password is incorrect",
+      });
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    const updatedUserResult = await client.query(
+      `UPDATE users
+       SET password_hash = $1,
+           must_change_password = false,
+           password_changed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING
+         id,
+         name,
+         email,
+         status,
+         must_change_password,
+         password_changed_at,
+         created_at,
+         updated_at`,
+      [newPasswordHash, req.user.id]
+    );
+
+    await createAuditLog(
+      {
+        userId: req.user.id,
+        action: "CHANGE_PASSWORD",
+        module: "auth",
+        entityType: "user",
+        entityId: req.user.id,
+        result: "success",
+      },
+      client
+    );
+
+    await client.query("COMMIT");
+
+    res.status(200).json({
+      status: "success",
+      message: "Password changed successfully",
+      data: {
+        user: {
+          ...updatedUserResult.rows[0],
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    next(error);
+  } finally {
+    client.release();
   }
 }
 

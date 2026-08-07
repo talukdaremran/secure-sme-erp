@@ -3,17 +3,26 @@ import {
   FiAlertTriangle,
   FiCheckCircle,
   FiClock,
+  FiPlus,
   FiRefreshCw,
   FiSearch,
   FiShield,
   FiUser,
   FiUserCheck,
   FiUsers,
+  FiX,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
 import { useAuth } from "../context/AuthContext";
 
 const roleOptions = ["Admin", "Staff"];
+const initialCreateUserForm = {
+  name: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  role: "Staff",
+};
 
 function UsersPage() {
   const { user: currentUser } = useAuth();
@@ -32,6 +41,11 @@ function UsersPage() {
   const [error, setError] = useState("");
   const [updateError, setUpdateError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState(initialCreateUserForm);
+  const [createUserError, setCreateUserError] = useState("");
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   async function fetchUsers() {
     try {
@@ -139,6 +153,92 @@ function UsersPage() {
     return "badge badge-warning";
   }
 
+  function openCreateUserModal() {
+    setCreateUserError("");
+    setCreateUserForm(initialCreateUserForm);
+    setIsCreateUserModalOpen(true);
+  }
+
+  function closeCreateUserModal() {
+    setIsCreateUserModalOpen(false);
+    setCreateUserError("");
+    setCreateUserForm(initialCreateUserForm);
+  }
+
+  function handleCreateUserChange(event) {
+    const { name, value } = event.target;
+
+    setCreateUserForm((previousForm) => ({
+      ...previousForm,
+      [name]: value,
+    }));
+  }
+
+  async function handleCreateUserSubmit(event) {
+    event.preventDefault();
+
+    setCreateUserError("");
+    setUpdateError("");
+    setSuccessMessage("");
+
+    if (createUserForm.password !== createUserForm.confirmPassword) {
+      setCreateUserError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setIsCreatingUser(true);
+
+      await apiClient.post("/users", {
+        name: createUserForm.name,
+        email: createUserForm.email,
+        password: createUserForm.password,
+        role: createUserForm.role,
+      });
+
+      setSuccessMessage(`${createUserForm.name} was created successfully.`);
+      closeCreateUserModal();
+      await fetchUsers();
+    } catch (error) {
+      setCreateUserError(
+        error.response?.data?.message || "Failed to create user."
+      );
+    } finally {
+      setIsCreatingUser(false);
+    }
+  }
+
+  function resetUserFilters() {
+    setSearchQuery("");
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setSortOption("newest");
+  }
+
+  function getAccountSetupLabel(user) {
+    if (!user.last_login_at) {
+      return "Not accessed";
+    }
+
+    if (user.must_change_password) {
+      return "Password change required";
+    }
+
+    return "Setup complete";
+  }
+
+  function getAccountSetupBadgeClass(user) {
+    if (!user.last_login_at) {
+      return "badge badge-warning";
+    }
+
+    if (user.must_change_password) {
+      return "badge badge-info";
+    }
+
+    return "badge badge-success";
+  }
+
   const totalUsers = users.length;
 
   const adminUsers = users.filter((user) => user.role === "Admin");
@@ -196,12 +296,7 @@ function UsersPage() {
   const hasActiveUserFilters =
     searchQuery || roleFilter !== "all" || statusFilter !== "all";
 
-  function resetUserFilters() {
-    setSearchQuery("");
-    setRoleFilter("all");
-    setStatusFilter("all");
-    setSortOption("newest");
-  }
+  const usersNeverLoggedIn = users.filter((user) => !user.last_login_at);
 
   return (
     <section>
@@ -214,6 +309,15 @@ function UsersPage() {
         </div>
 
         <div className="page-actions">
+          <button
+            type="button"
+            onClick={openCreateUserModal}
+            className="primary-button"
+          >
+            <FiPlus />
+            Create User
+          </button>
+
           <button
             type="button"
             onClick={fetchUsers}
@@ -277,20 +381,14 @@ function UsersPage() {
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-blue">
+        <article className="dashboard-metric-card metric-orange">
           <div className="metric-icon">
             <FiClock />
           </div>
 
           <div>
-            <span>Latest User</span>
-            <strong>
-              {loading
-                ? "..."
-                : latestUser
-                ? formatShortDate(latestUser.created_at)
-                : "-"}
-            </strong>
+            <span>Never Accessed</span>
+            <strong>{loading ? "..." : usersNeverLoggedIn.length}</strong>
           </div>
         </article>
       </div>
@@ -408,6 +506,8 @@ function UsersPage() {
                     <th>Email</th>
                     <th>Current Role</th>
                     <th>Status</th>
+                    <th>Account Setup</th>
+                    <th>Last Login</th>
                     <th>Created At</th>
                     <th>Update Role</th>
                   </tr>
@@ -449,6 +549,14 @@ function UsersPage() {
                           </span>
                         </td>
 
+                        <td>
+                          <span className={getAccountSetupBadgeClass(user)}>
+                            {getAccountSetupLabel(user)}
+                          </span>
+                        </td>
+
+                        <td>{formatDate(user.last_login_at)}</td>
+
                         <td>{formatDate(user.created_at)}</td>
 
                         <td>
@@ -488,6 +596,132 @@ function UsersPage() {
           )}
         </div>
       </div>
+
+      {isCreateUserModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-card create-user-modal">
+            <div className="modal-header">
+              <div>
+                <h2>Create User</h2>
+                <p>Add a new internal ERP account.</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeCreateUserModal}
+                className="icon-button"
+                aria-label="Close create user form"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUserSubmit} className="form-grid">
+              <div className="form-field">
+                <label htmlFor="create-name">Full Name</label>
+                <input
+                  id="create-name"
+                  name="name"
+                  type="text"
+                  value={createUserForm.name}
+                  onChange={handleCreateUserChange}
+                  placeholder="Full name"
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="create-email">Email</label>
+                <input
+                  id="create-email"
+                  name="email"
+                  type="email"
+                  value={createUserForm.email}
+                  onChange={handleCreateUserChange}
+                  placeholder="user@example.com"
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="create-role">Role</label>
+                <select
+                  id="create-role"
+                  name="role"
+                  value={createUserForm.role}
+                  onChange={handleCreateUserChange}
+                  required
+                >
+                  {roleOptions.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="create-password">Temporary Password</label>
+                <input
+                  id="create-password"
+                  name="password"
+                  type="password"
+                  value={createUserForm.password}
+                  onChange={handleCreateUserChange}
+                  placeholder="At least 8 characters"
+                  minLength="8"
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="create-confirm-password">Confirm Password</label>
+                <input
+                  id="create-confirm-password"
+                  name="confirmPassword"
+                  type="password"
+                  value={createUserForm.confirmPassword}
+                  onChange={handleCreateUserChange}
+                  placeholder="Confirm password"
+                  minLength="8"
+                  required
+                />
+              </div>
+
+              {createUserError && (
+                <p className="message error-message form-full-width">
+                  {createUserError}
+                </p>
+              )}
+
+              <p className="auth-note form-full-width">
+                Create a temporary password and share it with the staff member
+                securely. In production, this would be replaced with an invitation or
+                password reset flow.
+              </p>
+
+              <div className="modal-actions form-full-width">
+                <button
+                  type="button"
+                  onClick={closeCreateUserModal}
+                  className="secondary-button"
+                  disabled={isCreatingUser}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={isCreatingUser}
+                >
+                  {isCreatingUser ? "Creating..." : "Create User"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
