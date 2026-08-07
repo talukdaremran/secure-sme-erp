@@ -18,7 +18,16 @@ export async function protect(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const result = await pool.query(
-      `SELECT users.id, users.name, users.email, users.status, users.created_at, roles.name AS role
+      `SELECT 
+        users.id, 
+        users.name, 
+        users.email, 
+        users.status, 
+        users.must_change_password,
+        users.password_changed_at, 
+        users.last_login_at,
+        users.created_at, 
+        roles.name AS role
        FROM users
        JOIN roles ON users.role_id = roles.id
        WHERE users.id = $1`,

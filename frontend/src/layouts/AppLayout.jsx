@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   FiActivity,
   FiArchive,
@@ -19,6 +19,17 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import appIcon from "../assets/favicon.svg";
+
+const pageTitles = {
+  "/dashboard": "Dashboard",
+  "/products": "Products",
+  "/customers": "Customers",
+  "/sales-orders": "Sales Orders",
+  "/invoices": "Invoices",
+  "/inventory": "Inventory",
+  "/audit-logs": "Audit Logs",
+  "/users": "Users",
+};
 
 function AppLayout() {
   const navigate = useNavigate();
@@ -202,6 +213,15 @@ function AppLayout() {
       document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [isAccountMenuOpen]);
+
+  const location = useLocation();
+
+  const pageTitle =
+    pageTitles[location.pathname] || "Page Not Found";
+  
+  useEffect(() => {
+    document.title = `${pageTitle} | SME ERP`;
+  }, [pageTitle]);
 
   return (
     <div className="app-shell">
