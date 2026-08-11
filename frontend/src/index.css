@@ -2163,6 +2163,25 @@ td strong {
   gap: 4px;
 }
 
+.success-button {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.success-button:hover {
+  background: #bbf7d0;
+  color: #14532d;
+}
+
+.success-button:disabled {
+  background: #bbf7d0;
+  color: #64748b;
+}
+
+tr.purchase-order-received-row td {
+  background: #f0fdf4;
+}
+
 /* Purchase order detail modal */
 
 .purchase-order-detail-modal .detail-summary-grid {

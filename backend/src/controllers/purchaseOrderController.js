@@ -3,7 +3,8 @@ import { createAuditLog } from "../utils/auditLogger.js";
 
 const GST_RATE = 0.1;
 
-const allowedPurchaseOrderStatuses = ["draft", "ordered", "cancelled"];
+const normalStatusUpdates = ["draft", "ordered", "cancelled"];
+const allPurchaseOrderStatuses = ["draft", "ordered", "cancelled", "received"];
 
 function calculateLineTotal(quantity, unitCost) {
   return Number((quantity * unitCost).toFixed(2));
@@ -21,28 +22,34 @@ export async function getPurchaseOrders(req, res, next) {
   try {
     const result = await pool.query(
       `SELECT
-         purchase_orders.id,
-         purchase_orders.status,
-         purchase_orders.subtotal,
-         purchase_orders.gst_amount,
-         purchase_orders.total_amount,
-         purchase_orders.expected_delivery_date,
-         purchase_orders.notes,
-         purchase_orders.created_at,
-         purchase_orders.updated_at,
-         suppliers.name AS supplier_name,
-         users.name AS created_by_name,
-         COUNT(purchase_order_items.id) AS item_count
-       FROM purchase_orders
-       JOIN suppliers ON purchase_orders.supplier_id = suppliers.id
-       LEFT JOIN users ON purchase_orders.created_by = users.id
-       LEFT JOIN purchase_order_items
-         ON purchase_orders.id = purchase_order_items.purchase_order_id
-       GROUP BY
-         purchase_orders.id,
-         suppliers.name,
-         users.name
-       ORDER BY purchase_orders.id DESC`
+        purchase_orders.id,
+        purchase_orders.status,
+        purchase_orders.subtotal,
+        purchase_orders.gst_amount,
+        purchase_orders.total_amount,
+        purchase_orders.expected_delivery_date,
+        purchase_orders.notes,
+        purchase_orders.received_at,
+        purchase_orders.received_by,
+        purchase_orders.created_at,
+        purchase_orders.updated_at,
+        suppliers.name AS supplier_name,
+        users.name AS created_by_name,
+        received_by_user.name AS received_by_name,
+        COUNT(purchase_order_items.id) AS item_count
+      FROM purchase_orders
+      JOIN suppliers ON purchase_orders.supplier_id = suppliers.id
+      LEFT JOIN users ON purchase_orders.created_by = users.id
+      LEFT JOIN users AS received_by_user
+        ON purchase_orders.received_by = received_by_user.id
+      LEFT JOIN purchase_order_items
+        ON purchase_orders.id = purchase_order_items.purchase_order_id
+      GROUP BY
+        purchase_orders.id,
+        suppliers.name,
+        users.name,
+        received_by_user.name
+      ORDER BY purchase_orders.id DESC`
     );
 
     res.status(200).json({
@@ -62,26 +69,31 @@ export async function getPurchaseOrderById(req, res, next) {
 
     const orderResult = await pool.query(
       `SELECT
-         purchase_orders.id,
-         purchase_orders.supplier_id,
-         purchase_orders.created_by,
-         purchase_orders.status,
-         purchase_orders.subtotal,
-         purchase_orders.gst_amount,
-         purchase_orders.total_amount,
-         purchase_orders.expected_delivery_date,
-         purchase_orders.notes,
-         purchase_orders.created_at,
-         purchase_orders.updated_at,
-         suppliers.name AS supplier_name,
-         suppliers.email AS supplier_email,
-         suppliers.phone AS supplier_phone,
-         suppliers.contact_person AS supplier_contact_person,
-         users.name AS created_by_name
-       FROM purchase_orders
-       JOIN suppliers ON purchase_orders.supplier_id = suppliers.id
-       LEFT JOIN users ON purchase_orders.created_by = users.id
-       WHERE purchase_orders.id = $1`,
+        purchase_orders.id,
+        purchase_orders.supplier_id,
+        purchase_orders.created_by,
+        purchase_orders.status,
+        purchase_orders.subtotal,
+        purchase_orders.gst_amount,
+        purchase_orders.total_amount,
+        purchase_orders.expected_delivery_date,
+        purchase_orders.notes,
+        purchase_orders.received_at,
+        purchase_orders.received_by,
+        purchase_orders.created_at,
+        purchase_orders.updated_at,
+        suppliers.name AS supplier_name,
+        suppliers.email AS supplier_email,
+        suppliers.phone AS supplier_phone,
+        suppliers.contact_person AS supplier_contact_person,
+        users.name AS created_by_name,
+        received_by_user.name AS received_by_name
+      FROM purchase_orders
+      JOIN suppliers ON purchase_orders.supplier_id = suppliers.id
+      LEFT JOIN users ON purchase_orders.created_by = users.id
+      LEFT JOIN users AS received_by_user
+        ON purchase_orders.received_by = received_by_user.id
+      WHERE purchase_orders.id = $1`,
       [id]
     );
 
@@ -150,7 +162,7 @@ export async function createPurchaseOrder(req, res, next) {
 
     const normalisedStatus = normaliseStatus(status);
 
-    if (!allowedPurchaseOrderStatuses.includes(normalisedStatus)) {
+    if (!normalStatusUpdates.includes(normalisedStatus)) {
       return res.status(400).json({
         status: "error",
         message: "Invalid purchase order status",
@@ -324,10 +336,10 @@ export async function updatePurchaseOrderStatus(req, res, next) {
 
     const normalisedStatus = normaliseStatus(status);
 
-    if (!allowedPurchaseOrderStatuses.includes(normalisedStatus)) {
+    if (!normalStatusUpdates.includes(normalisedStatus)) {
       return res.status(400).json({
         status: "error",
-        message: "Invalid purchase order status",
+        message: "Invalid purchase order status. Use the receive action to mark a purchase order as received",
       });
     }
 
@@ -386,6 +398,154 @@ export async function updatePurchaseOrderStatus(req, res, next) {
       message: "Purchase order status updated successfully",
       data: {
         purchaseOrder: result.rows[0],
+      },
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    next(error);
+  } finally {
+    client.release();
+  }
+}
+
+export async function receivePurchaseOrder(req, res, next) {
+  const client = await pool.connect();
+
+  try {
+    const { id } = req.params;
+
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT id, status
+       FROM purchase_orders
+       WHERE id = $1
+       FOR UPDATE`,
+      [id]
+    );
+
+    if (orderResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        status: "error",
+        message: "Purchase order not found",
+      });
+    }
+
+    const purchaseOrder = orderResult.rows[0];
+
+    if (purchaseOrder.status === "cancelled") {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        status: "error",
+        message: "Cancelled purchase orders cannot be received",
+      });
+    }
+
+    if (purchaseOrder.status === "received") {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        status: "error",
+        message: "Purchase order has already been received",
+      });
+    }
+
+    const itemsResult = await client.query(
+      `SELECT
+         purchase_order_items.product_id,
+         purchase_order_items.quantity,
+         products.name AS product_name
+       FROM purchase_order_items
+       JOIN products ON purchase_order_items.product_id = products.id
+       WHERE purchase_order_items.purchase_order_id = $1`,
+      [id]
+    );
+
+    if (itemsResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(400).json({
+        status: "error",
+        message: "Purchase order has no items to receive",
+      });
+    }
+
+    for (const item of itemsResult.rows) {
+      await client.query(
+        `UPDATE products
+         SET stock_quantity = stock_quantity + $1,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [item.quantity, item.product_id]
+      );
+
+      await client.query(
+        `INSERT INTO inventory_movements (
+           product_id,
+           movement_type,
+           quantity_change,
+           reason,
+           related_purchase_order_id,
+           created_by
+         )
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          item.product_id,
+          "purchase_receive",
+          item.quantity,
+          `Received from purchase order PO-${String(id).padStart(4, "0")}`,
+          id,
+          req.user.id,
+        ]
+      );
+    }
+
+    const updatedOrderResult = await client.query(
+      `UPDATE purchase_orders
+       SET status = $1,
+           received_at = CURRENT_TIMESTAMP,
+           received_by = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+       RETURNING
+         id,
+         supplier_id,
+         created_by,
+         status,
+         subtotal,
+         gst_amount,
+         total_amount,
+         expected_delivery_date,
+         notes,
+         received_at,
+         received_by,
+         created_at,
+         updated_at`,
+      ["received", req.user.id, id]
+    );
+
+    await createAuditLog(
+      {
+        userId: req.user.id,
+        action: "RECEIVE_PURCHASE_ORDER",
+        module: "purchase_orders",
+        entityType: "purchase_order",
+        entityId: Number(id),
+        result: "success",
+      },
+      client
+    );
+
+    await client.query("COMMIT");
+
+    res.status(200).json({
+      status: "success",
+      message: "Purchase order received successfully",
+      data: {
+        purchaseOrder: updatedOrderResult.rows[0],
       },
     });
   } catch (error) {

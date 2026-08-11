@@ -49,6 +49,7 @@ function PurchaseOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [receivingOrderId, setReceivingOrderId] = useState(null);
 
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
@@ -199,6 +200,10 @@ function PurchaseOrdersPage() {
   }
 
   function getStatusBadgeClass(status) {
+    if (status === "received") {
+      return "badge badge-success";
+    }
+
     if (status === "ordered") {
       return "badge badge-info";
     }
@@ -208,6 +213,10 @@ function PurchaseOrdersPage() {
     }
 
     return "badge badge-warning";
+  }
+
+  function canReceivePurchaseOrder(order) {
+    return order.status === "draft" || order.status === "ordered";
   }
 
   async function handleSubmitPurchaseOrder(event) {
@@ -281,6 +290,33 @@ function PurchaseOrdersPage() {
       );
     } finally {
       setUpdatingStatusId(null);
+    }
+  }
+
+  async function handleReceivePurchaseOrder(orderId) {
+    try {
+      setReceivingOrderId(orderId);
+      setSuccessMessage("");
+      setError("");
+
+      await apiClient.patch(`/purchase-orders/${orderId}/receive`);
+
+      setSuccessMessage(
+        "Purchase order received successfully. Product stock has been updated."
+      );
+
+      await fetchPageData();
+
+      if (selectedPurchaseOrder?.id === orderId) {
+        const response = await apiClient.get(`/purchase-orders/${orderId}`);
+        setSelectedPurchaseOrder(response.data?.data?.purchaseOrder || null);
+      }
+    } catch (error) {
+      setError(
+        error.response?.data?.message || "Failed to receive purchase order."
+      );
+    } finally {
+      setReceivingOrderId(null);
     }
   }
 
@@ -670,6 +706,16 @@ function PurchaseOrdersPage() {
                         {formatCurrency(selectedPurchaseOrder.total_amount)}
                       </strong>
                     </article>
+
+                    <article>
+                      <span>Received</span>
+                      <strong>
+                        {selectedPurchaseOrder.received_at
+                          ? formatDateTime(selectedPurchaseOrder.received_at)
+                          : "-"}
+                      </strong>
+                      <p>{selectedPurchaseOrder.received_by_name || ""}</p>
+                    </article>
                   </div>
 
                   {selectedPurchaseOrder.notes && (
@@ -828,7 +874,10 @@ function PurchaseOrdersPage() {
 
                 <tbody>
                   {displayedPurchaseOrders.map((order) => (
-                    <tr key={order.id}>
+                    <tr
+                      key={order.id}
+                      className={order.status === "received" ? "purchase-order-received-row" : ""}
+                    >
                       <td>
                         <strong>PO-{String(order.id).padStart(4, "0")}</strong>
                       </td>
@@ -863,17 +912,25 @@ function PurchaseOrdersPage() {
 
                       <td>
                         <select
-                          value={order.status}
+                          value={order.status === "received" ? "received" : order.status}
                           onChange={(event) =>
                             handleUpdateStatus(order.id, event.target.value)
                           }
-                          disabled={updatingStatusId === order.id}
+                          disabled={
+                            updatingStatusId === order.id ||
+                            receivingOrderId === order.id ||
+                            order.status === "received"
+                          }
                         >
                           {statusOptions.map((status) => (
                             <option key={status} value={status}>
                               {formatLabel(status)}
                             </option>
                           ))}
+
+                          {order.status === "received" && (
+                            <option value="received">Received</option>
+                          )}
                         </select>
                       </td>
 
@@ -887,6 +944,17 @@ function PurchaseOrdersPage() {
                             <FiEye />
                             View
                           </button>
+
+                          {canReceivePurchaseOrder(order) && (
+                          <button
+                            type="button"
+                            onClick={() => handleReceivePurchaseOrder(order.id)}
+                            className="success-button"
+                            disabled={receivingOrderId === order.id}
+                          >
+                            {receivingOrderId === order.id ? "Receiving..." : "Receive"}
+                          </button>
+                        )}
                         </div>
                       </td>
                     </tr>

@@ -80,6 +80,8 @@ CREATE TABLE purchase_orders (
     total_amount NUMERIC(10, 2) DEFAULT 0 CHECK (total_amount >= 0),
     expected_delivery_date DATE,
     notes TEXT,
+    received_at TIMESTAMP,
+    received_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -145,6 +147,7 @@ CREATE TABLE inventory_movements (
     quantity_change INTEGER NOT NULL,
     reason TEXT,
     related_sales_order_id INTEGER REFERENCES sales_orders(id),
+    related_purchase_order_id INTEGER REFERENCES purchase_orders(id),
     created_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
