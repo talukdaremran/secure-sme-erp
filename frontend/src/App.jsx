@@ -18,6 +18,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ProfilePage from "./pages/ProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import SuppliersPage from "./pages/SuppliersPage";
+import PurchaseOrdersPage from "./pages/PurchaseOrdersPage";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/sales-orders" element={<SalesOrdersPage />} />
+          <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/profile" element={<ProfilePage />} />

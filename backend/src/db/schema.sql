@@ -6,9 +6,11 @@ DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS invoices CASCADE;
 DROP TABLE IF EXISTS sales_order_items CASCADE;
 DROP TABLE IF EXISTS sales_orders CASCADE;
+DROP TABLE IF EXISTS purchase_order_items CASCADE;
+DROP TABLE IF EXISTS purchase_orders CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
-DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS suppliers CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
 
@@ -66,6 +68,29 @@ CREATE TABLE customers (
     address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE purchase_orders (
+    id SERIAL PRIMARY KEY,
+    supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+    created_by INTEGER REFERENCES users(id),
+    status VARCHAR(50) DEFAULT 'draft',
+    subtotal NUMERIC(10, 2) DEFAULT 0 CHECK (subtotal >= 0),
+    gst_amount NUMERIC(10, 2) DEFAULT 0 CHECK (gst_amount >= 0),
+    total_amount NUMERIC(10, 2) DEFAULT 0 CHECK (total_amount >= 0),
+    expected_delivery_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE purchase_order_items (
+    id SERIAL PRIMARY KEY,
+    purchase_order_id INTEGER NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    unit_cost NUMERIC(10, 2) NOT NULL CHECK (unit_cost >= 0),
+    line_total NUMERIC(10, 2) NOT NULL CHECK (line_total >= 0)
 );
 
 CREATE TABLE sales_orders (

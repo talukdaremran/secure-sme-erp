@@ -2054,6 +2054,238 @@ td strong {
 }
 /* --- Sales Orders Page --- */
 
+/* === Purchase orders page === */
+
+.modal-card.purchase-order-form-modal,
+.modal-card.purchase-order-detail-modal {
+  width: min(1080px, calc(100vw - 48px));
+  max-width: min(1080px, calc(100vw - 48px));
+}
+
+.purchase-order-detail-modal {
+  padding: 26px;
+}
+
+.purchase-order-detail-modal .modal-header {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+}
+
+.purchase-order-detail-modal .modal-header h2 {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.purchase-order-detail-modal .modal-header p {
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+/* Purchase order form */
+
+.purchase-order-items-section {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.section-heading-row h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.section-heading-row p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.purchase-order-item-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) minmax(110px, 0.7fr) minmax(130px, 0.8fr) minmax(140px, 0.9fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.purchase-order-item-row + .purchase-order-item-row {
+  margin-top: 10px;
+}
+
+.line-total-preview {
+  min-height: 42px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.line-total-preview span,
+.purchase-order-total-preview span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.line-total-preview strong,
+.purchase-order-total-preview strong {
+  color: #0f172a;
+}
+
+.purchase-order-total-preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.purchase-order-total-preview div {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Purchase order detail modal */
+
+.purchase-order-detail-modal .detail-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.purchase-order-detail-modal .detail-summary-grid article {
+  min-width: 0;
+  min-height: 118px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.purchase-order-detail-modal .detail-summary-grid article > span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.purchase-order-detail-modal .detail-summary-grid article > strong {
+  display: block;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.25;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.purchase-order-detail-modal .detail-summary-grid article > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.purchase-order-detail-modal .detail-summary-grid .badge {
+  width: fit-content;
+  font-size: 12px;
+}
+
+.purchase-order-detail-modal .auth-note {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+}
+
+.purchase-order-detail-modal .table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e6eaf0;
+  border-radius: 14px;
+}
+
+.purchase-order-detail-modal table {
+  min-width: 760px;
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.purchase-order-detail-modal th,
+.purchase-order-detail-modal td {
+  white-space: normal;
+}
+
+.purchase-order-detail-modal td {
+  line-height: 1.35;
+}
+
+@media (max-width: 1100px) {
+  .purchase-order-item-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .purchase-order-detail-modal .detail-summary-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .purchase-order-total-preview {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .modal-card.purchase-order-form-modal,
+  .modal-card.purchase-order-detail-modal {
+    width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px);
+  }
+
+  .section-heading-row {
+    flex-direction: column;
+  }
+
+  .section-heading-row button {
+    width: 100%;
+  }
+
+  .purchase-order-item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-order-detail-modal .detail-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Purchase orders page --- */
+
 /* === Invoices Page === */
 .invoice-form-modal,
 .invoice-detail-modal {
