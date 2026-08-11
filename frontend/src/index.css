@@ -2005,6 +2005,10 @@ td strong {
   max-width: 980px;
 }
 
+.sales-order-detail-modal {
+  width: min(1080px, calc(100vw - 48px));
+}
+
 .line-items-section {
   grid-column: 1 / -1;
 }
@@ -2364,6 +2368,10 @@ tr.purchase-order-received-row td {
 .invoice-form-modal,
 .invoice-detail-modal {
   max-width: 980px;
+}
+
+.invoice-detail-modal {
+  width: min(1080px, calc(100vw - 48px));
 }
 
 .invoice-table-toolbar {

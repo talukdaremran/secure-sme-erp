@@ -133,3 +133,40 @@ export async function exportInvoices(req, res, next) {
     next(error);
   }
 }
+
+export async function exportPurchaseOrders(req, res, next) {
+  try {
+    const result = await pool.query(`
+      SELECT
+        purchase_orders.id,
+        suppliers.name AS supplier_name,
+        users.name AS created_by_name,
+        received_by_user.name AS received_by_name,
+        purchase_orders.status,
+        purchase_orders.subtotal,
+        purchase_orders.gst_amount,
+        purchase_orders.total_amount,
+        purchase_orders.expected_delivery_date,
+        purchase_orders.received_at,
+        purchase_orders.created_at
+      FROM purchase_orders
+      JOIN suppliers ON purchase_orders.supplier_id = suppliers.id
+      LEFT JOIN users ON purchase_orders.created_by = users.id
+      LEFT JOIN users AS received_by_user
+        ON purchase_orders.received_by = received_by_user.id
+      ORDER BY purchase_orders.id ASC
+    `);
+
+    await createAuditLog({
+      userId: req.user.id,
+      action: "EXPORT_PURCHASE_ORDERS",
+      module: "exports",
+      entityType: "purchase_orders",
+      result: "success",
+    });
+
+    sendCSVResponse(res, "purchase-orders.csv", result.rows);
+  } catch (error) {
+    next(error);
+  }
+}

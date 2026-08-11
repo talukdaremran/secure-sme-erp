@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  FiDownload,
   FiEye,
   FiPackage,
   FiPlus,
@@ -152,6 +153,32 @@ function PurchaseOrdersPage() {
         items: previousData.items.filter((_, itemIndex) => itemIndex !== index),
       };
     });
+  }
+
+  async function handleExportPurchaseOrders() {
+    try {
+      setError("");
+
+      const response = await apiClient.get("/exports/purchase-orders", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "purchase-orders.csv");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setError(
+        error.response?.data?.message || "Failed to export purchase orders."
+      );
+    }
   }
 
   function calculatePreviewSubtotal() {
@@ -399,6 +426,15 @@ function PurchaseOrdersPage() {
         </div>
 
         <div className="page-actions">
+          <button
+            type="button"
+            onClick={handleExportPurchaseOrders}
+            className="secondary-button"
+          >
+            <FiDownload />
+            Export CSV
+          </button>
+
           <button type="button" onClick={handleOpenForm}>
             <FiPlus />
             New Purchase Order
