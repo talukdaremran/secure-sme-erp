@@ -1324,6 +1324,52 @@ td select {
   gap: 18px;
 }
 
+.approval-metric-grid {
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.approval-dashboard-grid {
+  grid-template-columns: 1fr;
+}
+
+.approval-activity-item {
+  align-items: flex-start;
+}
+
+.approval-activity-item > div:last-child {
+  min-width: 0;
+}
+
+.approval-activity-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.approval-activity-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.approval-activity-footer small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.approval-activity-reason {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .approval-metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .empty-state {
   padding: 28px 18px;
   text-align: center;

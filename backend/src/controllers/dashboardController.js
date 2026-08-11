@@ -18,6 +18,11 @@ export async function getDashboardSummary(req, res, next) {
       receivedPurchaseOrdersResult,
       receivedProcurementSpendResult,
       recentPurchaseOrdersResult,
+
+      pendingApprovalsResult,
+      approvedApprovalsResult,
+      rejectedApprovalsResult,
+      recentApprovalRequestsResult,
     ] = await Promise.all([
       pool.query("SELECT COUNT(*)::int AS total_products FROM products"),
 
@@ -101,6 +106,47 @@ export async function getDashboardSummary(req, res, next) {
          ORDER BY purchase_orders.created_at DESC
          LIMIT 5`
       ),
+
+      pool.query(
+        `SELECT COUNT(*)::int AS pending_approvals
+        FROM approval_requests
+        WHERE status = 'pending'`
+      ),
+
+      pool.query(
+        `SELECT COUNT(*)::int AS approved_approvals
+        FROM approval_requests
+        WHERE status = 'approved'`
+      ),
+
+      pool.query(
+        `SELECT COUNT(*)::int AS rejected_approvals
+        FROM approval_requests
+        WHERE status = 'rejected'`
+      ),
+
+      pool.query(
+        `SELECT
+          approval_requests.id,
+          approval_requests.action_type,
+          approval_requests.status,
+          approval_requests.reason,
+          approval_requests.created_at,
+          approval_requests.reviewed_at,
+          requested_by_user.name AS requested_by_name,
+          reviewed_by_user.name AS reviewed_by_name,
+          products.name AS product_name
+        FROM approval_requests
+        LEFT JOIN users AS requested_by_user
+          ON approval_requests.requested_by = requested_by_user.id
+        LEFT JOIN users AS reviewed_by_user
+          ON approval_requests.reviewed_by = reviewed_by_user.id
+        LEFT JOIN products
+          ON approval_requests.entity_type = 'product'
+          AND approval_requests.entity_id = products.id
+        ORDER BY approval_requests.created_at DESC
+        LIMIT 5`
+      ),
     ]);
 
     res.status(200).json({
@@ -129,6 +175,11 @@ export async function getDashboardSummary(req, res, next) {
 
           recentActivity: recentActivityResult.rows,
           recentPurchaseOrders: recentPurchaseOrdersResult.rows,
+
+          pendingApprovals: pendingApprovalsResult.rows[0].pending_approvals,
+          approvedApprovals: approvedApprovalsResult.rows[0].approved_approvals,
+          rejectedApprovals: rejectedApprovalsResult.rows[0].rejected_approvals,
+          recentApprovalRequests: recentApprovalRequestsResult.rows,
         },
       },
     });
