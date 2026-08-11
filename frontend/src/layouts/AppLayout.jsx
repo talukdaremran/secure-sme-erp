@@ -18,6 +18,7 @@ import {
   FiLayers,
   FiTruck,
   FiShoppingBag,
+  FiShield,
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import appIcon from "../assets/favicon.svg";
@@ -33,6 +34,7 @@ const pageTitles = {
   "/users": "Users",
   "/suppliers": "Suppliers",
   "/purchase-orders": "Purchase Orders",
+  "/approvals": "Approvals",
 };
 
 function AppLayout() {
@@ -282,6 +284,11 @@ function AppLayout() {
           <NavLink to="/inventory">
             <FiArchive />
             <span>Inventory</span>
+          </NavLink>
+
+          <NavLink to="/approvals">
+            <FiShield />
+            <span>{user?.role === "Admin" ? "Approvals" : "Request Adjustment"}</span>
           </NavLink>
 
           {isAdmin && (

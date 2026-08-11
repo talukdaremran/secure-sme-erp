@@ -19,6 +19,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import PurchaseOrdersPage from "./pages/PurchaseOrdersPage";
+import ApprovalsPage from "./pages/ApprovalsPage";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/approvals" element={<ApprovalsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<AdminRoute />}>

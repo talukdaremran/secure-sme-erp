@@ -1,6 +1,7 @@
 -- Secure SME ERP - Version 1 Database Schema
 
 DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS approval_requests CASCADE;
 DROP TABLE IF EXISTS inventory_movements CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS invoices CASCADE;
@@ -150,6 +151,22 @@ CREATE TABLE inventory_movements (
     related_purchase_order_id INTEGER REFERENCES purchase_orders(id),
     created_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE approval_requests (
+    id SERIAL PRIMARY KEY,
+    requested_by INTEGER REFERENCES users(id),
+    reviewed_by INTEGER REFERENCES users(id),
+    action_type VARCHAR(80) NOT NULL,
+    entity_type VARCHAR(80) NOT NULL,
+    entity_id INTEGER,
+    status VARCHAR(30) DEFAULT 'pending',
+    request_data JSONB NOT NULL,
+    reason TEXT,
+    review_note TEXT,
+    reviewed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE audit_logs (
