@@ -14,6 +14,7 @@ import exportRoutes from "./exportRoutes.js";
 import supplierRoutes from "./supplierRoutes.js";
 import purchaseOrderRoutes from "./purchaseOrderRoutes.js";
 import approvalRoutes from "./approvalRoutes.js";
+import portalAuthRoutes from "./portalAuthRoutes.js";
 
 const router = express.Router();
 
@@ -43,6 +44,7 @@ router.get("/health/db", async (req, res) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/portal-auth", portalAuthRoutes);
 
 router.use("/products", productRoutes);
 
