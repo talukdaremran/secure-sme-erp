@@ -1229,6 +1229,61 @@ td select {
   font-weight: 850;
 }
 
+.dashboard-section-header {
+  margin: 26px 0 14px;
+}
+
+.dashboard-section-header h2 {
+  margin-bottom: 4px;
+}
+
+.dashboard-section-header p {
+  margin-bottom: 0;
+}
+
+.procurement-spend-grid {
+  grid-template-columns: minmax(260px, 1fr);
+}
+
+.procurement-spend-card {
+  max-width: 420px;
+}
+
+.procurement-spend-card strong {
+  font-size: 24px;
+}
+
+.procurement-dashboard-grid {
+  grid-template-columns: 1fr;
+}
+
+.purchase-order-activity-item {
+  align-items: flex-start;
+}
+
+.purchase-order-activity-item > div:last-child {
+  min-width: 0;
+}
+
+.purchase-order-activity-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.purchase-order-activity-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.purchase-order-activity-footer small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .metric-icon {
   width: 42px;
   height: 42px;

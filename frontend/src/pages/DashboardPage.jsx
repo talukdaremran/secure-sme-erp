@@ -6,7 +6,9 @@ import {
   FiClock,
   FiDollarSign,
   FiFileText,
+  FiShoppingBag,
   FiShoppingCart,
+  FiTruck,
   FiUsers,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
@@ -22,7 +24,6 @@ function DashboardPage() {
       setError("");
 
       const response = await apiClient.get("/dashboard/summary");
-
       const dashboardSummary = response.data?.data?.summary;
 
       if (!dashboardSummary) {
@@ -32,8 +33,7 @@ function DashboardPage() {
       setSummary(dashboardSummary);
     } catch (error) {
       setError(
-        error.response?.data?.message ||
-          "Failed to load dashboard summary."
+        error.response?.data?.message || "Failed to load dashboard summary."
       );
     } finally {
       setLoading(false);
@@ -45,12 +45,10 @@ function DashboardPage() {
   }, []);
 
   function formatCurrency(value) {
-    const numberValue = Number(value || 0);
-
     return new Intl.NumberFormat("en-AU", {
       style: "currency",
       currency: "AUD",
-    }).format(numberValue);
+    }).format(Number(value || 0));
   }
 
   function formatDate(value) {
@@ -59,6 +57,14 @@ function DashboardPage() {
     }
 
     return new Date(value).toLocaleString();
+  }
+
+  function formatShortDate(value) {
+    if (!value) {
+      return "N/A";
+    }
+
+    return new Date(value).toLocaleDateString();
   }
 
   function formatLabel(value) {
@@ -72,6 +78,22 @@ function DashboardPage() {
       .split(" ")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
+  }
+
+  function getPurchaseOrderStatusClass(status) {
+    if (status === "received") {
+      return "badge badge-success";
+    }
+
+    if (status === "ordered") {
+      return "badge badge-info";
+    }
+
+    if (status === "cancelled") {
+      return "badge badge-danger";
+    }
+
+    return "badge badge-warning";
   }
 
   if (loading) {
@@ -108,6 +130,7 @@ function DashboardPage() {
 
   const lowStockCount = Number(summary?.lowStockProducts || 0);
   const recentActivity = summary?.recentActivity || [];
+  const recentPurchaseOrders = summary?.recentPurchaseOrders || [];
 
   const metricCards = [
     {
@@ -160,14 +183,41 @@ function DashboardPage() {
     },
   ];
 
+  const procurementMetricCards = [
+    {
+      label: "Total Suppliers",
+      value: summary?.totalSuppliers || 0,
+      icon: FiTruck,
+      variant: "blue",
+    },
+    {
+      label: "Open Purchase Orders",
+      value: summary?.openPurchaseOrders || 0,
+      icon: FiShoppingBag,
+      variant: "purple",
+    },
+    {
+      label: "Pending Receipt",
+      value: summary?.pendingReceiptPurchaseOrders || 0,
+      icon: FiClock,
+      variant: "orange",
+    },
+    {
+      label: "Received Orders",
+      value: summary?.receivedPurchaseOrders || 0,
+      icon: FiCheckCircle,
+      variant: "green",
+    },
+  ];
+
   return (
     <section>
       <div className="page-header">
         <div>
           <h1>Dashboard</h1>
           <p>
-            Overview of sales, customers, inventory, invoices, and recent system
-            activity.
+            Overview of sales, customers, inventory, invoices, procurement, and
+            recent system activity.
           </p>
         </div>
 
@@ -219,8 +269,8 @@ function DashboardPage() {
                 <FiAlertTriangle />
                 <h3>{lowStockCount} low stock item(s)</h3>
                 <p>
-                  Some products have reached or passed their low stock level. Check the
-                  Products or Inventory page for details.
+                  Some products have reached or passed their low stock level.
+                  Check the Products or Inventory page for details.
                 </p>
               </div>
             )}
@@ -252,6 +302,109 @@ function DashboardPage() {
                         {activity.module} · {activity.result} ·{" "}
                         {formatDate(activity.created_at)}
                       </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="dashboard-section-header">
+        <div>
+          <h2>Procurement Overview</h2>
+          <p>Supplier and purchase order activity across the ERP.</p>
+        </div>
+      </div>
+
+      <div className="dashboard-metric-grid">
+        {procurementMetricCards.map((card) => {
+          const Icon = card.icon;
+
+          return (
+            <article
+              key={card.label}
+              className={`dashboard-metric-card metric-${card.variant}`}
+            >
+              <div className="metric-icon">
+                <Icon />
+              </div>
+
+              <div>
+                <span>{card.label}</span>
+                <strong>{card.value}</strong>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="dashboard-metric-grid procurement-spend-grid">
+        <article className="dashboard-metric-card metric-green procurement-spend-card">
+          <div className="metric-icon">
+            <FiDollarSign />
+          </div>
+
+          <div>
+            <span>Received Procurement Spend</span>
+            <strong>{formatCurrency(summary?.receivedProcurementSpend)}</strong>
+          </div>
+        </article>
+      </div>
+
+      <div className="dashboard-grid procurement-dashboard-grid">
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Recent Purchase Orders</h2>
+            <p>Latest supplier purchase orders created in the system.</p>
+          </div>
+
+          <div className="panel-body">
+            {recentPurchaseOrders.length === 0 ? (
+              <div className="empty-state">
+                <FiShoppingBag />
+                <h3>No purchase orders yet</h3>
+                <p>Create purchase orders to see procurement activity here.</p>
+              </div>
+            ) : (
+              <div className="activity-list">
+                {recentPurchaseOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="activity-item purchase-order-activity-item"
+                  >
+                    <div className="activity-dot" />
+
+                    <div>
+                      <strong>
+                        PO-{String(order.id).padStart(4, "0")} ·{" "}
+                        {order.supplier_name}
+                      </strong>
+
+                      <p>
+                        {formatCurrency(order.total_amount)} · Created{" "}
+                        {formatShortDate(order.created_at)}
+                      </p>
+
+                      <div className="purchase-order-activity-footer">
+                        <span className={getPurchaseOrderStatusClass(order.status)}>
+                          {formatLabel(order.status)}
+                        </span>
+
+                        {order.expected_delivery_date && (
+                          <small>
+                            Expected{" "}
+                            {formatShortDate(order.expected_delivery_date)}
+                          </small>
+                        )}
+
+                        {order.received_at && (
+                          <small>
+                            Received {formatShortDate(order.received_at)}
+                          </small>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
