@@ -13,6 +13,7 @@ import userRoutes from "./userRoutes.js";
 import exportRoutes from "./exportRoutes.js";
 import supplierRoutes from "./supplierRoutes.js";
 import purchaseOrderRoutes from "./purchaseOrderRoutes.js";
+import approvalRoutes from "./approvalRoutes.js";
 
 const router = express.Router();
 
@@ -58,6 +59,8 @@ router.use("/invoices", invoiceRoutes);
 router.use("/audit-logs", auditLogRoutes);
 
 router.use("/inventory-movements", inventoryMovementRoutes);
+
+router.use("/approvals", approvalRoutes);
 
 router.use("/dashboard", dashboardRoutes);
 

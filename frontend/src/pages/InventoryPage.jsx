@@ -13,6 +13,7 @@ import {
   FiShoppingCart,
   FiSliders,
   FiX,
+  FiShield,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
 import { useAuth } from "../context/AuthContext";
@@ -233,8 +234,12 @@ function InventoryPage() {
       return "badge badge-warning";
     }
 
-    if (movementType === "adjustment") {
+    if (movementType === "adjustment" || movementType === "approved_adjustment") {
       return "badge badge-info";
+    }
+
+    if (movementType === "purchase_receive") {
+      return "badge badge-success";
     }
 
     return "badge badge-success";
@@ -406,9 +411,14 @@ function InventoryPage() {
             <FiExternalLink />
           </Link>
 
+          <Link to="/approvals" className="secondary-button page-link-button">
+            <FiShield />
+            Request Adjustment
+          </Link>
+
           {isAdmin && (
             <button type="button" onClick={handleOpenAdjustmentForm}>
-              + New Adjustment
+              + Direct Adjustment
             </button>
           )}
         </div>
@@ -416,8 +426,8 @@ function InventoryPage() {
 
       {!isAdmin && (
         <p className="message info-message">
-          You can view inventory status and movement history. Manual stock
-          adjustments are available to Admin users only.
+          You can view inventory status and movement history. To request a stock
+          change, use Request Adjustment. Stock will only change after Admin approval.
         </p>
       )}
 
@@ -598,7 +608,10 @@ function InventoryPage() {
                 <FiActivity />
                 <div>
                   <strong>Inventory records tracked stock changes</strong>
-                  <p>Sales deductions and manual adjustments create movement history.</p>
+                  <p>
+                    Sales deductions, purchase receiving, approved adjustments, and Admin
+                    adjustments create movement history.
+                  </p>
                 </div>
               </div>
 
