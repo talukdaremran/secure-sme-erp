@@ -12,6 +12,7 @@ import dashboardRoutes from "./dashboardRoutes.js";
 import userRoutes from "./userRoutes.js";
 import exportRoutes from "./exportRoutes.js";
 import supplierRoutes from "./supplierRoutes.js";
+import purchaseOrderRoutes from "./purchaseOrderRoutes.js";
 
 const router = express.Router();
 
@@ -46,7 +47,11 @@ router.use("/products", productRoutes);
 
 router.use("/customers", customerRoutes);
 
+router.use("/suppliers", supplierRoutes);
+
 router.use("/sales-orders", salesOrderRoutes);
+
+router.use("/purchase-orders", purchaseOrderRoutes);
 
 router.use("/invoices", invoiceRoutes);
 
@@ -59,7 +64,5 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/users", userRoutes);
 
 router.use("/exports", exportRoutes);
-
-router.use("/suppliers", supplierRoutes);
 
 export default router;

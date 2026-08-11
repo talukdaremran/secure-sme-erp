@@ -17,6 +17,7 @@ import {
   FiUsers,
   FiLayers,
   FiTruck,
+  FiShoppingBag,
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import appIcon from "../assets/favicon.svg";
@@ -31,6 +32,7 @@ const pageTitles = {
   "/audit-logs": "Audit Logs",
   "/users": "Users",
   "/suppliers": "Suppliers",
+  "/purchase-orders": "Purchase Orders",
 };
 
 function AppLayout() {
@@ -265,6 +267,11 @@ function AppLayout() {
           <NavLink to="/sales-orders">
             <FiShoppingCart />
             <span>Sales Orders</span>
+          </NavLink>
+
+          <NavLink to="/purchase-orders">
+            <FiShoppingBag />
+            <span>Purchase Orders</span>
           </NavLink>
 
           <NavLink to="/invoices">
