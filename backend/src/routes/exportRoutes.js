@@ -5,6 +5,7 @@ import {
   exportInvoices,
   exportProducts,
   exportSalesOrders,
+  exportPurchaseOrders,
 } from "../controllers/exportController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -14,6 +15,7 @@ const router = express.Router();
 router.get("/products", protect, exportProducts);
 router.get("/customers", protect, exportCustomers);
 router.get("/sales-orders", protect, exportSalesOrders);
+router.get("/purchase-orders", protect, exportPurchaseOrders);
 router.get("/invoices", protect, exportInvoices);
 
 export default router;
