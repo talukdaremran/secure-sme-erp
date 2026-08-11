@@ -2,6 +2,7 @@
 
 DROP TABLE IF EXISTS audit_logs CASCADE;
 DROP TABLE IF EXISTS approval_requests CASCADE;
+DROP TABLE IF EXISTS portal_users CASCADE;
 DROP TABLE IF EXISTS inventory_movements CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS invoices CASCADE;
@@ -67,6 +68,23 @@ CREATE TABLE customers (
     email VARCHAR(150),
     phone VARCHAR(50),
     address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE portal_users (
+    id SERIAL PRIMARY KEY,
+    role VARCHAR(30) NOT NULL CHECK (role IN ('customer', 'supplier')),
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    phone VARCHAR(50),
+    customer_id INTEGER REFERENCES customers(id),
+    supplier_id INTEGER REFERENCES suppliers(id),
+    email_verified BOOLEAN NOT NULL DEFAULT false,
+    verification_code_hash TEXT,
+    verification_code_expires_at TIMESTAMP,
+    last_login_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

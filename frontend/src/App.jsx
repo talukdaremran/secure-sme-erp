@@ -20,13 +20,28 @@ import ChangePasswordPage from "./pages/ChangePasswordPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import PurchaseOrdersPage from "./pages/PurchaseOrdersPage";
 import ApprovalsPage from "./pages/ApprovalsPage";
+import LandingPage from "./pages/LandingPage";
+import PortalHomePage from "./pages/PortalHomePage";
+import PortalLoginPage from "./pages/PortalLoginPage";
+import PortalRegisterPage from "./pages/PortalRegisterPage";
+import PortalVerifyEmailPage from "./pages/PortalVerifyEmailPage";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<Navigate to="/login" replace />} />
+
+      <Route path="/customer/register" element={<PortalRegisterPage role="customer" />} />
+      <Route path="/customer/verify-email" element={<PortalVerifyEmailPage role="customer" />} />
+      <Route path="/customer/login" element={<PortalLoginPage role="customer" />} />
+      <Route path="/customer/home" element={<PortalHomePage role="customer" />} />
+
+      <Route path="/supplier/register" element={<PortalRegisterPage role="supplier" />} />
+      <Route path="/supplier/verify-email" element={<PortalVerifyEmailPage role="supplier" />} />
+      <Route path="/supplier/login" element={<PortalLoginPage role="supplier" />} />
+      <Route path="/supplier/home" element={<PortalHomePage role="supplier" />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/change-password" element={<ChangePasswordPage />} />
