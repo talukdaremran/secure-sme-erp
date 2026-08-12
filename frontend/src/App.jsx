@@ -3,7 +3,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
-import HomeRedirect from "./components/HomeRedirect";
 
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -26,6 +25,11 @@ import PortalLoginPage from "./pages/PortalLoginPage";
 import PortalRegisterPage from "./pages/PortalRegisterPage";
 import PortalVerifyEmailPage from "./pages/PortalVerifyEmailPage";
 
+import CustomerPortalLayout from "./layouts/CustomerPortalLayout";
+import CustomerCartPage from "./pages/CustomerCartPage";
+import CustomerOrdersPage from "./pages/CustomerOrdersPage";
+import CustomerProductsPage from "./pages/CustomerProductsPage";
+
 function App() {
   return (
     <Routes>
@@ -36,7 +40,14 @@ function App() {
       <Route path="/customer/register" element={<PortalRegisterPage role="customer" />} />
       <Route path="/customer/verify-email" element={<PortalVerifyEmailPage role="customer" />} />
       <Route path="/customer/login" element={<PortalLoginPage role="customer" />} />
-      <Route path="/customer/home" element={<PortalHomePage role="customer" />} />
+
+      <Route path="/customer" element={<CustomerPortalLayout />}>
+        <Route index element={<Navigate to="/customer/products" replace />} />
+        <Route path="home" element={<Navigate to="/customer/products" replace />} />
+        <Route path="products" element={<CustomerProductsPage />} />
+        <Route path="cart" element={<CustomerCartPage />} />
+        <Route path="orders" element={<CustomerOrdersPage />} />
+      </Route>
 
       <Route path="/supplier/register" element={<PortalRegisterPage role="supplier" />} />
       <Route path="/supplier/verify-email" element={<PortalVerifyEmailPage role="supplier" />} />
@@ -45,7 +56,7 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/change-password" element={<ChangePasswordPage />} />
-        
+
         <Route element={<AppLayout />}>
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/customers" element={<CustomersPage />} />
