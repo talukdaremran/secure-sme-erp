@@ -3617,6 +3617,85 @@ tr.purchase-order-received-row td {
     flex-direction: column;
   }
 }
+
+/* === AI sales forecast === */
+
+.ai-forecast-summary {
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-forecast-summary article {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.ai-forecast-summary span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ai-forecast-summary strong {
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.ai-forecast-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-forecast-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 120px;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-forecast-row span {
+  color: #475569;
+  font-weight: 800;
+}
+
+.ai-forecast-row strong {
+  color: #0f172a;
+  text-align: right;
+}
+
+.ai-forecast-bar-track {
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.ai-forecast-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb, #22c55e);
+}
+
+@media (max-width: 900px) {
+  .ai-forecast-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-forecast-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .ai-forecast-row strong {
+    text-align: left;
+  }
+}
 /* --- AI Analytics --- */
 
 

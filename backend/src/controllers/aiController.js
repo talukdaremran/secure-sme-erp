@@ -1,3 +1,5 @@
+import pool from "../config/db.js";
+
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
 
 export async function getAiServiceHealth(req, res, next) {
@@ -36,5 +38,75 @@ export async function getAiServiceHealth(req, res, next) {
         error: error.message,
       },
     });
+  }
+}
+
+export async function getSalesForecast(req, res, next) {
+  try {
+    const forecastDays = Math.min(
+      Math.max(Number(req.query.days) || 7, 1),
+      30
+    );
+
+    const salesHistoryResult = await pool.query(
+      `SELECT
+         DATE(created_at) AS sale_date,
+         SUM(total_amount)::float AS total_sales,
+         COUNT(*)::int AS order_count
+       FROM sales_orders
+       WHERE status IN ('confirmed', 'paid', 'delivered')
+       GROUP BY DATE(created_at)
+       ORDER BY sale_date ASC`
+    );
+
+    const salesHistory = salesHistoryResult.rows.map((row) => ({
+      sale_date: row.sale_date.toISOString().slice(0, 10),
+      total_sales: Number(row.total_sales),
+      order_count: Number(row.order_count),
+    }));
+
+    if (salesHistory.length < 2) {
+      return res.status(400).json({
+        status: "error",
+        message: "At least 2 days of sales history are required for forecasting",
+        data: {
+          historyPoints: salesHistory.length,
+          salesHistory,
+        },
+      });
+    }
+
+    const response = await fetch(`${AI_SERVICE_URL}/forecast/sales`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sales_history: salesHistory,
+        forecast_days: forecastDays,
+      }),
+    });
+
+    const aiResult = await response.json();
+
+    if (!response.ok) {
+      return res.status(502).json({
+        status: "error",
+        message: "AI service failed to generate sales forecast",
+        data: aiResult,
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Sales forecast generated successfully",
+      data: {
+        forecastDays,
+        historyPoints: salesHistory.length,
+        result: aiResult,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 }
