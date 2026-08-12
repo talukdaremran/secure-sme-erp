@@ -7,6 +7,7 @@ import {
   FiPlus,
   FiShoppingCart,
   FiTrash2,
+  FiTruck,
   FiUsers,
   FiX,
 } from "react-icons/fi";
@@ -43,6 +44,8 @@ function SalesOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deliveringOrderId, setDeliveringOrderId] = useState(null);
+  const [deliveryConfirmOrder, setDeliveryConfirmOrder] = useState(null);
 
   const [error, setError] = useState("");
   const [createError, setCreateError] = useState("");
@@ -247,6 +250,53 @@ function SalesOrdersPage() {
     }
   }
 
+  async function handleDeliverSalesOrder() {
+    if (!deliveryConfirmOrder) {
+      return;
+    }
+
+    const orderId = deliveryConfirmOrder.id;
+
+    try {
+      setDeliveringOrderId(orderId);
+      setError("");
+      setDetailError("");
+      setSuccessMessage("");
+
+      await apiClient.patch(`/sales-orders/${orderId}/deliver`);
+
+      setSuccessMessage("Sales order delivered successfully. Stock has been updated.");
+      setDeliveryConfirmOrder(null);
+
+      await fetchSalesOrders();
+      await fetchFormOptions();
+
+      if (selectedSalesOrder?.id === orderId) {
+        await fetchSalesOrderDetails(orderId);
+      }
+    } catch (error) {
+      setError(
+        error.response?.data?.message || "Failed to mark sales order as delivered."
+      );
+    } finally {
+      setDeliveringOrderId(null);
+    }
+  }
+
+  function handleOpenDeliveryConfirm(order) {
+    setError("");
+    setSuccessMessage("");
+    setDeliveryConfirmOrder(order);
+  }
+
+  function handleCloseDeliveryConfirm() {
+    if (deliveringOrderId) {
+      return;
+    }
+
+    setDeliveryConfirmOrder(null);
+  }
+
   function formatCurrency(value) {
     return new Intl.NumberFormat("en-AU", {
       style: "currency",
@@ -281,11 +331,19 @@ function SalesOrdersPage() {
   function getStatusBadgeClass(status) {
     const normalizedStatus = String(status || "").toLowerCase();
 
-    if (normalizedStatus === "confirmed" || normalizedStatus === "paid") {
+    if (
+      normalizedStatus === "confirmed" ||
+      normalizedStatus === "paid" ||
+      normalizedStatus === "delivered"
+    ) {
       return "badge badge-success";
     }
 
-    if (normalizedStatus === "pending") {
+    if (
+      normalizedStatus === "pending" ||
+      normalizedStatus === "placed" ||
+      normalizedStatus === "draft"
+    ) {
       return "badge badge-warning";
     }
 
@@ -298,6 +356,10 @@ function SalesOrdersPage() {
     }
 
     return "badge badge-info";
+  }
+
+  function canDeliverOrder(order) {
+    return String(order.status || "").toLowerCase() === "placed";
   }
 
   const totalOrders = salesOrders.length;
@@ -556,6 +618,8 @@ function SalesOrdersPage() {
                     <th>Subtotal</th>
                     <th>GST</th>
                     <th>Total</th>
+                    <th>Delivered By</th>
+                    <th>Delivered At</th>
                     <th>Created At</th>
                     <th>Actions</th>
                   </tr>
@@ -589,6 +653,8 @@ function SalesOrdersPage() {
                         <strong>{formatCurrency(order.total_amount)}</strong>
                       </td>
 
+                      <td>{order.delivered_by_name || "-"}</td>
+                      <td>{formatDate(order.delivered_at)}</td>
                       <td>{formatDate(order.created_at)}</td>
 
                       <td>
@@ -601,6 +667,18 @@ function SalesOrdersPage() {
                             <FiEye />
                             View
                           </button>
+
+                          {canDeliverOrder(order) && (
+                            <button
+                              type="button"
+                              className="success-button"
+                              onClick={() => handleOpenDeliveryConfirm(order)}
+                              disabled={deliveringOrderId === order.id}
+                            >
+                              <FiTruck />
+                              {deliveringOrderId === order.id ? "Delivering..." : "Deliver"}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -768,6 +846,71 @@ function SalesOrdersPage() {
         </div>
       )}
 
+      {deliveryConfirmOrder && (
+        <div className="modal-backdrop">
+          <section className="modal-card delivery-confirm-modal">
+            <div className="modal-header">
+              <div>
+                <h2>Confirm Delivery</h2>
+                <p>
+                  This action will mark the customer order as delivered and deduct
+                  stock from inventory.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="icon-button modal-close-button"
+                onClick={handleCloseDeliveryConfirm}
+                disabled={Boolean(deliveringOrderId)}
+                aria-label="Close delivery confirmation"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className="delivery-confirm-content">
+              <div className="delivery-confirm-icon">
+                <FiTruck />
+              </div>
+
+              <div>
+                <strong>
+                  SO-{String(deliveryConfirmOrder.id).padStart(4, "0")} ·{" "}
+                  {deliveryConfirmOrder.customer_name}
+                </strong>
+
+                <p>
+                  Stock will be deducted now and a sale inventory movement will be
+                  created. This order cannot be delivered again after confirmation.
+                </p>
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                onClick={handleDeliverSalesOrder}
+                disabled={Boolean(deliveringOrderId)}
+              >
+                {deliveringOrderId
+                  ? "Marking as Delivered..."
+                  : "Mark as Delivered"}
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={handleCloseDeliveryConfirm}
+                disabled={Boolean(deliveringOrderId)}
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {isDetailModalOpen && (
         <div className="modal-backdrop">
           <section className="modal-card sales-order-detail-modal">
@@ -828,6 +971,16 @@ function SalesOrdersPage() {
                     <article className="detail-summary-card">
                       <span>Created At</span>
                       <strong>{formatDate(selectedSalesOrder.created_at)}</strong>
+                    </article>
+
+                    <article className="detail-summary-card">
+                      <span>Delivered By</span>
+                      <strong>{selectedSalesOrder.delivered_by_name || "-"}</strong>
+                    </article>
+
+                    <article className="detail-summary-card">
+                      <span>Delivered At</span>
+                      <strong>{formatDate(selectedSalesOrder.delivered_at)}</strong>
                     </article>
 
                     <article className="detail-summary-card">

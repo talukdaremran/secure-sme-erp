@@ -2580,6 +2580,44 @@ td strong {
   color: #1d4ed8;
   font-size: 18px;
 }
+
+.delivery-confirm-modal {
+  max-width: 520px;
+}
+
+.delivery-confirm-content {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  display: flex;
+  gap: 14px;
+  background: #eff6ff;
+}
+
+.delivery-confirm-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 22px;
+}
+
+.delivery-confirm-content strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #0f172a;
+}
+
+.delivery-confirm-content p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+}
 /* --- Sales Orders Page --- */
 
 /* === Purchase orders page === */

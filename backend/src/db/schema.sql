@@ -118,10 +118,12 @@ CREATE TABLE sales_orders (
     id SERIAL PRIMARY KEY,
     customer_id INTEGER NOT NULL REFERENCES customers(id),
     created_by INTEGER REFERENCES users(id),
+    delivered_by INTEGER REFERENCES users(id),
     status VARCHAR(50) DEFAULT 'draft',
     subtotal NUMERIC(10, 2) DEFAULT 0 CHECK (subtotal >= 0),
     gst_amount NUMERIC(10, 2) DEFAULT 0 CHECK (gst_amount >= 0),
     total_amount NUMERIC(10, 2) DEFAULT 0 CHECK (total_amount >= 0),
+    delivered_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
