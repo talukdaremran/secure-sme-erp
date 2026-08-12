@@ -30,6 +30,9 @@ import CustomerCartPage from "./pages/CustomerCartPage";
 import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 import CustomerProductsPage from "./pages/CustomerProductsPage";
 
+import SupplierPortalLayout from "./layouts/SupplierPortalLayout";
+import SupplierPurchaseOrdersPage from "./pages/SupplierPurchaseOrdersPage";
+
 function App() {
   return (
     <Routes>
@@ -52,7 +55,11 @@ function App() {
       <Route path="/supplier/register" element={<PortalRegisterPage role="supplier" />} />
       <Route path="/supplier/verify-email" element={<PortalVerifyEmailPage role="supplier" />} />
       <Route path="/supplier/login" element={<PortalLoginPage role="supplier" />} />
-      <Route path="/supplier/home" element={<PortalHomePage role="supplier" />} />
+      <Route path="/supplier" element={<SupplierPortalLayout />}>
+        <Route index element={<Navigate to="/supplier/purchase-orders" replace />} />
+        <Route path="home" element={<Navigate to="/supplier/purchase-orders" replace />} />
+        <Route path="purchase-orders" element={<SupplierPurchaseOrdersPage />} />
+      </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route path="/change-password" element={<ChangePasswordPage />} />
