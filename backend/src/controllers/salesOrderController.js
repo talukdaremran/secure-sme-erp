@@ -7,21 +7,26 @@ export async function getSalesOrders(req, res, next) {
   try {
     const result = await pool.query(
       `SELECT 
-         sales_orders.id,
-         sales_orders.customer_id,
-         customers.name AS customer_name,
-         sales_orders.created_by,
-         users.name AS created_by_name,
-         sales_orders.status,
-         sales_orders.subtotal,
-         sales_orders.gst_amount,
-         sales_orders.total_amount,
-         sales_orders.created_at,
-         sales_orders.updated_at
-       FROM sales_orders
-       JOIN customers ON sales_orders.customer_id = customers.id
-       LEFT JOIN users ON sales_orders.created_by = users.id
-       ORDER BY sales_orders.id ASC`
+        sales_orders.id,
+        sales_orders.customer_id,
+        customers.name AS customer_name,
+        sales_orders.created_by,
+        users.name AS created_by_name,
+        sales_orders.delivered_by,
+        delivered_by_user.name AS delivered_by_name,
+        sales_orders.status,
+        sales_orders.subtotal,
+        sales_orders.gst_amount,
+        sales_orders.total_amount,
+        sales_orders.delivered_at,
+        sales_orders.created_at,
+        sales_orders.updated_at
+      FROM sales_orders
+      JOIN customers ON sales_orders.customer_id = customers.id
+      LEFT JOIN users ON sales_orders.created_by = users.id
+      LEFT JOIN users AS delivered_by_user
+        ON sales_orders.delivered_by = delivered_by_user.id
+      ORDER BY sales_orders.id ASC`
     );
 
     res.status(200).json({
@@ -46,15 +51,20 @@ export async function getSalesOrderById(req, res, next) {
          customers.name AS customer_name,
          sales_orders.created_by,
          users.name AS created_by_name,
+         sales_orders.delivered_by,
+         delivered_by_user.name AS delivered_by_name,
          sales_orders.status,
          sales_orders.subtotal,
          sales_orders.gst_amount,
          sales_orders.total_amount,
+         sales_orders.delivered_at,
          sales_orders.created_at,
          sales_orders.updated_at
        FROM sales_orders
        JOIN customers ON sales_orders.customer_id = customers.id
        LEFT JOIN users ON sales_orders.created_by = users.id
+       LEFT JOIN users AS delivered_by_user
+        ON sales_orders.delivered_by = delivered_by_user.id
        WHERE sales_orders.id = $1`,
       [id]
     );
@@ -267,6 +277,165 @@ export async function createSalesOrder(req, res, next) {
       data: {
         salesOrder,
         items: orderItems,
+      },
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    next(error);
+  } finally {
+    client.release();
+  }
+}
+
+export async function deliverSalesOrder(req, res, next) {
+  const client = await pool.connect();
+
+  try {
+    const { id } = req.params;
+
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT
+         id,
+         customer_id,
+         created_by,
+         status,
+         delivered_at,
+         delivered_by
+       FROM sales_orders
+       WHERE id = $1
+       FOR UPDATE`,
+      [id]
+    );
+
+    if (orderResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        status: "error",
+        message: "Sales order not found",
+      });
+    }
+
+    const salesOrder = orderResult.rows[0];
+
+    if (salesOrder.status !== "placed") {
+      await client.query("ROLLBACK");
+
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Only placed customer portal orders can be marked as delivered from this workflow",
+      });
+    }
+
+    if (salesOrder.delivered_at) {
+      await client.query("ROLLBACK");
+
+      return res.status(400).json({
+        status: "error",
+        message: "Sales order has already been delivered",
+      });
+    }
+
+    const itemsResult = await client.query(
+      `SELECT
+         sales_order_items.product_id,
+         sales_order_items.quantity,
+         products.name AS product_name
+       FROM sales_order_items
+       JOIN products ON sales_order_items.product_id = products.id
+       WHERE sales_order_items.sales_order_id = $1
+       ORDER BY sales_order_items.id ASC`,
+      [id]
+    );
+
+    if (itemsResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(400).json({
+        status: "error",
+        message: "Sales order has no items to deliver",
+      });
+    }
+
+    for (const item of itemsResult.rows) {
+      const stockUpdateResult = await client.query(
+        `UPDATE products
+         SET stock_quantity = stock_quantity - $1,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2
+           AND stock_quantity >= $1
+         RETURNING id, stock_quantity`,
+        [item.quantity, item.product_id]
+      );
+
+      if (stockUpdateResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+
+        return res.status(400).json({
+          status: "error",
+          message: `Insufficient stock to deliver product: ${item.product_name}`,
+        });
+      }
+
+      await client.query(
+        `INSERT INTO inventory_movements
+           (product_id, movement_type, quantity_change, reason, related_sales_order_id, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          item.product_id,
+          "sale",
+          -Number(item.quantity),
+          "Stock deducted after customer order delivery",
+          id,
+          req.user.id,
+        ]
+      );
+    }
+
+    const updatedOrderResult = await client.query(
+      `UPDATE sales_orders
+       SET status = 'delivered',
+           delivered_by = $1,
+           delivered_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING
+         id,
+         customer_id,
+         created_by,
+         delivered_by,
+         status,
+         subtotal,
+         gst_amount,
+         total_amount,
+         delivered_at,
+         created_at,
+         updated_at`,
+      [req.user.id, id]
+    );
+
+    await createAuditLog(
+      {
+        userId: req.user.id,
+        action: "DELIVER_SALES_ORDER",
+        module: "sales_orders",
+        entityType: "sales_order",
+        entityId: Number(id),
+        result: "success",
+      },
+      client
+    );
+
+    await client.query("COMMIT");
+
+    res.status(200).json({
+      status: "success",
+      message: "Sales order marked as delivered and stock updated",
+      data: {
+        salesOrder: updatedOrderResult.rows[0],
       },
     });
   } catch (error) {
