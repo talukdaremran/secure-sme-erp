@@ -64,17 +64,22 @@ export async function getCustomerPortalOrders(req, res, next) {
 
     const ordersResult = await pool.query(
       `SELECT
-         sales_orders.id,
-         sales_orders.customer_id,
-         sales_orders.status,
-         sales_orders.subtotal,
-         sales_orders.gst_amount,
-         sales_orders.total_amount,
-         sales_orders.created_at,
-         sales_orders.updated_at
-       FROM sales_orders
-       WHERE sales_orders.customer_id = $1
-       ORDER BY sales_orders.created_at DESC`,
+        sales_orders.id,
+        sales_orders.customer_id,
+        sales_orders.status,
+        sales_orders.subtotal,
+        sales_orders.gst_amount,
+        sales_orders.total_amount,
+        sales_orders.delivered_at,
+        sales_orders.delivered_by,
+        delivered_by_user.name AS delivered_by_name,
+        sales_orders.created_at,
+        sales_orders.updated_at
+      FROM sales_orders
+      LEFT JOIN users AS delivered_by_user
+        ON sales_orders.delivered_by = delivered_by_user.id
+      WHERE sales_orders.customer_id = $1
+      ORDER BY sales_orders.created_at DESC`,
       [req.portalUser.customer_id]
     );
 

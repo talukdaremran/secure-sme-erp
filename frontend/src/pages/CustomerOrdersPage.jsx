@@ -59,6 +59,18 @@ function CustomerOrdersPage() {
     return "badge badge-warning";
   }
 
+  function getOrderProgressText(order) {
+    if (order.status === "delivered") {
+      return `Delivered ${formatDate(order.delivered_at)}`;
+    }
+
+    if (order.status === "placed") {
+      return "Order placed. Waiting for staff delivery confirmation.";
+    }
+
+    return "Order is being processed.";
+  }
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -94,6 +106,9 @@ function CustomerOrdersPage() {
                 <div>
                   <h3>SO-{String(order.id).padStart(4, "0")}</h3>
                   <p>{formatDate(order.created_at)}</p>
+                  <p className="customer-order-progress">
+                    {getOrderProgressText(order)}
+                  </p>
                 </div>
 
                 <span className={getStatusBadgeClass(order.status)}>
@@ -111,6 +126,16 @@ function CustomerOrdersPage() {
                   </div>
                 ))}
               </div>
+
+              {order.status === "delivered" && (
+                <div className="customer-order-delivery-note">
+                  <strong>Delivery confirmed</strong>
+                  <span>
+                    {formatDate(order.delivered_at)}
+                    {order.delivered_by_name ? ` by ${order.delivered_by_name}` : ""}
+                  </span>
+                </div>
+              )}
 
               <div className="customer-order-total">
                 <span>Total</span>

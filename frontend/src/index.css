@@ -378,222 +378,6 @@ p {
 }
 /* --- Portal auth pages --- */
 
-/* === Customer portal === */
-
-.customer-portal-shell {
-  min-height: 100vh;
-  padding: 28px;
-  background: #f8fafc;
-}
-
-.customer-portal-header {
-  max-width: 1180px;
-  margin: 0 auto 18px;
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-portal-header h1 {
-  margin: 0 0 4px;
-  color: #0f172a;
-}
-
-.customer-portal-header p {
-  margin: 0;
-  color: #64748b;
-}
-
-.customer-portal-nav {
-  max-width: 1180px;
-  margin: 0 auto 18px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.customer-portal-nav a {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: white;
-  color: #475569;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.customer-portal-nav a.active {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.customer-portal-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-
-.customer-product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(230px, 1fr));
-  gap: 16px;
-}
-
-.customer-product-card {
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-product-card h3 {
-  margin: 12px 0 6px;
-  color: #0f172a;
-}
-
-.customer-product-card p {
-  margin: 0;
-  color: #64748b;
-}
-
-.customer-product-meta {
-  margin: 18px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.customer-product-meta strong {
-  color: #0f172a;
-  font-size: 20px;
-}
-
-.customer-product-meta span {
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.customer-product-card button,
-.customer-cart-summary button {
-  width: 100%;
-  justify-content: center;
-}
-
-.customer-cart-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 18px;
-  align-items: start;
-}
-
-.cart-quantity-input {
-  max-width: 90px;
-}
-
-.customer-cart-summary {
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-cart-summary h2 {
-  margin: 0 0 16px;
-}
-
-.summary-row {
-  padding: 10px 0;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.total-row {
-  border-bottom: 0;
-  font-size: 18px;
-}
-
-.customer-cart-summary p {
-  margin: 16px 0;
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.customer-order-list {
-  display: grid;
-  gap: 14px;
-}
-
-.customer-order-card {
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-order-header,
-.customer-order-total,
-.customer-order-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.customer-order-header h3 {
-  margin: 0 0 4px;
-}
-
-.customer-order-header p {
-  margin: 0;
-  color: #64748b;
-}
-
-.customer-order-items {
-  margin: 16px 0;
-  display: grid;
-  gap: 8px;
-}
-
-.customer-order-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.customer-order-total {
-  padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-}
-
-@media (max-width: 900px) {
-  .customer-product-grid,
-  .customer-cart-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .customer-portal-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-/* --- Customer portal --- */
-
 /* === Account Menu === */
 
 .account-menu {
@@ -3388,6 +3172,249 @@ tr.purchase-order-received-row td {
 }
 
 /* --- Approval workflow page --- */
+
+/* === Customer portal === */
+
+.customer-portal-shell {
+  min-height: 100vh;
+  padding: 28px;
+  background: #f8fafc;
+}
+
+.customer-portal-header {
+  max-width: 1180px;
+  margin: 0 auto 18px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: white;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.customer-portal-header h1 {
+  margin: 0 0 4px;
+  color: #0f172a;
+}
+
+.customer-portal-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.customer-portal-nav {
+  max-width: 1180px;
+  margin: 0 auto 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.customer-portal-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #475569;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.customer-portal-nav a.active {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.customer-portal-page {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.customer-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.customer-product-card {
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.customer-product-card h3 {
+  margin: 12px 0 6px;
+  color: #0f172a;
+}
+
+.customer-product-card p {
+  margin: 0;
+  color: #64748b;
+}
+
+.customer-product-meta {
+  margin: 18px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.customer-product-meta strong {
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.customer-product-meta span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.customer-product-card button,
+.customer-cart-summary button {
+  width: 100%;
+  justify-content: center;
+}
+
+.customer-cart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.cart-quantity-input {
+  max-width: 90px;
+}
+
+.customer-cart-summary {
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.customer-cart-summary h2 {
+  margin: 0 0 16px;
+}
+
+.summary-row {
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.total-row {
+  border-bottom: 0;
+  font-size: 18px;
+}
+
+.customer-cart-summary p {
+  margin: 16px 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.customer-order-list {
+  display: grid;
+  gap: 14px;
+}
+
+.customer-order-card {
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.customer-order-header,
+.customer-order-total,
+.customer-order-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.customer-order-header h3 {
+  margin: 0 0 4px;
+}
+
+.customer-order-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.customer-order-items {
+  margin: 16px 0;
+  display: grid;
+  gap: 8px;
+}
+
+.customer-order-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.customer-order-total {
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.customer-order-progress {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.customer-order-delivery-note {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  background: #f0fdf4;
+}
+
+.customer-order-delivery-note strong {
+  color: #166534;
+}
+
+.customer-order-delivery-note span {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .customer-product-grid,
+  .customer-cart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-portal-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+/* --- Customer portal --- */
 
 /* === Supplier portal === */
 
