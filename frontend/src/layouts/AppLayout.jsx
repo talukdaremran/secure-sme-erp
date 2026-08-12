@@ -19,12 +19,14 @@ import {
   FiTruck,
   FiShoppingBag,
   FiShield,
+  FiCpu,
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import appIcon from "../assets/favicon.svg";
 
 const pageTitles = {
   "/dashboard": "Dashboard",
+  "/ai-analytics": "AI Analytics",
   "/products": "Products",
   "/customers": "Customers",
   "/sales-orders": "Sales Orders",
@@ -250,6 +252,11 @@ function AppLayout() {
               <span>Dashboard</span>
             </NavLink>
           )}
+
+          <NavLink to="/ai-analytics">
+            <FiCpu />
+            AI Analytics
+          </NavLink>
 
           <NavLink to="/products">
             <FiBox />

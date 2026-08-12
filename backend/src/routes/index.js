@@ -18,6 +18,8 @@ import portalAuthRoutes from "./portalAuthRoutes.js";
 import customerPortalRoutes from "./customerPortalRoutes.js";
 import supplierPortalRoutes from "./supplierPortalRoutes.js";
 
+import aiRoutes from "./aiRoutes.js";
+
 const router = express.Router();
 
 router.get("/health", (req, res) => {
@@ -69,6 +71,7 @@ router.use("/inventory-movements", inventoryMovementRoutes);
 router.use("/approvals", approvalRoutes);
 
 router.use("/dashboard", dashboardRoutes);
+router.use("/ai", aiRoutes);
 
 router.use("/users", userRoutes);
 
