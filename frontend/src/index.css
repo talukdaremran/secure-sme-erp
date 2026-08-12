@@ -3389,6 +3389,120 @@ tr.purchase-order-received-row td {
 
 /* --- Approval workflow page --- */
 
+/* === Supplier portal === */
+
+.supplier-portal-shell {
+  min-height: 100vh;
+  padding: 28px;
+  background: #f8fafc;
+}
+
+.supplier-portal-header {
+  max-width: 1180px;
+  margin: 0 auto 18px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: white;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.supplier-portal-header h1 {
+  margin: 0 0 4px;
+  color: #0f172a;
+}
+
+.supplier-portal-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.supplier-portal-nav {
+  max-width: 1180px;
+  margin: 0 auto 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.supplier-portal-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #475569;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.supplier-portal-nav a.active {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.supplier-portal-page {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.supplier-portal-metrics {
+  margin-bottom: 18px;
+}
+
+.supplier-po-detail-modal {
+  width: min(980px, calc(100vw - 48px));
+  max-width: min(980px, calc(100vw - 48px));
+}
+
+.supplier-delivery-box {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: #eff6ff;
+}
+
+.supplier-delivery-box label {
+  display: block;
+  margin-bottom: 8px;
+  color: #0f172a;
+  font-weight: 850;
+}
+
+.supplier-delivery-box textarea {
+  max-width: none;
+  margin-bottom: 12px;
+}
+
+.supplier-delivery-box button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.supplier-delivery-box p {
+  margin: 12px 0 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .supplier-portal-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+/* --- Supplier portal --- */
+
 
 /* === Responsive styles for smaller devices === */
 @media (max-width: 1100px) {

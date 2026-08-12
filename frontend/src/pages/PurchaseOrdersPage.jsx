@@ -29,7 +29,7 @@ const initialFormData = {
   ],
 };
 
-const statusOptions = ["draft", "ordered", "cancelled"];
+const staffStatusOptions = ["draft", "ordered", "cancelled"];
 
 function PurchaseOrdersPage() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -231,8 +231,12 @@ function PurchaseOrdersPage() {
       return "badge badge-success";
     }
 
-    if (status === "ordered") {
+    if (status === "supplier_delivered") {
       return "badge badge-info";
+    }
+
+    if (status === "ordered") {
+      return "badge badge-warning";
     }
 
     if (status === "cancelled") {
@@ -243,7 +247,11 @@ function PurchaseOrdersPage() {
   }
 
   function canReceivePurchaseOrder(order) {
-    return order.status === "draft" || order.status === "ordered";
+    return (
+      order.status === "draft" ||
+      order.status === "ordered" ||
+      order.status === "supplier_delivered"
+    );
   }
 
   async function handleSubmitPurchaseOrder(event) {
@@ -374,6 +382,13 @@ function PurchaseOrdersPage() {
   const previewGst = previewSubtotal * GST_RATE;
   const previewTotal = previewSubtotal + previewGst;
 
+  const filterStatusOptions = [
+    ...new Set([
+      ...purchaseOrders.map((order) => order.status).filter(Boolean),
+      ...staffStatusOptions,
+    ]),
+  ].sort();
+
   const displayedPurchaseOrders = purchaseOrders
     .filter((order) => {
       const searchableText = `${order.id || ""} ${order.supplier_name || ""} ${
@@ -497,7 +512,7 @@ function PurchaseOrdersPage() {
                   value={formData.status}
                   onChange={handleFormChange}
                 >
-                  {statusOptions.map((status) => (
+                  {staffStatusOptions.map((status) => (
                     <option key={status} value={status}>
                       {formatLabel(status)}
                     </option>
@@ -830,7 +845,7 @@ function PurchaseOrdersPage() {
             aria-label="Filter purchase orders by status"
           >
             <option value="all">All Statuses</option>
-            {statusOptions.map((status) => (
+            {staffStatusOptions.map((status) => (
               <option key={status} value={status}>
                 {formatLabel(status)}
               </option>
@@ -955,10 +970,11 @@ function PurchaseOrdersPage() {
                           disabled={
                             updatingStatusId === order.id ||
                             receivingOrderId === order.id ||
-                            order.status === "received"
+                            order.status === "received" ||
+                            order.status === "supplier_delivered"
                           }
                         >
-                          {statusOptions.map((status) => (
+                          {staffStatusOptions.map((status) => (
                             <option key={status} value={status}>
                               {formatLabel(status)}
                             </option>
@@ -966,6 +982,10 @@ function PurchaseOrdersPage() {
 
                           {order.status === "received" && (
                             <option value="received">Received</option>
+                          )}
+
+                          {order.status === "supplier_delivered" && (
+                            <option value="supplier_delivered">Supplier Delivered</option>
                           )}
                         </select>
                       </td>

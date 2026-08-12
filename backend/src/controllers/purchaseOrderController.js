@@ -4,7 +4,13 @@ import { createAuditLog } from "../utils/auditLogger.js";
 const GST_RATE = 0.1;
 
 const normalStatusUpdates = ["draft", "ordered", "cancelled"];
-const allPurchaseOrderStatuses = ["draft", "ordered", "cancelled", "received"];
+const allPurchaseOrderStatuses = [
+  "draft",
+  "ordered",
+  "supplier_delivered",
+  "cancelled",
+  "received",
+];
 
 function calculateLineTotal(quantity, unitCost) {
   return Number((quantity * unitCost).toFixed(2));
@@ -29,17 +35,23 @@ export async function getPurchaseOrders(req, res, next) {
         purchase_orders.total_amount,
         purchase_orders.expected_delivery_date,
         purchase_orders.notes,
+        purchase_orders.supplier_delivered_at,
+        purchase_orders.supplier_delivered_by,
+        purchase_orders.supplier_delivery_note,
         purchase_orders.received_at,
         purchase_orders.received_by,
         purchase_orders.created_at,
         purchase_orders.updated_at,
         suppliers.name AS supplier_name,
         users.name AS created_by_name,
+        supplier_delivered_by_user.name AS supplier_delivered_by_name,
         received_by_user.name AS received_by_name,
         COUNT(purchase_order_items.id) AS item_count
       FROM purchase_orders
       JOIN suppliers ON purchase_orders.supplier_id = suppliers.id
       LEFT JOIN users ON purchase_orders.created_by = users.id
+      LEFT JOIN portal_users AS supplier_delivered_by_user
+        ON purchase_orders.supplier_delivered_by = supplier_delivered_by_user.id
       LEFT JOIN users AS received_by_user
         ON purchase_orders.received_by = received_by_user.id
       LEFT JOIN purchase_order_items
@@ -48,6 +60,7 @@ export async function getPurchaseOrders(req, res, next) {
         purchase_orders.id,
         suppliers.name,
         users.name,
+        supplier_delivered_by_user.name,
         received_by_user.name
       ORDER BY purchase_orders.id DESC`
     );
@@ -78,6 +91,9 @@ export async function getPurchaseOrderById(req, res, next) {
         purchase_orders.total_amount,
         purchase_orders.expected_delivery_date,
         purchase_orders.notes,
+        purchase_orders.supplier_delivered_at,
+        purchase_orders.supplier_delivered_by,
+        purchase_orders.supplier_delivery_note,
         purchase_orders.received_at,
         purchase_orders.received_by,
         purchase_orders.created_at,
@@ -87,10 +103,13 @@ export async function getPurchaseOrderById(req, res, next) {
         suppliers.phone AS supplier_phone,
         suppliers.contact_person AS supplier_contact_person,
         users.name AS created_by_name,
+        supplier_delivered_by_user.name AS supplier_delivered_by_name,
         received_by_user.name AS received_by_name
       FROM purchase_orders
       JOIN suppliers ON purchase_orders.supplier_id = suppliers.id
       LEFT JOIN users ON purchase_orders.created_by = users.id
+      LEFT JOIN portal_users AS supplier_delivered_by_user
+        ON purchase_orders.supplier_delivered_by = supplier_delivered_by_user.id
       LEFT JOIN users AS received_by_user
         ON purchase_orders.received_by = received_by_user.id
       WHERE purchase_orders.id = $1`,
@@ -417,10 +436,10 @@ export async function receivePurchaseOrder(req, res, next) {
     await client.query("BEGIN");
 
     const orderResult = await client.query(
-      `SELECT id, status
-       FROM purchase_orders
-       WHERE id = $1
-       FOR UPDATE`,
+      `SELECT id, status, supplier_delivered_at
+      FROM purchase_orders
+      WHERE id = $1
+      FOR UPDATE`,
       [id]
     );
 
@@ -450,6 +469,15 @@ export async function receivePurchaseOrder(req, res, next) {
       return res.status(409).json({
         status: "error",
         message: "Purchase order has already been received",
+      });
+    }
+
+    if (!["draft", "ordered", "supplier_delivered"].includes(purchaseOrder.status)) {
+      await client.query("ROLLBACK");
+
+      return res.status(400).json({
+        status: "error",
+        message: "Purchase order cannot be received in its current status",
       });
     }
 
@@ -511,19 +539,22 @@ export async function receivePurchaseOrder(req, res, next) {
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $3
        RETURNING
-         id,
-         supplier_id,
-         created_by,
-         status,
-         subtotal,
-         gst_amount,
-         total_amount,
-         expected_delivery_date,
-         notes,
-         received_at,
-         received_by,
-         created_at,
-         updated_at`,
+        id,
+        supplier_id,
+        created_by,
+        status,
+        subtotal,
+        gst_amount,
+        total_amount,
+        expected_delivery_date,
+        notes,
+        supplier_delivered_at,
+        supplier_delivered_by,
+        supplier_delivery_note,
+        received_at,
+        received_by,
+        created_at,
+        updated_at`,
       ["received", req.user.id, id]
     );
 
