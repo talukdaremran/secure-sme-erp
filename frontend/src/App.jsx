@@ -33,6 +33,8 @@ import CustomerProductsPage from "./pages/CustomerProductsPage";
 import SupplierPortalLayout from "./layouts/SupplierPortalLayout";
 import SupplierPurchaseOrdersPage from "./pages/SupplierPurchaseOrdersPage";
 
+import AiAnalyticsPage from "./pages/AiAnalyticsPage";
+
 function App() {
   return (
     <Routes>
@@ -70,6 +72,7 @@ function App() {
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/sales-orders" element={<SalesOrdersPage />} />
           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+          <Route path="/ai-analytics" element={<AiAnalyticsPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/approvals" element={<ApprovalsPage />} />

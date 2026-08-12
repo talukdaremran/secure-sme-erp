@@ -3530,6 +3530,96 @@ tr.purchase-order-received-row td {
 }
 /* --- Supplier portal --- */
 
+/* === AI Analytics === */
+
+.ai-status-card {
+  margin-bottom: 18px;
+}
+
+.ai-connection-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.ai-connection-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  flex: 0 0 auto;
+}
+
+.ai-connected {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.ai-disconnected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.ai-connection-box h3 {
+  margin: 0 0 6px;
+  color: #0f172a;
+}
+
+.ai-connection-box p {
+  margin: 0 0 10px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.ai-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ai-feature-card {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.ai-feature-card svg {
+  font-size: 24px;
+  color: #2563eb;
+  margin-bottom: 10px;
+}
+
+.ai-feature-card h3 {
+  margin: 0 0 6px;
+  color: #0f172a;
+}
+
+.ai-feature-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.metric-red .metric-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+@media (max-width: 900px) {
+  .ai-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-connection-box {
+    flex-direction: column;
+  }
+}
+/* --- AI Analytics --- */
+
+
 
 /* === Responsive styles for smaller devices === */
 @media (max-width: 1100px) {
