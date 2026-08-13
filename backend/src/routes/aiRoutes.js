@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAiServiceHealth,
   getSalesForecast,
+  getAuditAnomalies,
 } from "../controllers/aiController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -11,5 +12,6 @@ router.use(protect);
 
 router.get("/health", getAiServiceHealth);
 router.get("/sales-forecast", getSalesForecast);
+router.get("/audit-anomalies", getAuditAnomalies);
 
 export default router;

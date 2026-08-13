@@ -7,6 +7,8 @@ import {
   FiDollarSign,
   FiRefreshCw,
   FiTrendingUp,
+  FiCheckCircle,
+  FiShield,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
 
@@ -20,6 +22,10 @@ function AiAnalyticsPage() {
 
   const [healthError, setHealthError] = useState("");
   const [forecastError, setForecastError] = useState("");
+
+  const [anomalyData, setAnomalyData] = useState(null);
+  const [anomalyLoading, setAnomalyLoading] = useState(true);
+  const [anomalyError, setAnomalyError] = useState("");
 
   async function checkAiHealth() {
     try {
@@ -58,14 +64,34 @@ function AiAnalyticsPage() {
     }
   }
 
+  async function fetchAuditAnomalies(limit = 100) {
+    try {
+      setAnomalyLoading(true);
+      setAnomalyError("");
+
+      const response = await apiClient.get(`/ai/audit-anomalies?limit=${limit}`);
+
+      setAnomalyData(response.data?.data || null);
+    } catch (error) {
+      setAnomalyData(error.response?.data?.data || null);
+      setAnomalyError(
+        error.response?.data?.message || "Unable to analyse audit logs."
+      );
+    } finally {
+      setAnomalyLoading(false);
+    }
+  }
+
   async function refreshAiAnalytics() {
     await checkAiHealth();
     await fetchSalesForecast();
+    await fetchAuditAnomalies();
   }
 
   useEffect(() => {
     checkAiHealth();
     fetchSalesForecast();
+    fetchAuditAnomalies();
   }, []);
 
   function formatCurrency(value) {
@@ -100,6 +126,26 @@ function AiAnalyticsPage() {
     1
   );
 
+  const anomalyResult = anomalyData?.result;
+  const anomalies = anomalyResult?.anomalies || [];
+  const anomalySummary = anomalyResult?.summary || {
+    high: 0,
+    medium: 0,
+    low: 0,
+  };
+
+  function getSeverityBadgeClass(severity) {
+    if (severity === "high") {
+      return "badge badge-danger";
+    }
+
+    if (severity === "medium") {
+      return "badge badge-warning";
+    }
+
+    return "badge badge-info";
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -115,15 +161,16 @@ function AiAnalyticsPage() {
           type="button"
           className="secondary-button"
           onClick={refreshAiAnalytics}
-          disabled={checking || forecastLoading}
+          disabled={checking || forecastLoading || anomalyLoading}
         >
           <FiRefreshCw />
-          {checking || forecastLoading ? "Refreshing..." : "Refresh AI Data"}
+          {checking || forecastLoading || anomalyLoading ? "Refreshing..." : "Refresh AI Data"}
         </button>
       </div>
 
       {healthError && <p className="message error-message">{healthError}</p>}
       {forecastError && <p className="message error-message">{forecastError}</p>}
+      {anomalyError && <p className="message error-message">{anomalyError}</p>}
 
       <div className="dashboard-metric-grid">
         <article
@@ -177,6 +224,17 @@ function AiAnalyticsPage() {
           <div>
             <span>Average Daily Forecast</span>
             <strong>{formatCurrency(averagePredictedSales)}</strong>
+          </div>
+        </article>
+
+        <article className="dashboard-metric-card metric-red">
+          <div className="metric-icon">
+            <FiShield />
+          </div>
+
+          <div>
+            <span>High Risk Anomalies</span>
+            <strong>{anomalySummary.high}</strong>
           </div>
         </article>
       </div>
@@ -317,6 +375,110 @@ function AiAnalyticsPage() {
                     </div>
                   );
                 })}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="table-card ai-status-card">
+        <div className="table-card-header">
+          <div>
+            <h2>Audit Log Anomaly Detection</h2>
+            <p>
+              Analyse recent audit logs for suspicious patterns such as repeated
+              failed logins, risky actions, and unusual activity.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => fetchAuditAnomalies(100)}
+            disabled={anomalyLoading}
+          >
+            <FiShield />
+            {anomalyLoading ? "Analysing..." : "Analyse Logs"}
+          </button>
+        </div>
+
+        <div className="panel-body">
+          {anomalyLoading ? (
+            <p>Analysing audit logs...</p>
+          ) : anomalyError ? (
+            <div className="empty-state">
+              <FiAlertTriangle />
+              <h3>Anomaly detection unavailable</h3>
+              <p>{anomalyError}</p>
+            </div>
+          ) : anomalies.length === 0 ? (
+            <div className="empty-state">
+              <FiCheckCircle />
+              <h3>No suspicious activity detected</h3>
+              <p>
+                The AI service analysed recent audit logs and did not find suspicious
+                patterns based on the current detection rules.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="ai-anomaly-summary">
+                <article className="severity-high">
+                  <span>High</span>
+                  <strong>{anomalySummary.high}</strong>
+                </article>
+
+                <article className="severity-medium">
+                  <span>Medium</span>
+                  <strong>{anomalySummary.medium}</strong>
+                </article>
+
+                <article className="severity-low">
+                  <span>Low</span>
+                  <strong>{anomalySummary.low}</strong>
+                </article>
+
+                <article>
+                  <span>Logs Analysed</span>
+                  <strong>{anomalyResult?.logs_analysed || 0}</strong>
+                </article>
+              </div>
+
+              <div className="ai-anomaly-list">
+                {anomalies.map((anomaly, index) => (
+                  <article className="ai-anomaly-card" key={`${anomaly.type}-${index}`}>
+                    <div className="ai-anomaly-card-header">
+                      <div>
+                        <span className={getSeverityBadgeClass(anomaly.severity)}>
+                          {String(anomaly.severity).toUpperCase()}
+                        </span>
+                        <h3>{anomaly.title}</h3>
+                      </div>
+
+                      <FiAlertTriangle />
+                    </div>
+
+                    <p>{anomaly.description}</p>
+
+                    {anomaly.evidence && (
+                      <div className="ai-anomaly-evidence">
+                        <strong>Evidence</strong>
+
+                        {Object.entries(anomaly.evidence).map(([key, value]) => (
+                          <span key={key}>
+                            {key.replaceAll("_", " ")}: {String(value)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {anomaly.recommendation && (
+                      <p className="ai-anomaly-recommendation">
+                        <strong>Recommendation:</strong> {anomaly.recommendation}
+                      </p>
+                    )}
+                  </article>
+                ))}
               </div>
             </>
           )}

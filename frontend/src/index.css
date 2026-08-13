@@ -3696,6 +3696,117 @@ tr.purchase-order-received-row td {
     text-align: left;
   }
 }
+
+/* === AI audit anomalies === */
+
+.ai-anomaly-summary {
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-anomaly-summary article {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.ai-anomaly-summary span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ai-anomaly-summary strong {
+  color: #0f172a;
+  font-size: 22px;
+}
+
+.ai-anomaly-summary .severity-high {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.ai-anomaly-summary .severity-medium {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.ai-anomaly-summary .severity-low {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.ai-anomaly-list {
+  display: grid;
+  gap: 14px;
+}
+
+.ai-anomaly-card {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.ai-anomaly-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.ai-anomaly-card-header h3 {
+  margin: 8px 0 0;
+  color: #0f172a;
+}
+
+.ai-anomaly-card-header svg {
+  color: #f97316;
+  font-size: 22px;
+}
+
+.ai-anomaly-card p {
+  margin: 0 0 12px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.ai-anomaly-evidence {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 12px;
+  display: grid;
+  gap: 6px;
+  background: #f8fafc;
+}
+
+.ai-anomaly-evidence strong {
+  color: #0f172a;
+}
+
+.ai-anomaly-evidence span {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.ai-anomaly-recommendation {
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 900px) {
+  .ai-anomaly-summary {
+    grid-template-columns: 1fr;
+  }
+}
 /* --- AI Analytics --- */
 
 
