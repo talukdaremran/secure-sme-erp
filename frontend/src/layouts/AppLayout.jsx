@@ -25,18 +25,18 @@ import { useAuth } from "../context/AuthContext";
 import appIcon from "../assets/favicon.svg";
 
 const pageTitles = {
-  "/dashboard": "Dashboard",
-  "/ai-analytics": "AI Analytics",
+  "/dashboard": "Operations Overview",
+  "/ai-analytics": "Intelligence Hub",
   "/products": "Products",
   "/customers": "Customers",
-  "/sales-orders": "Sales Orders",
+  "/sales-orders": "Sales Fulfilment",
   "/invoices": "Invoices",
-  "/inventory": "Inventory",
-  "/audit-logs": "Audit Logs",
-  "/users": "Users",
+  "/inventory": "Stock Control",
+  "/audit-logs": "Security Monitor",
+  "/users": "Team Access",
   "/suppliers": "Suppliers",
-  "/purchase-orders": "Purchase Orders",
-  "/approvals": "Approvals",
+  "/purchase-orders": "Procurement",
+  "/approvals": "Control Centre",
 };
 
 function AppLayout() {
@@ -228,7 +228,7 @@ function AppLayout() {
     pageTitles[location.pathname] || "Page Not Found";
   
   useEffect(() => {
-    document.title = `${pageTitle} | SME ERP`;
+    document.title = `${pageTitle} | CoreFlow`;
   }, [pageTitle]);
 
   return (
@@ -240,77 +240,95 @@ function AppLayout() {
           </div>
 
           <div>
-            <h2>SME ERP</h2>
-            <p>Secure Business Portal</p>
+            <h2>CoreFlow</h2>
+            <p>Operations Platform</p>
           </div>
         </div>
 
         <nav className="sidebar-nav">
-          {isAdmin && (
-            <NavLink to="/dashboard">
-              <FiBarChart2 />
-              <span>Dashboard</span>
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Command Centre</p>
+
+            {isAdmin && (
+              <NavLink to="/dashboard">
+                <FiBarChart2 />
+                <span>Dashboard</span>
+              </NavLink>
+            )}
+
+            <NavLink to="/ai-analytics">
+              <FiCpu />
+              <span>AI Analytics</span>
             </NavLink>
-          )}
+          </div>
 
-          <NavLink to="/ai-analytics">
-            <FiCpu />
-            AI Analytics
-          </NavLink>
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Operations</p>
 
-          <NavLink to="/products">
-            <FiBox />
-            <span>Products</span>
-          </NavLink>
+            <NavLink to="/products">
+              <FiBox />
+              <span>Products</span>
+            </NavLink>
 
-          <NavLink to="/customers">
-            <FiUsers />
-            <span>Customers</span>
-          </NavLink>
+            <NavLink to="/inventory">
+              <FiArchive />
+              <span>Inventory</span>
+            </NavLink>
 
-          <NavLink to="/suppliers">
-            <FiTruck />
-            <span>Suppliers</span>
-          </NavLink>
+            <NavLink to="/sales-orders">
+              <FiShoppingCart />
+              <span>Sales Orders</span>
+            </NavLink>
 
-          <NavLink to="/sales-orders">
-            <FiShoppingCart />
-            <span>Sales Orders</span>
-          </NavLink>
+            <NavLink to="/invoices">
+              <FiFileText />
+              <span>Invoices</span>
+            </NavLink>
+          </div>
 
-          <NavLink to="/purchase-orders">
-            <FiShoppingBag />
-            <span>Purchase Orders</span>
-          </NavLink>
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Relationships</p>
 
-          <NavLink to="/invoices">
-            <FiFileText />
-            <span>Invoices</span>
-          </NavLink>
+            <NavLink to="/customers">
+              <FiUsers />
+              <span>Customers</span>
+            </NavLink>
 
-          <NavLink to="/inventory">
-            <FiArchive />
-            <span>Inventory</span>
-          </NavLink>
+            <NavLink to="/suppliers">
+              <FiTruck />
+              <span>Suppliers</span>
+            </NavLink>
 
-          <NavLink to="/approvals">
-            <FiShield />
-            <span>{user?.role === "Admin" ? "Approvals" : "Request Adjustment"}</span>
-          </NavLink>
+            <NavLink to="/purchase-orders">
+              <FiShoppingBag />
+              <span>Purchase Orders</span>
+            </NavLink>
+          </div>
 
-          {isAdmin && (
-            <>
-              <NavLink to="/audit-logs">
-                <FiActivity />
-                <span>Audit Logs</span>
-              </NavLink>
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Security</p>
 
-              <NavLink to="/users">
-                <FiClipboard />
-                <span>Users</span>
-              </NavLink>
-            </>
-          )}
+            <NavLink to="/approvals">
+              <FiShield />
+              <span>
+                {user?.role === "Admin" ? "Approvals" : "Request Adjustment"}
+              </span>
+            </NavLink>
+
+            {isAdmin && (
+              <>
+                <NavLink to="/audit-logs">
+                  <FiActivity />
+                  <span>Audit Logs</span>
+                </NavLink>
+
+                <NavLink to="/users">
+                  <FiClipboard />
+                  <span>Users</span>
+                </NavLink>
+              </>
+            )}
+          </div>
         </nav>
 
         <div className="sidebar-footer">
@@ -495,26 +513,6 @@ function AppLayout() {
       </aside>
 
       <div className="content-shell">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Secure SME ERP</p>
-            <h1>Business Management System</h1>
-          </div>
-
-          {user && (
-            <button
-              type="button"
-              className="topbar-user topbar-account-button"
-              onClick={handleOpenProfile}
-            >
-              <span>{user.role}</span>
-              <div className="topbar-avatar">
-                {user.name?.charAt(0).toUpperCase()}
-              </div>
-            </button>
-          )}
-        </header>
-
         <main className="main-content">
           <Outlet />
         </main>
