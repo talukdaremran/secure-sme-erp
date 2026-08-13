@@ -210,31 +210,121 @@ function AiAnalyticsPage() {
 
   return (
     <section>
-      <div className="page-header">
-        <div>
-          <h1>AI Analytics</h1>
+      <div className="ai-hero">
+        <div className="ai-hero-main">
+          <span className="hero-kicker">Intelligence Hub</span>
+
+          <h1>AI Insights for Operations</h1>
+
           <p>
-            Monitor the Python AI service and generate sales forecasts from ERP
-            sales order data.
+            Forecast sales, detect suspicious activity, and identify customer activity
+            risk using data from the ERP workflow.
           </p>
+
+          <div className="ai-hero-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={refreshAiAnalytics}
+              disabled={
+                checking ||
+                forecastLoading ||
+                anomalyLoading ||
+                customerActivityLoading
+              }
+            >
+              <FiRefreshCw />
+              {checking || forecastLoading || anomalyLoading || customerActivityLoading
+                ? "Refreshing..."
+                : "Refresh Insights"}
+            </button>
+
+            <span className={isConnected ? "ai-live-pill connected" : "ai-live-pill offline"}>
+              {healthLoading ? "Checking AI Service" : isConnected ? "AI Service Live" : "AI Service Offline"}
+            </span>
+          </div>
         </div>
 
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={refreshAiAnalytics}
-          disabled={
-            checking ||
-            forecastLoading ||
-            anomalyLoading ||
-            customerActivityLoading
-          }
-        >
-          <FiRefreshCw />
-          {checking || forecastLoading || anomalyLoading || customerActivityLoading 
-            ? "Refreshing..." 
-            : "Refresh AI Data"}
-        </button>
+        <div className="ai-hero-panel">
+          <div className="ai-service-mini-card">
+            <div
+              className={`ai-connection-icon ${
+                isConnected ? "ai-connected" : "ai-disconnected"
+              }`}
+            >
+              {isConnected ? <FiCpu /> : <FiAlertTriangle />}
+            </div>
+
+            <div>
+              <span>Python FastAPI Service</span>
+              <strong>
+                {healthLoading
+                  ? "Checking..."
+                  : isConnected
+                  ? "Connected"
+                  : "Offline"}
+              </strong>
+              <p>{aiStatus?.aiServiceUrl || "Service URL unavailable"}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {healthError && <p className="message error-message">{healthError}</p>}
+      {forecastError && <p className="message error-message">{forecastError}</p>}
+      {anomalyError && <p className="message error-message">{anomalyError}</p>}
+      {customerActivityError && (
+        <p className="message error-message">{customerActivityError}</p>
+      )}
+
+      <div className="ai-module-grid">
+        <article className="ai-module-card">
+          <div className="ai-module-icon sales">
+            <FiTrendingUp />
+          </div>
+
+          <div>
+            <span>Sales Forecast</span>
+            <strong>{formatCurrency(totalPredictedSales)}</strong>
+            <p>Predicted 7-day revenue</p>
+          </div>
+        </article>
+
+        <article className="ai-module-card">
+          <div className="ai-module-icon security">
+            <FiShield />
+          </div>
+
+          <div>
+            <span>Security Anomalies</span>
+            <strong>{anomalySummary.high}</strong>
+            <p>High severity findings</p>
+          </div>
+        </article>
+
+        <article className="ai-module-card">
+          <div className="ai-module-icon customers">
+            <FiUsers />
+          </div>
+
+          <div>
+            <span>Customer Risk</span>
+            <strong>{customerActivitySummary.at_risk}</strong>
+            <p>Customers marked at risk</p>
+          </div>
+        </article>
+
+        <article className="ai-module-card">
+          <div className="ai-module-icon model">
+            <FiActivity />
+          </div>
+
+          <div>
+            <span>Active Models</span>
+            <strong>3</strong>
+            <p>Forecasting, anomaly, activity</p>
+          </div>
+        </article>
       </div>
 
       {healthError && <p className="message error-message">{healthError}</p>}
@@ -321,61 +411,6 @@ function AiAnalyticsPage() {
           </div>
         </article>
       </div>
-
-      <section className="table-card ai-status-card">
-        <div className="table-card-header">
-          <div>
-            <h2>AI Service Connection</h2>
-            <p>
-              This checks whether the Node/Express backend can communicate with
-              the Python FastAPI service.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={checkAiHealth}
-            disabled={checking}
-          >
-            <FiRefreshCw />
-            {checking ? "Checking..." : "Check Connection"}
-          </button>
-        </div>
-
-        <div className="panel-body">
-          <div className="ai-connection-box">
-            <div
-              className={`ai-connection-icon ${
-                isConnected ? "ai-connected" : "ai-disconnected"
-              }`}
-            >
-              {isConnected ? <FiCpu /> : <FiAlertTriangle />}
-            </div>
-
-            <div>
-              <h3>
-                {healthLoading
-                  ? "Checking AI service..."
-                  : isConnected
-                  ? "AI service is connected"
-                  : "AI service is not connected"}
-              </h3>
-
-              <p>
-                {isConnected
-                  ? aiStatus?.aiService?.message ||
-                    "The backend successfully connected to the AI service."
-                  : "Start the Python AI service and check the connection again."}
-              </p>
-
-              <p className="auth-note">
-                AI Service URL: {aiStatus?.aiServiceUrl || "Not available"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <section className="table-card ai-status-card">
         <div className="table-card-header">
@@ -753,9 +788,10 @@ function AiAnalyticsPage() {
       <section className="table-card">
         <div className="table-card-header">
           <div>
-            <h2>Planned AI Features</h2>
+            <h2>AI Modules Summary</h2>
             <p>
-              These features will be added after the sales forecasting endpoint.
+              The system combines operational ERP data with a separate Python AI
+              service for decision-support insights.
             </p>
           </div>
         </div>
@@ -766,25 +802,26 @@ function AiAnalyticsPage() {
               <FiTrendingUp />
               <h3>Sales Forecasting</h3>
               <p>
-                Predict future sales trends using historical sales order data.
+                Uses historical completed sales orders to predict short-term sales
+                trends.
               </p>
             </article>
 
             <article className="ai-feature-card">
               <FiAlertTriangle />
-              <h3>Anomaly Detection</h3>
+              <h3>Audit Anomaly Detection</h3>
               <p>
-                Detect unusual activity patterns in audit logs or business
-                transactions.
+                Reviews audit logs for suspicious behaviour such as repeated failed
+                logins and risky actions.
               </p>
             </article>
 
             <article className="ai-feature-card">
-              <FiActivity />
-              <h3>Customer Prediction</h3>
+              <FiUsers />
+              <h3>Customer Activity Prediction</h3>
               <p>
-                Analyse customer behaviour for future churn or activity
-                prediction.
+                Classifies customers as active, at risk, or inactive based on order
+                behaviour.
               </p>
             </article>
           </div>
