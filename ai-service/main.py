@@ -48,6 +48,19 @@ class AuditLogItem(BaseModel):
 class AuditAnomalyRequest(BaseModel):
     audit_logs: List[AuditLogItem]
 
+class CustomerActivityItem(BaseModel):
+    customer_id: int
+    customer_name: str
+    customer_email: Optional[str] = None
+    order_count: int = 0
+    total_spent: float = 0
+    average_order_value: float = 0
+    last_order_date: Optional[str] = None
+
+
+class CustomerActivityPredictionRequest(BaseModel):
+    customers: List[CustomerActivityItem]
+
 def get_actor_label(log: AuditLogItem):
     if log.user_email:
         return log.user_email
@@ -69,7 +82,7 @@ def health_check():
         "features": {
             "sales_forecasting": "available",
             "anomaly_detection": "available",
-            "customer_churn_prediction": "planned",
+            "customer_churn_prediction": "available",
         },
     }
 
@@ -297,3 +310,118 @@ def detect_audit_anomalies(request: AuditAnomalyRequest):
             "low": severity_counter.get("low", 0),
         },
     }
+
+@app.post("/predict/customer-activity")
+def predict_customer_activity(request: CustomerActivityPredictionRequest):
+    predictions = []
+    today = datetime.utcnow().date()
+
+    for customer in request.customers:
+        days_since_last_order = None
+
+        if customer.last_order_date:
+            try:
+                last_order_date = datetime.strptime(
+                    customer.last_order_date,
+                    "%Y-%m-%d",
+                ).date()
+
+                days_since_last_order = (today - last_order_date).days
+            except ValueError:
+                days_since_last_order = None
+
+        risk_score = 0
+        risk_reasons = []
+
+        if customer.order_count == 0:
+            risk_score += 90
+            risk_reasons.append("Customer has not placed any orders.")
+        elif days_since_last_order is None:
+            risk_score += 70
+            risk_reasons.append("Last order date is unavailable.")
+        else:
+            if days_since_last_order > 90:
+                risk_score += 80
+                risk_reasons.append("Customer has not ordered in over 90 days.")
+            elif days_since_last_order > 45:
+                risk_score += 55
+                risk_reasons.append("Customer has not ordered in over 45 days.")
+            elif days_since_last_order > 30:
+                risk_score += 35
+                risk_reasons.append("Customer has not ordered in over 30 days.")
+            else:
+                risk_score += 10
+                risk_reasons.append("Customer has ordered recently.")
+
+        if customer.order_count <= 1:
+            risk_score += 15
+            risk_reasons.append("Customer has very low order frequency.")
+        elif customer.order_count >= 5:
+            risk_score -= 15
+            risk_reasons.append("Customer has repeated order activity.")
+
+        if customer.total_spent >= 1000:
+            risk_score -= 10
+            risk_reasons.append("Customer has high total spending.")
+
+        risk_score = max(0, min(100, risk_score))
+
+        if risk_score >= 70:
+            activity_status = "inactive"
+            recommendation = (
+                "Review this customer and consider follow-up communication or "
+                "a retention offer."
+            )
+        elif risk_score >= 40:
+            activity_status = "at_risk"
+            recommendation = (
+                "Monitor this customer and encourage a repeat order."
+            )
+        else:
+            activity_status = "active"
+            recommendation = (
+                "Customer activity looks healthy. Continue normal engagement."
+            )
+
+        predictions.append(
+            {
+                "customer_id": customer.customer_id,
+                "customer_name": customer.customer_name,
+                "customer_email": customer.customer_email,
+                "activity_status": activity_status,
+                "risk_score": risk_score,
+                "order_count": customer.order_count,
+                "total_spent": round(float(customer.total_spent), 2),
+                "average_order_value": round(
+                    float(customer.average_order_value),
+                    2,
+                ),
+                "last_order_date": customer.last_order_date,
+                "days_since_last_order": days_since_last_order,
+                "risk_reasons": risk_reasons,
+                "recommendation": recommendation,
+            }
+        )
+
+    predictions.sort(key=lambda item: item["risk_score"], reverse=True)
+
+    summary = {
+        "active": len(
+            [item for item in predictions if item["activity_status"] == "active"]
+        ),
+        "at_risk": len(
+            [item for item in predictions if item["activity_status"] == "at_risk"]
+        ),
+        "inactive": len(
+            [item for item in predictions if item["activity_status"] == "inactive"]
+        ),
+    }
+
+    return {
+        "status": "success",
+        "model": "RuleBasedCustomerActivityPrediction",
+        "customers_analysed": len(predictions),
+        "summary": summary,
+        "predictions": predictions,
+    }
+

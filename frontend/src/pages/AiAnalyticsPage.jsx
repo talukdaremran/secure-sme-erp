@@ -9,6 +9,7 @@ import {
   FiTrendingUp,
   FiCheckCircle,
   FiShield,
+  FiUsers,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
 
@@ -26,6 +27,10 @@ function AiAnalyticsPage() {
   const [anomalyData, setAnomalyData] = useState(null);
   const [anomalyLoading, setAnomalyLoading] = useState(true);
   const [anomalyError, setAnomalyError] = useState("");
+
+  const [customerActivityData, setCustomerActivityData] = useState(null);
+  const [customerActivityLoading, setCustomerActivityLoading] = useState(true);
+  const [customerActivityError, setCustomerActivityError] = useState("");
 
   async function checkAiHealth() {
     try {
@@ -82,16 +87,37 @@ function AiAnalyticsPage() {
     }
   }
 
+  async function fetchCustomerActivityPredictions() {
+    try {
+      setCustomerActivityLoading(true);
+      setCustomerActivityError("");
+
+      const response = await apiClient.get("/ai/customer-activity");
+
+      setCustomerActivityData(response.data?.data || null);
+    } catch (error) {
+      setCustomerActivityData(error.response?.data?.data || null);
+      setCustomerActivityError(
+        error.response?.data?.message ||
+          "Unable to load customer activity predictions."
+      );
+    } finally {
+      setCustomerActivityLoading(false);
+    }
+  }
+
   async function refreshAiAnalytics() {
     await checkAiHealth();
     await fetchSalesForecast();
     await fetchAuditAnomalies();
+    await fetchCustomerActivityPredictions();
   }
 
   useEffect(() => {
     checkAiHealth();
     fetchSalesForecast();
     fetchAuditAnomalies();
+    fetchCustomerActivityPredictions();
   }, []);
 
   function formatCurrency(value) {
@@ -146,6 +172,42 @@ function AiAnalyticsPage() {
     return "badge badge-info";
   }
 
+  const customerActivityResult = customerActivityData?.result;
+  const customerPredictions = customerActivityResult?.predictions || [];
+  const customerActivitySummary = customerActivityResult?.summary || {
+    active: 0,
+    at_risk: 0,
+    inactive: 0,
+  };
+
+  function getCustomerActivityBadgeClass(status) {
+    if (status === "active") {
+      return "badge badge-success";
+    }
+
+    if (status === "at_risk") {
+      return "badge badge-warning";
+    }
+
+    return "badge badge-danger";
+  }
+
+  function formatActivityStatus(status) {
+    if (status === "at_risk") {
+      return "At Risk";
+    }
+
+    if (status === "active") {
+      return "Active";
+    }
+
+    if (status === "inactive") {
+      return "Inactive";
+    }
+
+    return "-";
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -161,16 +223,26 @@ function AiAnalyticsPage() {
           type="button"
           className="secondary-button"
           onClick={refreshAiAnalytics}
-          disabled={checking || forecastLoading || anomalyLoading}
+          disabled={
+            checking ||
+            forecastLoading ||
+            anomalyLoading ||
+            customerActivityLoading
+          }
         >
           <FiRefreshCw />
-          {checking || forecastLoading || anomalyLoading ? "Refreshing..." : "Refresh AI Data"}
+          {checking || forecastLoading || anomalyLoading || customerActivityLoading 
+            ? "Refreshing..." 
+            : "Refresh AI Data"}
         </button>
       </div>
 
       {healthError && <p className="message error-message">{healthError}</p>}
       {forecastError && <p className="message error-message">{forecastError}</p>}
       {anomalyError && <p className="message error-message">{anomalyError}</p>}
+      {customerActivityError && (
+        <p className="message error-message">{customerActivityError}</p>
+      )}
 
       <div className="dashboard-metric-grid">
         <article
@@ -235,6 +307,17 @@ function AiAnalyticsPage() {
           <div>
             <span>High Risk Anomalies</span>
             <strong>{anomalySummary.high}</strong>
+          </div>
+        </article>
+
+        <article className="dashboard-metric-card metric-orange">
+          <div className="metric-icon">
+            <FiUsers />
+          </div>
+
+          <div>
+            <span>At-Risk Customers</span>
+            <strong>{customerActivitySummary.at_risk}</strong>
           </div>
         </article>
       </div>
@@ -477,6 +560,148 @@ function AiAnalyticsPage() {
                         <strong>Recommendation:</strong> {anomaly.recommendation}
                       </p>
                     )}
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="table-card ai-status-card">
+        <div className="table-card-header">
+          <div>
+            <h2>Customer Activity Prediction</h2>
+            <p>
+              Analyse customer order history and classify customers as active, at
+              risk, or inactive.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={fetchCustomerActivityPredictions}
+            disabled={customerActivityLoading}
+          >
+            <FiUsers />
+            {customerActivityLoading ? "Predicting..." : "Predict Activity"}
+          </button>
+        </div>
+
+        <div className="panel-body">
+          {customerActivityLoading ? (
+            <p>Analysing customer activity...</p>
+          ) : customerActivityError ? (
+            <div className="empty-state">
+              <FiAlertTriangle />
+              <h3>Customer prediction unavailable</h3>
+              <p>{customerActivityError}</p>
+            </div>
+          ) : customerPredictions.length === 0 ? (
+            <div className="empty-state">
+              <FiUsers />
+              <h3>No customer activity data available</h3>
+              <p>Create customers and sales orders to generate predictions.</p>
+            </div>
+          ) : (
+            <>
+              <div className="ai-customer-summary">
+                <article className="customer-active">
+                  <span>Active</span>
+                  <strong>{customerActivitySummary.active}</strong>
+                </article>
+
+                <article className="customer-risk">
+                  <span>At Risk</span>
+                  <strong>{customerActivitySummary.at_risk}</strong>
+                </article>
+
+                <article className="customer-inactive">
+                  <span>Inactive</span>
+                  <strong>{customerActivitySummary.inactive}</strong>
+                </article>
+
+                <article>
+                  <span>Customers Analysed</span>
+                  <strong>{customerActivityResult?.customers_analysed || 0}</strong>
+                </article>
+              </div>
+
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Customer</th>
+                      <th>Status</th>
+                      <th>Risk Score</th>
+                      <th>Orders</th>
+                      <th>Total Spent</th>
+                      <th>Last Order</th>
+                      <th>Recommendation</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {customerPredictions.map((customer) => (
+                      <tr key={customer.customer_id}>
+                        <td>
+                          <div>
+                            <strong>{customer.customer_name}</strong>
+                            <p className="table-subtext">
+                              {customer.customer_email || "-"}
+                            </p>
+                          </div>
+                        </td>
+
+                        <td>
+                          <span
+                            className={getCustomerActivityBadgeClass(
+                              customer.activity_status
+                            )}
+                          >
+                            {formatActivityStatus(customer.activity_status)}
+                          </span>
+                        </td>
+
+                        <td>
+                          <strong>{customer.risk_score}/100</strong>
+                        </td>
+
+                        <td>{customer.order_count}</td>
+                        <td>{formatCurrency(customer.total_spent)}</td>
+                        <td>{formatDate(customer.last_order_date)}</td>
+                        <td>{customer.recommendation}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="ai-customer-risk-list">
+                {customerPredictions.slice(0, 3).map((customer) => (
+                  <article
+                    className="ai-customer-risk-card"
+                    key={`risk-${customer.customer_id}`}
+                  >
+                    <div>
+                      <span
+                        className={getCustomerActivityBadgeClass(
+                          customer.activity_status
+                        )}
+                      >
+                        {formatActivityStatus(customer.activity_status)}
+                      </span>
+
+                      <h3>{customer.customer_name}</h3>
+                      <p>Risk score: {customer.risk_score}/100</p>
+                    </div>
+
+                    <ul>
+                      {customer.risk_reasons.map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
                   </article>
                 ))}
               </div>

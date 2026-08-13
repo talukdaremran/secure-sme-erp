@@ -178,3 +178,73 @@ export async function getAuditAnomalies(req, res, next) {
     next(error);
   }
 }
+
+export async function getCustomerActivityPrediction(req, res, next) {
+  try {
+    const customersResult = await pool.query(
+      `SELECT
+         customers.id AS customer_id,
+         customers.name AS customer_name,
+         customers.email AS customer_email,
+         COUNT(sales_orders.id)::int AS order_count,
+         COALESCE(SUM(sales_orders.total_amount), 0)::float AS total_spent,
+         COALESCE(AVG(sales_orders.total_amount), 0)::float AS average_order_value,
+         MAX(DATE(sales_orders.created_at)) AS last_order_date
+       FROM customers
+       LEFT JOIN sales_orders
+         ON customers.id = sales_orders.customer_id
+        AND sales_orders.status IN ('placed', 'confirmed', 'paid', 'delivered')
+       GROUP BY
+         customers.id,
+         customers.name,
+         customers.email
+       ORDER BY customers.id ASC`
+    );
+
+    const customers = customersResult.rows.map((row) => ({
+      customer_id: row.customer_id,
+      customer_name: row.customer_name,
+      customer_email: row.customer_email,
+      order_count: Number(row.order_count),
+      total_spent: Number(row.total_spent),
+      average_order_value: Number(row.average_order_value),
+      last_order_date: row.last_order_date
+        ? row.last_order_date.toISOString().slice(0, 10)
+        : null,
+    }));
+
+    const response = await fetch(
+      `${AI_SERVICE_URL}/predict/customer-activity`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customers,
+        }),
+      }
+    );
+
+    const aiResult = await response.json();
+
+    if (!response.ok) {
+      return res.status(502).json({
+        status: "error",
+        message: "AI service failed to predict customer activity",
+        data: aiResult,
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Customer activity prediction completed successfully",
+      data: {
+        customersAnalysed: customers.length,
+        result: aiResult,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
