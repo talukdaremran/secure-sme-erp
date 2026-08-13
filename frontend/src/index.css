@@ -3807,6 +3807,96 @@ tr.purchase-order-received-row td {
     grid-template-columns: 1fr;
   }
 }
+
+/* === AI customer activity prediction === */
+
+.ai-customer-summary {
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-customer-summary article {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.ai-customer-summary span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ai-customer-summary strong {
+  color: #0f172a;
+  font-size: 22px;
+}
+
+.ai-customer-summary .customer-active {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.ai-customer-summary .customer-risk {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.ai-customer-summary .customer-inactive {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.table-subtext {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-customer-risk-list {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ai-customer-risk-card {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.ai-customer-risk-card h3 {
+  margin: 10px 0 4px;
+  color: #0f172a;
+}
+
+.ai-customer-risk-card p {
+  margin: 0 0 12px;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.ai-customer-risk-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .ai-customer-summary,
+  .ai-customer-risk-list {
+    grid-template-columns: 1fr;
+  }
+}
 /* --- AI Analytics --- */
 
 
