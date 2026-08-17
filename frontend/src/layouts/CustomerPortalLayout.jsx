@@ -1,4 +1,11 @@
-import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  Navigate,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import {
   FiBox,
   FiLogOut,
@@ -11,10 +18,36 @@ import { useCustomerCart } from "../context/CustomerCartContext";
 import { usePortalAuth } from "../context/PortalAuthContext";
 import "../styles/customerPortal.css";
 
+const pageTitles = {
+  "/customer/products": "Products",
+  "/customer/cart": "Cart",
+  "/customer/orders": "Orders",
+};
+
+function getCustomerPageTitle(pathname) {
+  if (pageTitles[pathname]) {
+    return pageTitles[pathname];
+  }
+
+  if (pathname.startsWith("/customer/products/")) {
+    return "Product Details";
+  }
+
+  return "Customer Portal";
+}
+
 function CustomerPortalLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const { portalUser, portalLoading, portalLogout } = usePortalAuth();
   const { cartCount, clearCart } = useCustomerCart();
+
+  const pageTitle = getCustomerPageTitle(location.pathname);
+
+  useEffect(() => {
+    document.title = `${pageTitle} | CoreFlow`;
+  }, [pageTitle]);
 
   if (portalLoading) {
     return (

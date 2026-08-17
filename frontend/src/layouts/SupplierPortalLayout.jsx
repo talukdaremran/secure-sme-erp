@@ -1,6 +1,13 @@
-import { Link, Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiLogOut, FiTruck } from "react-icons/fi";
+import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  FiClipboard,
+  FiLogOut,
+  FiTruck,
+  FiUser,
+} from "react-icons/fi";
+
 import { usePortalAuth } from "../context/PortalAuthContext";
+import "../styles/supplierPortal.css";
 
 function SupplierPortalLayout() {
   const navigate = useNavigate();
@@ -28,33 +35,46 @@ function SupplierPortalLayout() {
   }
 
   return (
-    <section className="supplier-portal-shell">
-      <header className="supplier-portal-header">
-        <Link to="/" className="back-link">
-          <FiArrowLeft />
-          Landing
-        </Link>
+    <div className="sf-shell">
+      <header className="sf-topbar">
+        <div className="sf-brand">
+          <div className="sf-brand-icon">
+            <FiTruck />
+          </div>
 
-        <div>
-          <h1>Supplier Portal</h1>
-          <p>Welcome, {portalUser.name}</p>
+          <div>
+            <span>CoreFlow Supplier Portal</span>
+            <strong>Vendor Workspace</strong>
+          </div>
         </div>
 
-        <button type="button" className="secondary-button" onClick={handleLogout}>
-          <FiLogOut />
-          Logout
-        </button>
+        <nav className="sf-nav" aria-label="Supplier portal navigation">
+          <NavLink
+            to="/supplier/purchase-orders"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            <FiClipboard />
+            Purchase Orders
+          </NavLink>
+        </nav>
+
+        <div className="sf-account">
+          <span>
+            <FiUser />
+            {portalUser?.name || "Supplier"}
+          </span>
+
+          <button type="button" onClick={handleLogout}>
+            <FiLogOut />
+            Logout
+          </button>
+        </div>
       </header>
 
-      <nav className="supplier-portal-nav">
-        <NavLink to="/supplier/purchase-orders">
-          <FiTruck />
-          Purchase Orders
-        </NavLink>
-      </nav>
-
-      <Outlet />
-    </section>
+      <main className="sf-main">
+        <Outlet />
+      </main>
+    </div>
   );
 }
 

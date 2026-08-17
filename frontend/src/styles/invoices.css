@@ -1,0 +1,31 @@
+/* === Invoices Page === */
+.invoice-form-modal,
+.invoice-detail-modal {
+  max-width: 980px;
+}
+
+.invoice-detail-modal {
+  width: min(1080px, calc(100vw - 48px));
+}
+
+.invoice-table-toolbar {
+  grid-template-columns: minmax(240px, 1fr) repeat(2, minmax(145px, 190px)) auto;
+}
+
+.payment-update-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.payment-update-control select {
+  max-width: 150px;
+  min-width: 135px;
+  margin-right: 0;
+}
+
+.payment-update-control button {
+  margin-left: 0;
+}
+/* --- Invoices Page --- */

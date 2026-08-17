@@ -6,6 +6,7 @@ import {
   FiUser,
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import "../styles/profile.css";
 
 function ProfilePage() {
   const { user } = useAuth();

@@ -1,0 +1,101 @@
+/* === Portal auth pages === */
+
+.portal-auth-page,
+.portal-home-page {
+  min-height: 100vh;
+  padding: 40px 20px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.12), transparent 30%),
+    #f8fafc;
+}
+
+.portal-auth-card,
+.portal-home-card {
+  width: min(480px, 100%);
+  padding: 26px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.1);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.portal-auth-header {
+  margin-bottom: 20px;
+}
+
+.portal-auth-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 24px;
+}
+
+.portal-auth-header h1,
+.portal-home-card h1 {
+  margin: 0 0 8px;
+  color: #0f172a;
+}
+
+.portal-auth-header p,
+.portal-home-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.portal-auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.portal-auth-footer {
+  margin: 16px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.portal-auth-footer a {
+  color: #2563eb;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.portal-home-placeholder {
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.portal-home-placeholder h2 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.portal-home-card button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* --- Portal auth pages --- */

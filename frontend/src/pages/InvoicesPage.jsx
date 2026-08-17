@@ -11,6 +11,7 @@ import {
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
+import "../styles/invoices.css";
 
 const initialFormData = {
   sales_order_id: "",

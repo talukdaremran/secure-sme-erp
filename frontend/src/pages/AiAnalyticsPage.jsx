@@ -12,6 +12,7 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
+import "../styles/aiAnalytics.css";
 
 function AiAnalyticsPage() {
   const [aiStatus, setAiStatus] = useState(null);

@@ -9,6 +9,7 @@ import {
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
 import ConfirmModal from "../components/ConfirmModal";
+import "../styles/products.css";
 
 const initialFormData = {
   name: "",

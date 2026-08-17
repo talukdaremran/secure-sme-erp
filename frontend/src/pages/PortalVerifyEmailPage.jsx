@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiCheckCircle } from "react-icons/fi";
 import portalApiClient from "../api/portalApiClient";
+import "../styles/portalAuth.css";
 
 function PortalVerifyEmailPage({ role }) {
   const navigate = useNavigate();

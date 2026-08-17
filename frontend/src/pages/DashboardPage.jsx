@@ -32,6 +32,7 @@ import {
   YAxis,
 } from "recharts";
 import apiClient from "../api/apiClient";
+import "../styles/dashboard.css";
 
 const chartColors = {
   blue: "#38bdf8",

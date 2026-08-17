@@ -23,6 +23,8 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import appIcon from "../assets/favicon.svg";
+import "../styles/appShell.css";
+import "../styles/internalResponsive.css";
 
 const pageTitles = {
   "/dashboard": "Operations Overview",

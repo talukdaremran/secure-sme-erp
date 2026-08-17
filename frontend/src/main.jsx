@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { PortalAuthProvider } from "./context/PortalAuthContext";
 import { CustomerCartProvider } from "./context/CustomerCartContext";
 import "./index.css";
+import "./styles/shared.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { FiBriefcase, FiShoppingCart, FiTruck } from "react-icons/fi";
 
+import "../styles/landing.css";
+
 function LandingPage() {
   return (
     <section className="landing-page">

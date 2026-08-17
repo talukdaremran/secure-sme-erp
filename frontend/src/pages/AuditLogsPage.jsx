@@ -11,6 +11,7 @@ import {
   FiXCircle,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
+import "../styles/auditLogs.css";
 
 function AuditLogsPage() {
   const [auditLogs, setAuditLogs] = useState([]);

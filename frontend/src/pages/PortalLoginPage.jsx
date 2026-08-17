@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiLock } from "react-icons/fi";
 import { usePortalAuth } from "../context/PortalAuthContext";
+import "../styles/portalAuth.css";
 
 function PortalLoginPage({ role }) {
   const navigate = useNavigate();

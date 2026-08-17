@@ -1,6 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import { FiArrowLeft, FiLogOut } from "react-icons/fi";
 import { usePortalAuth } from "../context/PortalAuthContext";
+import "../styles/portalAuth.css";
 
 function PortalHomePage({ role }) {
   const { portalUser, portalLoading, portalLogout } = usePortalAuth();

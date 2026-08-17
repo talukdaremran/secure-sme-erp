@@ -17,6 +17,7 @@ import {
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
 import { useAuth } from "../context/AuthContext";
+import "../styles/inventory.css";
 
 const initialFormData = {
   product_id: "",

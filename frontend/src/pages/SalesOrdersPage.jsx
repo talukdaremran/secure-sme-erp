@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
+import "../styles/salesOrders.css";
 
 const initialFormData = {
   customer_id: "",

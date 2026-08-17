@@ -1,0 +1,63 @@
+/* === Audit Logs Page === */
+
+.audit-table-toolbar {
+  grid-template-columns: minmax(280px, 1fr) repeat(3, minmax(145px, 190px)) auto;
+}
+
+.toolbar-input-with-icon {
+  width: 100%;
+  max-width: none;
+  position: relative;
+}
+
+.toolbar-input-with-icon svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  color: var(--primary);
+  transform: translateY(-50%);
+}
+
+.toolbar-input-with-icon input {
+  max-width: none;
+  padding-left: 38px;
+}
+
+.audit-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.audit-user-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: var(--primary-dark);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.audit-action-text {
+  color: #172033;
+  font-size: 13px;
+}
+
+.audit-entity-cell {
+  display: grid;
+  gap: 3px;
+}
+
+.audit-entity-cell strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.audit-entity-cell span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+/* --- Audit Logs Page --- */

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FiLock, FiMail } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import appIcon from "../assets/favicon.svg";
+import "../styles/auth.css";
 
 function LoginPage() {
   const navigate = useNavigate();

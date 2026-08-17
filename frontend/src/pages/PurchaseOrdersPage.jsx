@@ -12,6 +12,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import apiClient from "../api/apiClient";
+import "../styles/purchaseOrders.css";
 
 const GST_RATE = 0.1;
 
