@@ -1,7 +1,15 @@
-import { Link, Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiBox, FiLogOut, FiShoppingCart, FiUser } from "react-icons/fi";
+import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  FiBox,
+  FiLogOut,
+  FiShoppingBag,
+  FiShoppingCart,
+  FiUser,
+} from "react-icons/fi";
+
 import { useCustomerCart } from "../context/CustomerCartContext";
 import { usePortalAuth } from "../context/PortalAuthContext";
+import "../styles/customerPortal.css";
 
 function CustomerPortalLayout() {
   const navigate = useNavigate();
@@ -31,43 +39,60 @@ function CustomerPortalLayout() {
   }
 
   return (
-    <section className="customer-portal-shell">
-      <header className="customer-portal-header">
-        <Link to="/" className="back-link">
-          <FiArrowLeft />
-          Landing
-        </Link>
+    <div className="cf-customer-shell">
+      <header className="cf-customer-topbar">
+        <div className="cf-customer-brand">
+          <div className="cf-customer-brand-icon">
+            <FiShoppingBag />
+          </div>
 
-        <div>
-          <h1>Customer Portal</h1>
-          <p>Welcome, {portalUser.name}</p>
+          <div>
+            <span>CoreFlow</span>
+            <strong>Customer Ordering</strong>
+          </div>
         </div>
 
-        <button type="button" className="secondary-button" onClick={handleLogout}>
-          <FiLogOut />
-          Logout
-        </button>
+        <nav className="cf-customer-nav" aria-label="Customer portal navigation">
+          <NavLink
+            to="/customer/products"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            <FiBox />
+            Products
+          </NavLink>
+
+          <NavLink
+            to="/customer/cart"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            <FiShoppingCart />
+            Cart
+            <span className="cf-cart-count">{cartCount}</span>
+          </NavLink>
+
+          <NavLink
+            to="/customer/orders"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            <FiUser />
+            Orders
+          </NavLink>
+        </nav>
+
+        <div className="cf-customer-account">
+          <span>{portalUser?.customer_name || "Customer"}</span>
+
+          <button type="button" onClick={handleLogout}>
+            <FiLogOut />
+            Logout
+          </button>
+        </div>
       </header>
 
-      <nav className="customer-portal-nav">
-        <NavLink to="/customer/products">
-          <FiBox />
-          Products
-        </NavLink>
-
-        <NavLink to="/customer/cart">
-          <FiShoppingCart />
-          Cart ({cartCount})
-        </NavLink>
-
-        <NavLink to="/customer/orders">
-          <FiUser />
-          My Orders
-        </NavLink>
-      </nav>
-
-      <Outlet />
-    </section>
+      <main className="cf-customer-main">
+        <Outlet />
+      </main>
+    </div>
   );
 }
 

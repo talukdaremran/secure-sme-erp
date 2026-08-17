@@ -296,7 +296,7 @@ function AiAnalyticsPage() {
           </div>
 
           <div>
-            <span>Security Anomalies</span>
+            <span>Anomaly Detection</span>
             <strong>{anomalySummary.high}</strong>
             <p>High severity findings</p>
           </div>
@@ -320,7 +320,7 @@ function AiAnalyticsPage() {
           </div>
 
           <div>
-            <span>Active Models</span>
+            <span>AI Models</span>
             <strong>3</strong>
             <p>Forecasting, anomaly, activity</p>
           </div>
@@ -333,84 +333,6 @@ function AiAnalyticsPage() {
       {customerActivityError && (
         <p className="message error-message">{customerActivityError}</p>
       )}
-
-      <div className="dashboard-metric-grid">
-        <article
-          className={`dashboard-metric-card ${
-            isConnected ? "metric-green" : "metric-red"
-          }`}
-        >
-          <div className="metric-icon">
-            <FiCpu />
-          </div>
-
-          <div>
-            <span>AI Service Status</span>
-            <strong>
-              {healthLoading
-                ? "Checking..."
-                : isConnected
-                ? "Connected"
-                : "Offline"}
-            </strong>
-          </div>
-        </article>
-
-        <article className="dashboard-metric-card metric-blue">
-          <div className="metric-icon">
-            <FiActivity />
-          </div>
-
-          <div>
-            <span>Model</span>
-            <strong>{forecastResult?.model || "LinearRegression"}</strong>
-          </div>
-        </article>
-
-        <article className="dashboard-metric-card metric-green">
-          <div className="metric-icon">
-            <FiDollarSign />
-          </div>
-
-          <div>
-            <span>7-Day Forecast Total</span>
-            <strong>{formatCurrency(totalPredictedSales)}</strong>
-          </div>
-        </article>
-
-        <article className="dashboard-metric-card metric-orange">
-          <div className="metric-icon">
-            <FiTrendingUp />
-          </div>
-
-          <div>
-            <span>Average Daily Forecast</span>
-            <strong>{formatCurrency(averagePredictedSales)}</strong>
-          </div>
-        </article>
-
-        <article className="dashboard-metric-card metric-red">
-          <div className="metric-icon">
-            <FiShield />
-          </div>
-
-          <div>
-            <span>High Risk Anomalies</span>
-            <strong>{anomalySummary.high}</strong>
-          </div>
-        </article>
-
-        <article className="dashboard-metric-card metric-orange">
-          <div className="metric-icon">
-            <FiUsers />
-          </div>
-
-          <div>
-            <span>At-Risk Customers</span>
-            <strong>{customerActivitySummary.at_risk}</strong>
-          </div>
-        </article>
-      </div>
 
       <section className="table-card ai-status-card">
         <div className="table-card-header">

@@ -236,7 +236,7 @@ function AppLayout() {
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">
-            <img src={appIcon} alt="SME ERP logo" />
+            <img src={appIcon} alt="CoreFlow logo" />
           </div>
 
           <div>

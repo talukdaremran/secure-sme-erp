@@ -16,6 +16,7 @@ const initialFormData = {
   category: "",
   price: "",
   low_stock_level: "",
+  image_url: "",
 };
 
 function ProductsPage() {
@@ -83,6 +84,7 @@ function ProductsPage() {
       category: product.category || "",
       price: product.price || "",
       low_stock_level: product.low_stock_level || 0,
+      image_url: product.image_url || "",
     });
 
     setIsProductFormOpen(true);
@@ -113,6 +115,7 @@ function ProductsPage() {
         category: formData.category || null,
         price: Number(formData.price),
         low_stock_level: Number(formData.low_stock_level || 0),
+        image_url: formData.image_url || null,
       };
 
       if (editingProductId) {
@@ -320,6 +323,38 @@ function ProductsPage() {
     setSortOption("name-asc");
   }
 
+
+  function getProductInitials(productName) {
+    if (!productName) {
+      return "P";
+    }
+
+    return productName
+      .split(" ")
+      .slice(0, 2)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("");
+  }
+
+  function renderProductThumbnail(product) {
+    if (product.image_url) {
+      return (
+        <img
+          src={product.image_url}
+          alt={product.name}
+          className="product-thumbnail"
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+            event.currentTarget.nextElementSibling.style.display = "grid";
+          }}
+        />
+      );
+    }
+
+    return null;
+  }
+
   return (
     <section>
       <div className="page-header">
@@ -410,6 +445,18 @@ function ProductsPage() {
                   type="text"
                   value={formData.category}
                   onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-field form-full-width">
+                <label htmlFor="image_url">Product Image URL</label>
+                <input
+                  id="image_url"
+                  name="image_url"
+                  type="url"
+                  value={formData.image_url}
+                  onChange={handleChange}
+                  placeholder="https://example.com/product-image.jpg"
                 />
               </div>
 
@@ -717,7 +764,23 @@ function ProductsPage() {
                     return (
                       <tr key={product.id}>
                         <td>
-                          <strong>{product.name}</strong>
+                          <div className="product-name-cell">
+                            <div className="product-thumb-frame">
+                              {renderProductThumbnail(product)}
+
+                              <div
+                                className="product-thumbnail-fallback"
+                                style={{ display: product.image_url ? "none" : "grid" }}
+                              >
+                                {getProductInitials(product.name)}
+                              </div>
+                            </div>
+
+                            <div>
+                              <strong>{product.name}</strong>
+                              <p>{product.category || "Uncategorised"}</p>
+                            </div>
+                          </div>
                         </td>
 
                         <td>

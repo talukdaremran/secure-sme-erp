@@ -2219,6 +2219,53 @@ td select {
 }
 
 /* Product table */
+.product-name-cell {
+  min-width: 250px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.product-name-cell strong {
+  display: block;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.product-name-cell p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.product-thumb-frame {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #eef2ff;
+  border: 1px solid #e2e8f0;
+}
+
+.product-thumbnail {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.product-thumbnail-fallback {
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 td strong {
   color: #0f172a;
 }
@@ -3172,249 +3219,6 @@ tr.purchase-order-received-row td {
 }
 
 /* --- Approval workflow page --- */
-
-/* === Customer portal === */
-
-.customer-portal-shell {
-  min-height: 100vh;
-  padding: 28px;
-  background: #f8fafc;
-}
-
-.customer-portal-header {
-  max-width: 1180px;
-  margin: 0 auto 18px;
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-portal-header h1 {
-  margin: 0 0 4px;
-  color: #0f172a;
-}
-
-.customer-portal-header p {
-  margin: 0;
-  color: #64748b;
-}
-
-.customer-portal-nav {
-  max-width: 1180px;
-  margin: 0 auto 18px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.customer-portal-nav a {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: white;
-  color: #475569;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.customer-portal-nav a.active {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.customer-portal-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-
-.customer-product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(230px, 1fr));
-  gap: 16px;
-}
-
-.customer-product-card {
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-product-card h3 {
-  margin: 12px 0 6px;
-  color: #0f172a;
-}
-
-.customer-product-card p {
-  margin: 0;
-  color: #64748b;
-}
-
-.customer-product-meta {
-  margin: 18px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.customer-product-meta strong {
-  color: #0f172a;
-  font-size: 20px;
-}
-
-.customer-product-meta span {
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.customer-product-card button,
-.customer-cart-summary button {
-  width: 100%;
-  justify-content: center;
-}
-
-.customer-cart-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 18px;
-  align-items: start;
-}
-
-.cart-quantity-input {
-  max-width: 90px;
-}
-
-.customer-cart-summary {
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-cart-summary h2 {
-  margin: 0 0 16px;
-}
-
-.summary-row {
-  padding: 10px 0;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.total-row {
-  border-bottom: 0;
-  font-size: 18px;
-}
-
-.customer-cart-summary p {
-  margin: 16px 0;
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.customer-order-list {
-  display: grid;
-  gap: 14px;
-}
-
-.customer-order-card {
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: white;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
-}
-
-.customer-order-header,
-.customer-order-total,
-.customer-order-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.customer-order-header h3 {
-  margin: 0 0 4px;
-}
-
-.customer-order-header p {
-  margin: 0;
-  color: #64748b;
-}
-
-.customer-order-items {
-  margin: 16px 0;
-  display: grid;
-  gap: 8px;
-}
-
-.customer-order-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.customer-order-total {
-  padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.customer-order-progress {
-  margin-top: 6px;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.customer-order-delivery-note {
-  margin: 14px 0;
-  padding: 12px 14px;
-  border: 1px solid #bbf7d0;
-  border-radius: 12px;
-  display: grid;
-  gap: 4px;
-  background: #f0fdf4;
-}
-
-.customer-order-delivery-note strong {
-  color: #166534;
-}
-
-.customer-order-delivery-note span {
-  color: #475569;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-@media (max-width: 900px) {
-  .customer-product-grid,
-  .customer-cart-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .customer-portal-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-/* --- Customer portal --- */
 
 /* === Supplier portal === */
 
@@ -5779,3 +5583,236 @@ tr.purchase-order-received-row td {
   }
   /* --- */
 }
+
+/* === Issue #181: sidebar footer + account dropdown fix === */
+
+html,
+body,
+#root {
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+  display: block;
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+/* Sidebar stays fixed while the main page scrolls */
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 280px;
+  height: 100vh;
+  min-height: 0;
+  max-height: none;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  z-index: 1000;
+}
+
+.brand {
+  flex-shrink: 0;
+}
+
+/* Only the navigation area scrolls */
+.sidebar-nav {
+  flex: 1;
+  min-height: 0;
+  margin-top: 18px;
+  padding-right: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.32);
+}
+
+/* Profile area always visible */
+.sidebar-footer {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  background: #0f172a;
+  z-index: 1200;
+}
+
+/* Main content starts after fixed sidebar */
+.content-shell {
+  width: calc(100% - 280px);
+  min-width: 0;
+  margin-left: 280px;
+  background: #f6f8fb;
+  overflow-x: hidden;
+}
+
+.main-content {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* Main account menu opens upward from profile card */
+.account-menu-wrapper {
+  position: relative;
+}
+
+.account-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 12px);
+  width: 100%;
+  max-height: min(620px, calc(100vh - 120px));
+  overflow-y: auto;
+  overflow-x: visible;
+  z-index: 1300;
+}
+
+/* Switch/add-account menu opens separately to the right */
+.account-switcher-menu {
+  position: absolute;
+  left: calc(100% + 12px);
+  right: auto;
+  top: 0;
+  bottom: auto;
+  width: 330px;
+  max-width: 330px;
+  margin-top: 0;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.24);
+  z-index: 1400;
+}
+
+/* Logout account submenu also opens to the right */
+.account-logout-menu {
+  position: absolute;
+  left: calc(100% + 12px);
+  right: auto;
+  bottom: 0;
+  top: auto;
+  width: 340px;
+  max-width: 340px;
+  margin-top: 0;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.24);
+  z-index: 1400;
+}
+
+/* Prevent long emails from widening menus */
+.account-menu,
+.account-switcher-menu,
+.account-logout-menu {
+  min-width: 0;
+}
+
+.account-menu-text {
+  min-width: 0;
+}
+
+.account-menu-text span {
+  max-width: 170px;
+}
+
+/* Make sure the right-side menus stay above page content */
+.content-shell,
+.main-content {
+  position: relative;
+  z-index: 1;
+}
+
+
+
+/* === Issue #181: fix account submenu clipping only === */
+
+/* Main account dropdown should not create inner scrollbars */
+.account-menu {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* Allow nested right-side menus to escape the main account menu */
+.account-menu-user-row-wrapper,
+.account-menu-logout-row-wrapper {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Switch/add account menu opens to the right cleanly */
+.account-switcher-menu {
+  position: absolute !important;
+  left: calc(100% + 2px) !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: -9px !important;
+  width: 330px !important;
+  max-width: 330px !important;
+  overflow: visible !important;
+  z-index: 2000 !important;
+}
+
+/* Logout submenu also opens to the right cleanly */
+.account-logout-menu {
+  position: absolute !important;
+  left: calc(100% + 2px) !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: -9px !important;
+  width: 340px !important;
+  max-width: 340px !important;
+  overflow: visible !important;
+  z-index: 2000 !important;
+}
+
+/* The sidebar must allow popups to extend into the main area */
+.sidebar,
+.sidebar-footer,
+.account-menu-wrapper {
+  overflow: visible !important;
+}
+
+/* Prevent the menu itself from showing a horizontal scrollbar */
+.account-menu::-webkit-scrollbar {
+  display: none;
+}
+
+/* === Issue #181: AI Analytics cleanup === */
+
+.ai-module-grid {
+  margin-bottom: 22px;
+}
+
+.ai-module-card {
+  min-height: 112px;
+}
+
+.ai-module-card strong {
+  letter-spacing: -0.03em;
+}
+
+.ai-module-card p {
+  max-width: 220px;
+}
+

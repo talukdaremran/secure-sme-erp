@@ -4,9 +4,9 @@ import { createAuditLog } from "../utils/auditLogger.js";
 export async function getProducts(req, res, next) {
   try {
     const result = await pool.query(
-      `SELECT id, name, sku, category, price, stock_quantity, low_stock_level, created_at, updated_at
-       FROM products
-       ORDER BY id ASC`
+      `SELECT id, name, sku, category, price, stock_quantity, low_stock_level, image_url, created_at, updated_at
+      FROM products
+      ORDER BY id ASC`
     );
 
     res.status(200).json({
@@ -25,9 +25,9 @@ export async function getProductById(req, res, next) {
     const { id } = req.params;
 
     const result = await pool.query(
-      `SELECT id, name, sku, category, price, stock_quantity, low_stock_level, created_at, updated_at
-       FROM products
-       WHERE id = $1`,
+      `SELECT id, name, sku, category, price, stock_quantity, low_stock_level, image_url, created_at, updated_at
+      FROM products
+      WHERE id = $1`,
       [id]
     );
 
@@ -51,7 +51,7 @@ export async function getProductById(req, res, next) {
 
 export async function createProduct(req, res, next) {
   try {
-    const { name, sku, category, price, low_stock_level } = req.body;
+    const { name, sku, category, price, low_stock_level, image_url } = req.body;
 
     if (Object.prototype.hasOwnProperty.call(req.body, "stock_quantity")) {
       return res.status(400).json({
@@ -88,15 +88,17 @@ export async function createProduct(req, res, next) {
     }
 
     const result = await pool.query(
-      `INSERT INTO products (name, sku, category, price, stock_quantity, low_stock_level)
-       VALUES ($1, $2, $3, $4, 0, $5)
-       RETURNING id, name, sku, category, price, stock_quantity, low_stock_level, created_at, updated_at`,
+      `INSERT INTO products
+        (name, sku, category, price, stock_quantity, low_stock_level, image_url)
+      VALUES ($1, $2, $3, $4, 0, $5, $6)
+      RETURNING id, name, sku, category, price, stock_quantity, low_stock_level, image_url, created_at, updated_at`,
       [
         name.trim(),
         sku.trim(),
         category || null,
         price,
         low_stock_level ?? 0,
+        image_url?.trim() || null,
       ]
     );
 
@@ -127,7 +129,7 @@ export async function createProduct(req, res, next) {
 export async function updateProduct(req, res, next) {
   try {
     const { id } = req.params;
-    const { name, sku, category, price, low_stock_level } = req.body;
+    const { name, sku, category, price, low_stock_level, image_url } = req.body;
 
     if (Object.prototype.hasOwnProperty.call(req.body, "stock_quantity")) {
       return res.status(400).json({
@@ -165,20 +167,22 @@ export async function updateProduct(req, res, next) {
 
     const result = await pool.query(
       `UPDATE products
-       SET name = $1,
-           sku = $2,
-           category = $3,
-           price = $4,
-           low_stock_level = $5,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6
-       RETURNING id, name, sku, category, price, stock_quantity, low_stock_level, created_at, updated_at`,
+      SET name = $1,
+          sku = $2,
+          category = $3,
+          price = $4,
+          low_stock_level = $5,
+          image_url = $6,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $7
+      RETURNING id, name, sku, category, price, stock_quantity, low_stock_level, image_url, created_at, updated_at`,
       [
         name.trim(),
         sku.trim(),
         category || null,
         price,
         low_stock_level ?? 0,
+        image_url?.trim() || null,
         id,
       ]
     );
