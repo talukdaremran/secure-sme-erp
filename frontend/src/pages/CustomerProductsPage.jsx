@@ -285,7 +285,6 @@ function CustomerProductsPage() {
                 <div className="cf-product-body">
                   <span className="cf-product-sku">{product.sku}</span>
                   <Link to={`/customer/products/${product.id}`}>{product.name}</Link>
-                  <p>{category}</p>
                 </div>
 
                 <div className="cf-product-footer">

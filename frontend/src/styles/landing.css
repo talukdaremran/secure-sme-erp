@@ -41,7 +41,8 @@
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #0f766e);
+  /* background: linear-gradient(135deg, #2563eb, #0f766e); */
+  background: transparent;
   color: #ffffff;
   display: grid;
   place-items: center;

@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 
 import "../styles/landing.css";
+import appIcon from "../assets/coreflow-icon.png";
 
 const portalCards = [
   {
@@ -83,7 +84,7 @@ function LandingPage() {
       <header className="landing-topbar">
         <div className="landing-brand">
           <div className="landing-brand-mark">
-            <FiDatabase />
+            <img src={appIcon} alt="CoreFlow logo" />
           </div>
 
           <div>

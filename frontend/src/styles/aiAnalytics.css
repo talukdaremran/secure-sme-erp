@@ -375,6 +375,10 @@
   margin-top: 0;
 }
 
+.ai-panel.ai-anomaly-detection {
+  height: 100%;
+}
+
 .ai-anomaly-summary,
 .ai-customer-summary {
   margin-bottom: 12px;
@@ -505,13 +509,13 @@
 
 .ai-table {
   width: 100%;
-  min-width: 520px;
+  /* min-width: 520px; */
   border-collapse: collapse;
 }
 
-.ai-table.customer-table {
-  min-width: 980px;
-}
+/* .ai-table.customer-table {
+  min-width: 980px;           // scroll x is removed
+} */
 
 .ai-table th {
   height: 38px;

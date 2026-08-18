@@ -541,7 +541,7 @@ function AiAnalyticsPage() {
       </section>
 
       <section className="ai-insight-grid">
-        <article className="ai-panel">
+        <article className="ai-panel ai-anomaly-detection">
           <div className="ai-panel-header">
             <div>
               <span>Audit anomaly detection</span>

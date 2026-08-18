@@ -156,6 +156,8 @@ function CustomersPage() {
       return;
     }
 
+    setCustomerToDelete(null);
+
     try {
       setDeletingCustomerId(customerToDelete.id);
       setFormError("");

@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiUserPlus } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiCheckCircle,
+  FiLock,
+  FiMail,
+  FiMapPin,
+  FiPhone,
+  FiTruck,
+  FiUser,
+  FiUserPlus,
+} from "react-icons/fi";
 import portalApiClient from "../api/portalApiClient";
 import "../styles/portalAuth.css";
 
@@ -18,7 +28,8 @@ function PortalRegisterPage({ role }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const roleLabel = role === "customer" ? "Customer" : "Supplier";
+  const isCustomer = role === "customer";
+  const roleLabel = isCustomer ? "Customer" : "Supplier";
   const registerEndpoint =
     role === "customer"
       ? "/portal-auth/customer/register"
@@ -58,8 +69,6 @@ function PortalRegisterPage({ role }) {
 
       navigate(`/${role}/verify-email`);
     } catch (error) {
-      console.log(error.response?.data || error);
-      
       setError(
         error.response?.data?.message ||
           `Failed to register ${roleLabel.toLowerCase()} account.`
@@ -70,99 +79,156 @@ function PortalRegisterPage({ role }) {
   }
 
   return (
-    <section className="portal-auth-page">
-      <div className="portal-auth-card">
-        <Link to="/" className="back-link">
-          <FiArrowLeft />
-          Back to landing page
-        </Link>
+    <section className={`portal-auth-page ${role}`}>
+      <div className="portal-auth-shell">
+        <aside className="portal-auth-side">
+          <Link to="/" className="portal-back-link">
+            <FiArrowLeft />
+            Back to landing page
+          </Link>
 
-        <div className="portal-auth-header">
-          <div className="portal-auth-icon">
-            <FiUserPlus />
+          <div className="portal-auth-side-copy">
+            <span>{roleLabel} registration</span>
+            <h1>
+              {isCustomer
+                ? "Create your customer workspace."
+                : "Create your supplier workspace."}
+            </h1>
+            <p>
+              {isCustomer
+                ? "Register to browse products, checkout, and track your orders."
+                : "Register to receive purchase order access and confirm deliveries."}
+            </p>
           </div>
 
-          <h1>{roleLabel} Registration</h1>
-
-          <p>
-            Create your {roleLabel.toLowerCase()} portal account. A verification
-            code will be sent or shown in the backend terminal for demo.
-          </p>
-        </div>
-
-        {error && <p className="message error-message">{error}</p>}
-
-        <form onSubmit={handleSubmit} className="portal-auth-form">
-          <div className="form-field">
-            <label htmlFor={`${role}-name`}>Name</label>
-            <input
-              id={`${role}-name`}
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+          <div className="portal-auth-checklist">
+            <p>
+              <FiCheckCircle />
+              Email verification required
+            </p>
+            <p>
+              <FiCheckCircle />
+              Password must be at least 8 characters
+            </p>
+            <p>
+              <FiCheckCircle />
+              Access is separated by portal role
+            </p>
           </div>
+        </aside>
 
-          <div className="form-field">
-            <label htmlFor={`${role}-email`}>Email</label>
-            <input
-              id={`${role}-email`}
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-field">
-            <label htmlFor={`${role}-password`}>Password</label>
-            <input
-              id={`${role}-password`}
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              minLength="8"
-              required
-            />
-          </div>
-
-          <div className="form-field">
-            <label htmlFor={`${role}-phone`}>Phone</label>
-            <input
-              id={`${role}-phone`}
-              name="phone"
-              type="text"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-          </div>
-
-          {role === "customer" && (
-            <div className="form-field">
-              <label htmlFor="customer-address">Address</label>
-              <textarea
-                id="customer-address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                rows="3"
-              />
+        <section className="portal-auth-card wide">
+          <div className="portal-auth-header">
+            <div className="portal-auth-icon">
+              {isCustomer ? <FiUserPlus /> : <FiTruck />}
             </div>
-          )}
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating account..." : `Register as ${roleLabel}`}
-          </button>
-        </form>
+            <span>Create account</span>
+            <h1>{roleLabel} Registration</h1>
+            <p>
+              A verification code will be sent or shown in the backend terminal
+              for demo testing.
+            </p>
+          </div>
 
-        <p className="portal-auth-footer">
-          Already have an account?{" "}
-          <Link to={`/${role}/login`}>Login as {roleLabel}</Link>
-        </p>
+          {error && <p className="portal-message error">{error}</p>}
+
+          <form onSubmit={handleSubmit} className="portal-auth-form">
+            <div className="portal-form-grid">
+              <div className="portal-form-field">
+                <label htmlFor={`${role}-name`}>Name</label>
+                <div className="portal-input-with-icon">
+                  <FiUser />
+                  <input
+                    id={`${role}-name`}
+                    name="name"
+                    type="text"
+                    placeholder={`${roleLabel} name`}
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="portal-form-field">
+                <label htmlFor={`${role}-email`}>Email address</label>
+                <div className="portal-input-with-icon">
+                  <FiMail />
+                  <input
+                    id={`${role}-email`}
+                    name="email"
+                    type="email"
+                    placeholder={`${role}@coreflow.test`}
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="portal-form-field">
+                <label htmlFor={`${role}-password`}>Password</label>
+                <div className="portal-input-with-icon">
+                  <FiLock />
+                  <input
+                    id={`${role}-password`}
+                    name="password"
+                    type="password"
+                    placeholder="Minimum 8 characters"
+                    value={formData.password}
+                    onChange={handleChange}
+                    minLength="8"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="portal-form-field">
+                <label htmlFor={`${role}-phone`}>Phone</label>
+                <div className="portal-input-with-icon">
+                  <FiPhone />
+                  <input
+                    id={`${role}-phone`}
+                    name="phone"
+                    type="text"
+                    placeholder="Optional"
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {role === "customer" && (
+              <div className="portal-form-field">
+                <label htmlFor="customer-address">Address</label>
+                <div className="portal-input-with-icon textarea">
+                  <FiMapPin />
+                  <textarea
+                    id="customer-address"
+                    name="address"
+                    placeholder="Optional delivery address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    rows="3"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="portal-primary-button">
+              {loading ? "Creating account..." : `Register as ${roleLabel}`}
+            </button>
+          </form>
+
+          <div className="portal-auth-footer">
+            <p>
+              Already have an account?{" "}
+              <Link to={`/${role}/login`}>Login as {roleLabel}</Link>
+            </p>
+          </div>
+        </section>
       </div>
     </section>
   );

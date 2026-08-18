@@ -42,14 +42,13 @@
 
 .brand {
   min-height: 58px;
-  padding: 8px 8px 14px;
+  /* padding: 8px 8px 14px; */
   border-bottom: 1px solid var(--staff-border);
   display: flex;
   align-items: center;
   gap: 11px;
 }
 
-.brand-icon,
 .auth-logo {
   width: 38px;
   height: 38px;
@@ -65,8 +64,6 @@
 
 .brand-icon img,
 .auth-logo img {
-  width: 30px;
-  height: 30px;
   display: block;
 }
 
@@ -203,6 +200,12 @@
   flex-shrink: 0;
 }
 
+.user-name-role{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .user-card strong {
   display: block;
   color: #111827;
@@ -249,7 +252,7 @@
 .account-switcher-menu,
 .account-logout-menu {
   position: absolute;
-  left: calc(100% + 8px);
+  left: calc(100% + 2px);
   bottom: -8px;
   z-index: 2100;
   width: 320px;
@@ -634,7 +637,7 @@
 
   .account-switcher-menu,
   .account-logout-menu {
-    left: calc(100% + 10px);
+    left: calc(100% + 2px);
     right: auto;
     width: 300px;
   }
