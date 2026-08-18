@@ -22,7 +22,10 @@ import {
   FiCpu,
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
-import appIcon from "../assets/favicon.svg";
+// import appIcon from "../assets/favicon.svg";
+import appIcon from "../assets/coreflow-logo.png";
+import "../styles/appShell.css";
+import "../styles/internalResponsive.css";
 
 const pageTitles = {
   "/dashboard": "Operations Overview",
@@ -236,13 +239,13 @@ function AppLayout() {
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">
-            <img src={appIcon} alt="SME ERP logo" />
+            <img src={appIcon} alt="CoreFlow logo" />
           </div>
 
-          <div>
+          {/* <div>
             <h2>CoreFlow</h2>
             <p>Operations Platform</p>
-          </div>
+          </div> */}
         </div>
 
         <nav className="sidebar-nav">
@@ -345,7 +348,7 @@ function AppLayout() {
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
 
-                <div>
+                <div className="user-name-role">
                   <strong>{user.name}</strong>
                   <span>{user.role}</span>
                 </div>
@@ -435,7 +438,7 @@ function AppLayout() {
                     <span>Profile</span>
                   </button>
 
-                  <button
+                  {/* <button
                     type="button"
                     disabled
                     onMouseEnter={handleCloseSideMenus}
@@ -443,7 +446,7 @@ function AppLayout() {
                     <FiSettings />
                     <span>Settings</span>
                     <small>Soon</small>
-                  </button>
+                  </button> */}
 
                   <div className="account-menu-divider" />
 

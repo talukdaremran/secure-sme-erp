@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCheckCircle } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiCheckCircle,
+  FiKey,
+  FiMail,
+  FiShield,
+} from "react-icons/fi";
 import portalApiClient from "../api/portalApiClient";
+import "../styles/portalAuth.css";
 
 function PortalVerifyEmailPage({ role }) {
   const navigate = useNavigate();
@@ -56,66 +63,101 @@ function PortalVerifyEmailPage({ role }) {
   }
 
   return (
-    <section className="portal-auth-page">
-      <div className="portal-auth-card">
-        <Link to="/" className="back-link">
-          <FiArrowLeft />
-          Back to landing page
-        </Link>
+    <section className={`portal-auth-page ${role}`}>
+      <div className="portal-auth-shell compact">
+        <aside className="portal-auth-side">
+          <Link to="/" className="portal-back-link">
+            <FiArrowLeft />
+            Back to landing page
+          </Link>
 
-        <div className="portal-auth-header">
-          <div className="portal-auth-icon">
-            <FiCheckCircle />
+          <div className="portal-auth-side-copy">
+            <span>Email verification</span>
+            <h1>Confirm your {roleLabel.toLowerCase()} portal access.</h1>
+            <p>
+              Verification protects the portal account before it can access the
+              customer or supplier workspace.
+            </p>
           </div>
 
-          <h1>Verify {roleLabel} Email</h1>
+          <div className="portal-auth-checklist">
+            <p>
+              <FiShield />
+              Verification code required
+            </p>
+            <p>
+              <FiMail />
+              Use the email used during registration
+            </p>
+            <p>
+              <FiCheckCircle />
+              Redirects to login after success
+            </p>
+          </div>
+        </aside>
 
-          <p>
-            Enter the verification code sent to your email. During demo, check
-            the backend terminal for the code.
-          </p>
-        </div>
+        <section className="portal-auth-card">
+          <div className="portal-auth-header">
+            <div className="portal-auth-icon">
+              <FiKey />
+            </div>
 
-        {error && <p className="message error-message">{error}</p>}
-        {successMessage && (
-          <p className="message success-message">{successMessage}</p>
-        )}
-
-        <form onSubmit={handleSubmit} className="portal-auth-form">
-          <div className="form-field">
-            <label htmlFor={`${role}-verify-email`}>Email</label>
-            <input
-              id={`${role}-verify-email`}
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <span>{roleLabel} verification</span>
+            <h1>Verify email</h1>
+            <p>
+              Enter the verification code sent to your email. During demo, check
+              the backend terminal for the code.
+            </p>
           </div>
 
-          <div className="form-field">
-            <label htmlFor={`${role}-verification-code`}>
-              Verification Code
-            </label>
-            <input
-              id={`${role}-verification-code`}
-              name="code"
-              type="text"
-              value={formData.code}
-              onChange={handleChange}
-              required
-            />
+          {error && <p className="portal-message error">{error}</p>}
+          {successMessage && <p className="portal-message success">{successMessage}</p>}
+
+          <form onSubmit={handleSubmit} className="portal-auth-form">
+            <div className="portal-form-field">
+              <label htmlFor={`${role}-verify-email`}>Email address</label>
+              <div className="portal-input-with-icon">
+                <FiMail />
+                <input
+                  id={`${role}-verify-email`}
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="portal-form-field">
+              <label htmlFor={`${role}-verification-code`}>
+                Verification code
+              </label>
+              <div className="portal-input-with-icon">
+                <FiKey />
+                <input
+                  id={`${role}-verification-code`}
+                  name="code"
+                  type="text"
+                  placeholder="Enter code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} className="portal-primary-button">
+              {loading ? "Verifying..." : "Verify email"}
+            </button>
+          </form>
+
+          <div className="portal-auth-footer">
+            <p>
+              Already verified? <Link to={`/${role}/login`}>Go to login</Link>
+            </p>
           </div>
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Verifying..." : "Verify Email"}
-          </button>
-        </form>
-
-        <p className="portal-auth-footer">
-          Already verified? <Link to={`/${role}/login`}>Go to login</Link>
-        </p>
+        </section>
       </div>
     </section>
   );

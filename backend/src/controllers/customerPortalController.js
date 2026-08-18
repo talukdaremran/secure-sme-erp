@@ -33,22 +33,67 @@ export async function getCustomerPortalProducts(req, res, next) {
 
     const result = await pool.query(
       `SELECT
-         id,
-         name,
-         sku,
-         category,
-         price,
-         stock_quantity,
-         low_stock_level
-       FROM products
-       WHERE stock_quantity > 0
-       ORDER BY name ASC`
+        id,
+        name,
+        sku,
+        category,
+        price,
+        stock_quantity,
+        low_stock_level,
+        image_url
+      FROM products
+      WHERE stock_quantity > 0
+      ORDER BY name ASC`
     );
 
     res.status(200).json({
       status: "success",
       data: {
         products: result.rows,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getCustomerPortalProductById(req, res, next) {
+  try {
+    if (!requireCustomerPortalUser(req, res)) {
+      return;
+    }
+
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT
+         id,
+         name,
+         sku,
+         category,
+         price,
+         stock_quantity,
+         low_stock_level,
+         image_url,
+         created_at,
+         updated_at
+       FROM products
+       WHERE id = $1
+         AND stock_quantity > 0`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found or currently unavailable",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        product: result.rows[0],
       },
     });
   } catch (error) {
@@ -98,18 +143,20 @@ export async function getCustomerPortalOrders(req, res, next) {
 
     const itemsResult = await pool.query(
       `SELECT
-         sales_order_items.id,
-         sales_order_items.sales_order_id,
-         sales_order_items.product_id,
-         products.name AS product_name,
-         products.sku,
-         sales_order_items.quantity,
-         sales_order_items.unit_price,
-         sales_order_items.line_total
-       FROM sales_order_items
-       JOIN products ON sales_order_items.product_id = products.id
-       WHERE sales_order_items.sales_order_id = ANY($1::int[])
-       ORDER BY sales_order_items.id ASC`,
+        sales_order_items.id,
+        sales_order_items.sales_order_id,
+        sales_order_items.product_id,
+        products.name AS product_name,
+        products.sku,
+        products.category,
+        products.image_url,
+        sales_order_items.quantity,
+        sales_order_items.unit_price,
+        sales_order_items.line_total
+      FROM sales_order_items
+      JOIN products ON sales_order_items.product_id = products.id
+      WHERE sales_order_items.sales_order_id = ANY($1::int[])
+      ORDER BY sales_order_items.id ASC`,
       [orderIds]
     );
 
@@ -187,13 +234,14 @@ export async function createCustomerPortalOrder(req, res, next) {
     for (const [productId, quantity] of mergedItemsMap.entries()) {
       const productResult = await client.query(
         `SELECT
-           id,
-           name,
-           sku,
-           price,
-           stock_quantity
-         FROM products
-         WHERE id = $1`,
+          id,
+          name,
+          sku,
+          price,
+          stock_quantity,
+          image_url
+        FROM products
+        WHERE id = $1`,
         [productId]
       );
 
@@ -226,6 +274,7 @@ export async function createCustomerPortalOrder(req, res, next) {
         product_id: product.id,
         product_name: product.name,
         sku: product.sku,
+        image_url: product.image_url,
         quantity,
         unit_price: unitPrice,
         line_total: lineTotal,

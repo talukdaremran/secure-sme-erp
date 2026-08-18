@@ -29,6 +29,7 @@ import CustomerPortalLayout from "./layouts/CustomerPortalLayout";
 import CustomerCartPage from "./pages/CustomerCartPage";
 import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 import CustomerProductsPage from "./pages/CustomerProductsPage";
+import CustomerProductDetailPage from "./pages/CustomerProductDetailPage";
 
 import SupplierPortalLayout from "./layouts/SupplierPortalLayout";
 import SupplierPurchaseOrdersPage from "./pages/SupplierPurchaseOrdersPage";
@@ -50,6 +51,7 @@ function App() {
         <Route index element={<Navigate to="/customer/products" replace />} />
         <Route path="home" element={<Navigate to="/customer/products" replace />} />
         <Route path="products" element={<CustomerProductsPage />} />
+        <Route path="/customer/products/:id" element={<CustomerProductDetailPage />} />
         <Route path="cart" element={<CustomerCartPage />} />
         <Route path="orders" element={<CustomerOrdersPage />} />
       </Route>

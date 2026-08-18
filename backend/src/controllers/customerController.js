@@ -220,6 +220,14 @@ export async function deleteCustomer(req, res, next) {
       },
     });
   } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This customer is linked to other records and cannot be deleted.",
+      });
+    }
+    
     next(error);
   }
 }

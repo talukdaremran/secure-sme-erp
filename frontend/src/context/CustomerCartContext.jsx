@@ -20,31 +20,35 @@ export function CustomerCartProvider({ children }) {
   }, [cartItems]);
 
   function addToCart(product) {
-    setCartItems((previousItems) => {
-      const existingItem = previousItems.find((item) => item.id === product.id);
+    setCartItems((currentItems) => {
+      const existingItem = currentItems.find((item) => item.id === product.id);
 
       if (existingItem) {
-        return previousItems.map((item) =>
+        return currentItems.map((item) =>
           item.id === product.id
             ? {
                 ...item,
                 quantity: Math.min(
                   Number(item.quantity) + 1,
-                  Number(product.stock_quantity || 1)
+                  Number(product.stock_quantity || item.stock_quantity || 1)
                 ),
+                image_url: product.image_url || item.image_url || null,
+                category: product.category || item.category || "General",
               }
             : item
         );
       }
 
       return [
-        ...previousItems,
+        ...currentItems,
         {
           id: product.id,
           name: product.name,
           sku: product.sku,
+          category: product.category || "General",
           price: Number(product.price || 0),
           stock_quantity: Number(product.stock_quantity || 0),
+          image_url: product.image_url || null,
           quantity: 1,
         },
       ];

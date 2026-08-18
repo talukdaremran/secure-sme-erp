@@ -58,6 +58,7 @@ CREATE TABLE products (
     price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
     stock_quantity INTEGER DEFAULT 0 CHECK (stock_quantity >= 0),
     low_stock_level INTEGER DEFAULT 0 CHECK (low_stock_level >= 0),
+    image_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,18 +1,25 @@
 import { useEffect, useState } from "react";
 import {
+  FiAlertTriangle,
   FiClock,
   FiDollarSign,
+  FiDownload,
   FiEye,
   FiFileText,
+  FiFilter,
   FiPlus,
+  FiRefreshCw,
+  FiSearch,
   FiShoppingCart,
   FiTrash2,
   FiTruck,
   FiUsers,
   FiX,
 } from "react-icons/fi";
+
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
+import "../styles/salesOrders.css";
 
 const initialFormData = {
   customer_id: "",
@@ -84,6 +91,10 @@ function SalesOrdersPage() {
     }
   }
 
+  async function refreshSalesOrdersPage() {
+    await Promise.all([fetchSalesOrders(), fetchFormOptions()]);
+  }
+
   async function fetchSalesOrderDetails(salesOrderId) {
     try {
       setDetailLoading(true);
@@ -102,8 +113,7 @@ function SalesOrdersPage() {
   }
 
   useEffect(() => {
-    fetchSalesOrders();
-    fetchFormOptions();
+    refreshSalesOrdersPage();
   }, []);
 
   function handleChange(event) {
@@ -218,8 +228,7 @@ function SalesOrdersPage() {
       setIsSalesOrderFormOpen(false);
       setSuccessMessage("Sales order created successfully.");
 
-      await fetchSalesOrders();
-      await fetchFormOptions();
+      await refreshSalesOrdersPage();
     } catch (error) {
       setCreateError(
         error.response?.data?.message || "Failed to create sales order."
@@ -268,8 +277,7 @@ function SalesOrdersPage() {
       setSuccessMessage("Sales order delivered successfully. Stock has been updated.");
       setDeliveryConfirmOrder(null);
 
-      await fetchSalesOrders();
-      await fetchFormOptions();
+      await refreshSalesOrdersPage();
 
       if (selectedSalesOrder?.id === orderId) {
         await fetchSalesOrderDetails(orderId);
@@ -336,7 +344,7 @@ function SalesOrdersPage() {
       normalizedStatus === "paid" ||
       normalizedStatus === "delivered"
     ) {
-      return "badge badge-success";
+      return "sales-status-pill status-success";
     }
 
     if (
@@ -344,7 +352,7 @@ function SalesOrdersPage() {
       normalizedStatus === "placed" ||
       normalizedStatus === "draft"
     ) {
-      return "badge badge-warning";
+      return "sales-status-pill status-warning";
     }
 
     if (
@@ -352,10 +360,10 @@ function SalesOrdersPage() {
       normalizedStatus === "failed" ||
       normalizedStatus === "rejected"
     ) {
-      return "badge badge-danger";
+      return "sales-status-pill status-danger";
     }
 
-    return "badge badge-info";
+    return "sales-status-pill status-info";
   }
 
   function canDeliverOrder(order) {
@@ -374,6 +382,14 @@ function SalesOrdersPage() {
   const uniqueCustomerCount = new Set(
     salesOrders.map((order) => order.customer_name).filter(Boolean)
   ).size;
+
+  const awaitingDeliveryOrders = salesOrders.filter((order) => {
+    return String(order.status || "").toLowerCase() === "placed";
+  });
+
+  const deliveredOrders = salesOrders.filter((order) => {
+    return String(order.status || "").toLowerCase() === "delivered";
+  });
 
   const latestOrder = [...salesOrders].sort((a, b) => {
     return new Date(b.created_at) - new Date(a.created_at);
@@ -433,120 +449,165 @@ function SalesOrdersPage() {
     detailLoading || Boolean(detailError) || Boolean(selectedSalesOrder);
 
   return (
-    <section>
-      <div className="page-header">
+    <section className="sales-page">
+      <header className="sales-command-bar">
         <div>
-          <h1>Sales Orders</h1>
+          <span className="sales-eyebrow">Sales fulfilment</span>
+          <h1>Sales orders</h1>
           <p>
-            Create customer orders, manage line items, and review sales order
-            details.
+            Create customer orders, review line items, track fulfilment status,
+            and mark placed orders as delivered to update stock.
           </p>
         </div>
 
-        <div className="page-actions">
+        <div className="sales-command-actions">
           <button
             type="button"
+            className="sales-secondary-command"
+            onClick={refreshSalesOrdersPage}
+            disabled={loading}
+          >
+            <FiRefreshCw />
+            Refresh
+          </button>
+
+          <button
+            type="button"
+            className="sales-secondary-command"
             onClick={handleExportSalesOrders}
             disabled={exporting}
           >
+            <FiDownload />
             {exporting ? "Exporting..." : "Export CSV"}
           </button>
 
-          <button type="button" onClick={handleOpenCreateSalesOrder}>
-            + New Sales Order
+          <button
+            type="button"
+            className="sales-primary-command"
+            onClick={handleOpenCreateSalesOrder}
+          >
+            <FiPlus />
+            New sales order
           </button>
         </div>
-      </div>
+      </header>
 
-      {exportError && <p className="message error-message">{exportError}</p>}
-      {successMessage && (
-        <p className="message success-message">{successMessage}</p>
+      {(exportError || successMessage || error) && (
+        <div className="sales-message-stack">
+          {exportError && <p className="message error-message">{exportError}</p>}
+          {error && <p className="message error-message">{error}</p>}
+          {successMessage && (
+            <p className="message success-message">{successMessage}</p>
+          )}
+        </div>
       )}
 
-      <div className="dashboard-metric-grid">
-        <article className="dashboard-metric-card metric-blue">
-          <div className="metric-icon">
+      <section className="sales-kpi-strip" aria-label="Sales order metrics">
+        <article className="sales-kpi-card">
+          <div className="sales-kpi-icon">
             <FiShoppingCart />
           </div>
 
           <div>
-            <span>Total Orders</span>
+            <span>Total orders</span>
             <strong>{totalOrders}</strong>
+            <p>Order records</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-green">
-          <div className="metric-icon">
+        <article className="sales-kpi-card">
+          <div className="sales-kpi-icon">
             <FiDollarSign />
           </div>
 
           <div>
-            <span>Total Sales Value</span>
+            <span>Sales value</span>
             <strong>{formatCurrency(totalSalesValue)}</strong>
+            <p>Order totals</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-purple">
-          <div className="metric-icon">
+        <article className="sales-kpi-card">
+          <div className="sales-kpi-icon">
             <FiFileText />
           </div>
 
           <div>
-            <span>Average Order</span>
+            <span>Average order</span>
             <strong>{formatCurrency(averageOrderValue)}</strong>
+            <p>Average order value</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-orange">
-          <div className="metric-icon">
-            <FiUsers />
+        <article className="sales-kpi-card warning">
+          <div className="sales-kpi-icon">
+            <FiTruck />
           </div>
 
           <div>
-            <span>Customers Ordered</span>
-            <strong>{uniqueCustomerCount}</strong>
+            <span>Awaiting delivery</span>
+            <strong>{awaitingDeliveryOrders.length}</strong>
+            <p>Placed orders</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-blue">
-          <div className="metric-icon">
+        <article className="sales-kpi-card success">
+          <div className="sales-kpi-icon">
             <FiClock />
           </div>
 
           <div>
-            <span>Latest Order</span>
-            <strong>{latestOrder ? formatShortDate(latestOrder.created_at) : "-"}</strong>
+            <span>Delivered</span>
+            <strong>{deliveredOrders.length}</strong>
+            <p>Fulfilled orders</p>
           </div>
         </article>
-      </div>
 
-      <div className="table-card">
-        <div className="table-card-header">
+        <article className="sales-kpi-card">
+          <div className="sales-kpi-icon">
+            <FiUsers />
+          </div>
+
           <div>
-            <h2>All Sales Orders</h2>
+            <span>Customers</span>
+            <strong>{uniqueCustomerCount}</strong>
+            <p>Ordered customers</p>
+          </div>
+        </article>
+      </section>
+
+      <section className="sales-workspace">
+        <div className="sales-workspace-header">
+          <div>
+            <span>Order workspace</span>
+            <h2>All sales orders</h2>
             <p>
               {loading
                 ? "Loading sales orders..."
                 : `Showing ${displayedSalesOrders.length} of ${salesOrders.length} sales orders.`}
+              {latestOrder ? ` Latest order: ${formatShortDate(latestOrder.created_at)}.` : ""}
             </p>
           </div>
         </div>
 
-        <div className="table-toolbar sales-table-toolbar">
-          <input
-            type="text"
-            placeholder="Search by order, customer, creator, or status..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            aria-label="Search sales orders"
-          />
+        <div className="sales-toolbar">
+          <div className="sales-search-field">
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Search by order, customer, creator, or status"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search sales orders"
+            />
+          </div>
 
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
             aria-label="Filter sales orders by status"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">All statuses</option>
             {statusOptions.map((status) => (
               <option key={status} value={status}>
                 {formatStatus(status)}
@@ -559,10 +620,10 @@ function SalesOrdersPage() {
             onChange={(event) => setSortOption(event.target.value)}
             aria-label="Sort sales orders"
           >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="total-desc">Total High-Low</option>
-            <option value="total-asc">Total Low-High</option>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="total-desc">Total high-low</option>
+            <option value="total-asc">Total low-high</option>
             <option value="customer-asc">Customer A-Z</option>
           </select>
 
@@ -570,57 +631,79 @@ function SalesOrdersPage() {
             <button
               type="button"
               onClick={resetSalesOrderFilters}
-              className="secondary-button"
+              className="sales-secondary-command"
             >
+              <FiFilter />
               Reset
             </button>
           )}
         </div>
 
-        <div className="panel-body">
+        <div className="sales-table-area">
           {loading ? (
-            <p>Loading sales orders...</p>
+            <div className="sales-empty-state">
+              <FiShoppingCart />
+              <h3>Loading sales orders</h3>
+              <p>Please wait while order data is loaded.</p>
+            </div>
           ) : error ? (
-            <div>
-              <p className="message error-message">{error}</p>
+            <div className="sales-empty-state">
+              <FiAlertTriangle />
+              <h3>Could not load sales orders</h3>
+              <p>{error}</p>
 
-              <button type="button" onClick={fetchSalesOrders}>
-                Try Again
+              <button
+                type="button"
+                onClick={fetchSalesOrders}
+                className="sales-primary-command"
+              >
+                Try again
               </button>
             </div>
           ) : salesOrders.length === 0 ? (
-            <div className="empty-state">
+            <div className="sales-empty-state">
+              <FiShoppingCart />
               <h3>No sales orders found</h3>
-              <p>Create the first sales order using the button above.</p>
+              <p>Create the first sales order using the command bar above.</p>
+
+              <button
+                type="button"
+                onClick={handleOpenCreateSalesOrder}
+                className="sales-primary-command"
+              >
+                <FiPlus />
+                New sales order
+              </button>
             </div>
           ) : displayedSalesOrders.length === 0 ? (
-            <div className="empty-state">
-              <h3>No matching sales orders found</h3>
+            <div className="sales-empty-state">
+              <FiFilter />
+              <h3>No matching sales orders</h3>
               <p>Try changing your search, status filter, or sort option.</p>
 
               <button
                 type="button"
                 onClick={resetSalesOrderFilters}
-                className="secondary-button"
+                className="sales-secondary-command"
               >
-                Reset Filters
+                Reset filters
               </button>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table>
+            <div className="sales-table-wrapper">
+              <table className="sales-table">
                 <thead>
                   <tr>
                     <th>Order</th>
                     <th>Customer</th>
-                    <th>Created By</th>
+                    <th>Created by</th>
                     <th>Status</th>
                     <th>Subtotal</th>
                     <th>GST</th>
                     <th>Total</th>
-                    <th>Delivered By</th>
-                    <th>Delivered At</th>
-                    <th>Created At</th>
+                    <th>Delivered by</th>
+                    <th>Delivered at</th>
+                    <th>Created at</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -629,7 +712,7 @@ function SalesOrdersPage() {
                   {displayedSalesOrders.map((order) => (
                     <tr key={order.id}>
                       <td>
-                        <span className="code-pill">
+                        <span className="sales-code-pill">
                           SO-{String(order.id).padStart(4, "0")}
                         </span>
                       </td>
@@ -658,25 +741,29 @@ function SalesOrdersPage() {
                       <td>{formatDate(order.created_at)}</td>
 
                       <td>
-                        <div className="table-actions">
+                        <div className="sales-table-actions">
                           <button
                             type="button"
                             onClick={() => fetchSalesOrderDetails(order.id)}
-                            className="secondary-button"
+                            className="sales-icon-action"
                           >
                             <FiEye />
-                            View
+                            <span>View</span>
                           </button>
 
                           {canDeliverOrder(order) && (
                             <button
                               type="button"
-                              className="success-button"
+                              className="sales-icon-action success"
                               onClick={() => handleOpenDeliveryConfirm(order)}
                               disabled={deliveringOrderId === order.id}
                             >
                               <FiTruck />
-                              {deliveringOrderId === order.id ? "Delivering..." : "Deliver"}
+                              <span>
+                                {deliveringOrderId === order.id
+                                  ? "Delivering"
+                                  : "Deliver"}
+                              </span>
                             </button>
                           )}
                         </div>
@@ -688,20 +775,21 @@ function SalesOrdersPage() {
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {isSalesOrderFormOpen && (
         <div className="modal-backdrop">
           <section className="modal-card sales-order-form-modal">
-            <div className="modal-header">
+            <div className="sales-modal-header">
               <div>
-                <h2>Create Sales Order</h2>
-                <p>Select a customer and add one or more line items.</p>
+                <span>Sales order</span>
+                <h2>Create sales order</h2>
+                <p>Select a customer and add one or more product line items.</p>
               </div>
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="sales-icon-button"
                 onClick={handleCloseCreateSalesOrder}
                 aria-label="Close sales order form"
               >
@@ -709,8 +797,8 @@ function SalesOrdersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateSalesOrder} className="form-grid">
-              <div className="form-field full-width">
+            <form onSubmit={handleCreateSalesOrder} className="sales-form-grid">
+              <div className="form-field sales-form-full">
                 <label htmlFor="customer_id">Customer</label>
                 <select
                   id="customer_id"
@@ -728,34 +816,34 @@ function SalesOrdersPage() {
                 </select>
               </div>
 
-              <div className="line-items-section full-width">
-                <div className="line-items-header">
+              <div className="sales-line-items-section sales-form-full">
+                <div className="sales-line-items-header">
                   <div>
-                    <h3>Line Items</h3>
+                    <h3>Line items</h3>
                     <p>Add products and quantities for this order.</p>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleAddItem}
-                    className="secondary-button"
+                    className="sales-secondary-command"
                   >
                     <FiPlus />
-                    Add Item
+                    Add item
                   </button>
                 </div>
 
-                <div className="line-items-list">
+                <div className="sales-line-items-list">
                   {formData.items.map((item, index) => (
-                    <div key={index} className="line-item-card">
-                      <div className="line-item-card-header">
+                    <div key={index} className="sales-line-item-card">
+                      <div className="sales-line-item-card-header">
                         <strong>Item {index + 1}</strong>
 
                         {formData.items.length > 1 && (
                           <button
                             type="button"
                             onClick={() => handleRemoveItem(index)}
-                            className="icon-button danger-icon-button"
+                            className="sales-icon-button danger"
                             aria-label={`Remove item ${index + 1}`}
                           >
                             <FiTrash2 />
@@ -763,7 +851,7 @@ function SalesOrdersPage() {
                         )}
                       </div>
 
-                      <div className="line-item-grid">
+                      <div className="sales-line-item-grid">
                         <div className="form-field">
                           <label htmlFor={`product_id_${index}`}>Product</label>
                           <select
@@ -823,14 +911,14 @@ function SalesOrdersPage() {
               </div>
 
               {createError && (
-                <p className="message error-message full-width">
+                <p className="message error-message sales-form-full">
                   {createError}
                 </p>
               )}
 
-              <div className="form-actions">
+              <div className="sales-form-actions sales-form-full">
                 <button type="submit" disabled={creating}>
-                  {creating ? "Creating..." : "Create Sales Order"}
+                  {creating ? "Creating..." : "Create sales order"}
                 </button>
 
                 <button
@@ -848,19 +936,20 @@ function SalesOrdersPage() {
 
       {deliveryConfirmOrder && (
         <div className="modal-backdrop">
-          <section className="modal-card delivery-confirm-modal">
-            <div className="modal-header">
+          <section className="modal-card sales-delivery-confirm-modal">
+            <div className="sales-modal-header">
               <div>
-                <h2>Confirm Delivery</h2>
+                <span>Delivery confirmation</span>
+                <h2>Confirm delivery</h2>
                 <p>
-                  This action will mark the customer order as delivered and deduct
-                  stock from inventory.
+                  This will mark the customer order as delivered and deduct stock
+                  from inventory.
                 </p>
               </div>
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="sales-icon-button"
                 onClick={handleCloseDeliveryConfirm}
                 disabled={Boolean(deliveringOrderId)}
                 aria-label="Close delivery confirmation"
@@ -869,8 +958,8 @@ function SalesOrdersPage() {
               </button>
             </div>
 
-            <div className="delivery-confirm-content">
-              <div className="delivery-confirm-icon">
+            <div className="sales-delivery-confirm-content">
+              <div className="sales-delivery-confirm-icon">
                 <FiTruck />
               </div>
 
@@ -881,21 +970,22 @@ function SalesOrdersPage() {
                 </strong>
 
                 <p>
-                  Stock will be deducted now and a sale inventory movement will be
-                  created. This order cannot be delivered again after confirmation.
+                  Stock will be deducted now and a sale inventory movement will
+                  be created. This order cannot be delivered again after
+                  confirmation.
                 </p>
               </div>
             </div>
 
-            <div className="form-actions">
+            <div className="sales-form-actions">
               <button
                 type="button"
                 onClick={handleDeliverSalesOrder}
                 disabled={Boolean(deliveringOrderId)}
               >
                 {deliveringOrderId
-                  ? "Marking as Delivered..."
-                  : "Mark as Delivered"}
+                  ? "Marking as delivered..."
+                  : "Mark as delivered"}
               </button>
 
               <button
@@ -914,22 +1004,20 @@ function SalesOrdersPage() {
       {isDetailModalOpen && (
         <div className="modal-backdrop">
           <section className="modal-card sales-order-detail-modal">
-            <div className="modal-header">
+            <div className="sales-modal-header">
               <div>
+                <span>Sales order details</span>
                 <h2>
                   {selectedSalesOrder
-                    ? `Sales Order SO-${String(selectedSalesOrder.id).padStart(
-                        4,
-                        "0"
-                      )}`
-                    : "Sales Order Details"}
+                    ? `SO-${String(selectedSalesOrder.id).padStart(4, "0")}`
+                    : "Sales order details"}
                 </h2>
-                <p>Review customer, totals, and line items.</p>
+                <p>Review customer, fulfilment status, totals, and line items.</p>
               </div>
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="sales-icon-button"
                 onClick={handleCloseDetails}
                 aria-label="Close sales order details"
               >
@@ -938,24 +1026,28 @@ function SalesOrdersPage() {
             </div>
 
             {detailLoading ? (
-              <p>Loading sales order details...</p>
+              <div className="sales-empty-state compact">
+                <FiFileText />
+                <h3>Loading order details</h3>
+                <p>Please wait while the order detail is loaded.</p>
+              </div>
             ) : detailError ? (
               <p className="message error-message">{detailError}</p>
             ) : (
               selectedSalesOrder && (
                 <>
-                  <div className="detail-summary-grid">
-                    <article className="detail-summary-card">
+                  <div className="sales-detail-summary-grid">
+                    <article className="sales-detail-summary-card">
                       <span>Customer</span>
                       <strong>{selectedSalesOrder.customer_name}</strong>
                     </article>
 
-                    <article className="detail-summary-card">
-                      <span>Created By</span>
+                    <article className="sales-detail-summary-card">
+                      <span>Created by</span>
                       <strong>{selectedSalesOrder.created_by_name || "-"}</strong>
                     </article>
 
-                    <article className="detail-summary-card">
+                    <article className="sales-detail-summary-card">
                       <span>Status</span>
                       <strong>
                         <span
@@ -968,32 +1060,32 @@ function SalesOrdersPage() {
                       </strong>
                     </article>
 
-                    <article className="detail-summary-card">
-                      <span>Created At</span>
+                    <article className="sales-detail-summary-card">
+                      <span>Created at</span>
                       <strong>{formatDate(selectedSalesOrder.created_at)}</strong>
                     </article>
 
-                    <article className="detail-summary-card">
-                      <span>Delivered By</span>
+                    <article className="sales-detail-summary-card">
+                      <span>Delivered by</span>
                       <strong>{selectedSalesOrder.delivered_by_name || "-"}</strong>
                     </article>
 
-                    <article className="detail-summary-card">
-                      <span>Delivered At</span>
+                    <article className="sales-detail-summary-card">
+                      <span>Delivered at</span>
                       <strong>{formatDate(selectedSalesOrder.delivered_at)}</strong>
                     </article>
 
-                    <article className="detail-summary-card">
+                    <article className="sales-detail-summary-card">
                       <span>Subtotal</span>
                       <strong>{formatCurrency(selectedSalesOrder.subtotal)}</strong>
                     </article>
 
-                    <article className="detail-summary-card">
+                    <article className="sales-detail-summary-card">
                       <span>GST</span>
                       <strong>{formatCurrency(selectedSalesOrder.gst_amount)}</strong>
                     </article>
 
-                    <article className="detail-summary-card detail-total-card">
+                    <article className="sales-detail-summary-card total">
                       <span>Total</span>
                       <strong>
                         {formatCurrency(selectedSalesOrder.total_amount)}
@@ -1001,20 +1093,23 @@ function SalesOrdersPage() {
                     </article>
                   </div>
 
-                  <h3>Line Items</h3>
+                  <div className="sales-detail-section-header">
+                    <h3>Line items</h3>
+                    <p>Products, quantities, unit prices, and line totals.</p>
+                  </div>
 
                   {selectedSalesOrder.items.length === 0 ? (
                     <p>No line items found.</p>
                   ) : (
-                    <div className="table-wrapper">
-                      <table>
+                    <div className="sales-table-wrapper">
+                      <table className="sales-table detail-lines">
                         <thead>
                           <tr>
                             <th>Product</th>
                             <th>SKU</th>
                             <th>Quantity</th>
-                            <th>Unit Price</th>
-                            <th>Line Total</th>
+                            <th>Unit price</th>
+                            <th>Line total</th>
                           </tr>
                         </thead>
 
@@ -1024,11 +1119,14 @@ function SalesOrdersPage() {
                               <td>
                                 <strong>{item.product_name}</strong>
                               </td>
+
                               <td>
-                                <span className="code-pill">{item.sku}</span>
+                                <span className="sales-code-pill">{item.sku}</span>
                               </td>
+
                               <td>{item.quantity}</td>
                               <td>{formatCurrency(item.unit_price)}</td>
+
                               <td>
                                 <strong>{formatCurrency(item.line_total)}</strong>
                               </td>

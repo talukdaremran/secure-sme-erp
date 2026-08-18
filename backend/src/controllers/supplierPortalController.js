@@ -113,17 +113,19 @@ export async function getSupplierPortalPurchaseOrderById(req, res, next) {
 
     const itemsResult = await pool.query(
       `SELECT
-         purchase_order_items.id,
-         purchase_order_items.product_id,
-         purchase_order_items.quantity,
-         purchase_order_items.unit_cost,
-         purchase_order_items.line_total,
-         products.name AS product_name,
-         products.sku AS product_sku
-       FROM purchase_order_items
-       JOIN products ON purchase_order_items.product_id = products.id
-       WHERE purchase_order_items.purchase_order_id = $1
-       ORDER BY purchase_order_items.id ASC`,
+        purchase_order_items.id,
+        purchase_order_items.product_id,
+        purchase_order_items.quantity,
+        purchase_order_items.unit_cost,
+        purchase_order_items.line_total,
+        products.name AS product_name,
+        products.sku AS product_sku,
+        products.category AS product_category,
+        products.image_url AS product_image_url
+      FROM purchase_order_items
+      JOIN products ON purchase_order_items.product_id = products.id
+      WHERE purchase_order_items.purchase_order_id = $1
+      ORDER BY purchase_order_items.id ASC`,
       [id]
     );
 
