@@ -1,612 +1,725 @@
 /* =========================================================
-   CoreFlow Staff Dashboard
-   Microsoft-style BI dashboard
+   CoreFlow Dashboard V4
+   Power BI / Microsoft Fabric inspired report canvas.
 ========================================================= */
 
-.bi-dashboard-page {
+.msdash-page {
   width: 100%;
   color: #111827;
 }
 
-.bi-dashboard-shell {
-  width: 100%;
+.msdash-shell {
+  max-width: 1440px;
+  margin: 0 auto;
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
-/* ---------- Header ---------- */
+/* ---------- Command bar ---------- */
 
-.bi-dashboard-header {
-  padding: 0 0 4px;
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: flex-start;
+.msdash-command-bar {
+  min-height: 72px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid #e5e7eb;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
 }
 
-.bi-dashboard-kicker {
+.msdash-eyebrow {
   display: inline-flex;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: #2563eb;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.bi-dashboard-header h1 {
+.msdash-command-bar h1 {
   margin: 0;
   color: #111827;
-  font-size: clamp(28px, 3.4vw, 40px);
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.msdash-command-bar p {
+  margin: 5px 0 0;
+  max-width: 780px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.msdash-command-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.msdash-primary-button,
+.msdash-secondary-button {
+  min-height: 34px;
+  margin-left: 0;
+  padding: 7px 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.msdash-primary-button {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.msdash-primary-button:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: none;
+}
+
+.msdash-secondary-button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+}
+
+.msdash-secondary-button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  transform: none;
+}
+
+/* ---------- Slicer/filter bar ---------- */
+
+.msdash-filter-bar {
+  min-height: 54px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.msdash-filter-bar > div:first-child {
+  padding-right: 10px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.msdash-filter-bar span {
+  display: block;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.msdash-filter-bar strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.msdash-filter-bar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.msdash-filter-bar select {
+  min-height: 32px;
+  border-radius: 6px;
+  border-color: #d1d5db;
+  font-size: 13px;
+}
+
+.msdash-widget-count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #374151;
+}
+
+.msdash-widget-count span {
+  color: #374151;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ---------- KPI strip ---------- */
+
+.msdash-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(135px, 1fr));
+  gap: 10px;
+}
+
+.msdash-kpi-card {
+  min-height: 86px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.msdash-kpi-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.msdash-kpi-card.indigo .msdash-kpi-icon {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.msdash-kpi-card.green .msdash-kpi-icon {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.msdash-kpi-card.amber .msdash-kpi-icon {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.msdash-kpi-card.slate .msdash-kpi-icon {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.msdash-kpi-card span {
+  display: block;
+  margin-bottom: 4px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.msdash-kpi-card strong {
+  display: block;
+  color: #111827;
+  font-size: 21px;
   line-height: 1.05;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.msdash-kpi-card p {
+  margin: 5px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* ---------- Report canvas ---------- */
+
+.msdash-report-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.msdash-span-4 {
+  grid-column: span 4;
+}
+
+.msdash-span-6 {
+  grid-column: span 6;
+}
+
+.msdash-span-8 {
+  grid-column: span 8;
+}
+
+.msdash-card {
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.msdash-card:hover {
+  border-color: #d1d5db;
+}
+
+.msdash-card-header {
+  min-height: 54px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.msdash-card-header span {
+  display: block;
+  margin-bottom: 3px;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.msdash-card-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+
+.msdash-card-header small,
+.msdash-card-header > svg {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.msdash-card-header > strong,
+.msdash-card-actions > strong {
+  color: #111827;
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 750;
   letter-spacing: -0.04em;
 }
 
-.bi-dashboard-header p {
-  max-width: 760px;
-  margin: 8px 0 0;
-  color: #6b7280;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.bi-refresh-button {
-  min-height: 38px;
-  margin-left: 0;
-  padding: 8px 13px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #1f2937;
+.msdash-card-header a {
+  color: #2563eb;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 12px;
   font-weight: 700;
-  box-shadow: none;
 }
 
-.bi-refresh-button:hover {
-  border-color: #9ca3af;
+.msdash-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.msdash-icon-button {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  margin-left: 0;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #6b7280;
+  display: inline-grid;
+  place-items: center;
+}
+
+.msdash-icon-button:hover {
   background: #f9fafb;
   color: #111827;
   transform: none;
 }
 
-/* ---------- Loading / error ---------- */
+.msdash-chart-body {
+  min-height: 236px;
+  padding: 12px;
+}
 
-.bi-dashboard-loading {
-  min-height: 420px;
-  padding: 28px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #ffffff;
+.msdash-chart-body.compact {
+  min-height: 226px;
+}
+
+.msdash-chart-body.large {
+  min-height: 320px;
+}
+
+.msdash-chart-body.top-products {
+  min-height: 326px;
+}
+
+/* ---------- Action queue ---------- */
+
+.msdash-action-list {
+  padding: 10px;
   display: grid;
-  place-items: center;
-  text-align: center;
+  gap: 8px;
 }
 
-.bi-dashboard-loading svg {
-  color: #2563eb;
-  font-size: 34px;
-}
-
-.bi-dashboard-loading h1 {
-  margin: 10px 0 4px;
-  font-size: 24px;
-}
-
-.bi-dashboard-loading p {
-  margin: 0;
-  color: #6b7280;
-}
-
-/* ---------- KPI cards ---------- */
-
-.bi-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 14px;
-}
-
-.bi-kpi-card {
-  min-height: 116px;
-  padding: 16px;
+.msdash-action-row {
+  min-height: 60px;
+  padding: 9px;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #ffffff;
-  display: flex;
-  align-items: flex-start;
-  gap: 13px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  color: inherit;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
 }
 
-.bi-kpi-card:hover {
+.msdash-action-row:hover {
+  background: #f9fafb;
   border-color: #cbd5e1;
 }
 
-.bi-kpi-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: #eff6ff;
-  color: #2563eb;
-  font-size: 19px;
-  flex-shrink: 0;
-}
-
-.kpi-cyan .bi-kpi-icon,
-.kpi-blue .bi-kpi-icon {
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.kpi-purple .bi-kpi-icon {
-  background: #f5f3ff;
-  color: #7c3aed;
-}
-
-.kpi-orange .bi-kpi-icon {
-  background: #fff7ed;
-  color: #d97706;
-}
-
-.kpi-green .bi-kpi-icon {
-  background: #ecfdf5;
-  color: #16a34a;
-}
-
-.bi-kpi-card span {
-  display: block;
-  margin-bottom: 6px;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.bi-kpi-card strong {
-  display: block;
-  color: #111827;
-  font-size: 26px;
-  line-height: 1;
-  font-weight: 750;
-  letter-spacing: -0.03em;
-}
-
-.bi-kpi-card p {
-  margin: 7px 0 0;
-  color: #6b7280;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-/* ---------- Dashboard grid ---------- */
-
-.bi-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr) minmax(260px, 0.72fr);
-  gap: 14px;
-  align-items: stretch;
-}
-
-.bi-chart-card,
-.bi-priority-card {
-  min-width: 0;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.bi-chart-card-large {
-  grid-row: span 2;
-}
-
-.bi-chart-card-wide {
-  grid-column: span 2;
-}
-
-.bi-activity-panel {
-  grid-column: span 1;
-}
-
-.bi-chart-header {
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.bi-chart-header span {
-  display: inline-flex;
-  margin-bottom: 4px;
-  color: #2563eb;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.075em;
-  text-transform: uppercase;
-}
-
-.bi-chart-header h2 {
-  margin: 0;
-  color: #111827;
-  font-size: 17px;
-  font-weight: 750;
-  letter-spacing: -0.02em;
-}
-
-.bi-chart-header small,
-.bi-chart-header > svg {
-  color: #6b7280;
-}
-
-.bi-chart-header > strong {
-  color: #111827;
-  font-size: 26px;
-  line-height: 1;
-  font-weight: 750;
-}
-
-.bi-chart-header a {
-  color: #2563eb;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.bi-chart-body {
-  min-height: 310px;
-}
-
-.bi-chart-body.compact {
-  min-height: 210px;
-}
-
-.bi-empty-state {
-  min-height: 180px;
-  padding: 22px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  background: #f9fafb;
-  color: #6b7280;
-  display: grid;
-  place-items: center;
-  text-align: center;
-}
-
-.bi-empty-state svg {
-  color: #2563eb;
-  font-size: 28px;
-}
-
-.bi-empty-state p {
-  margin: 6px 0 0;
-  color: #6b7280;
-}
-
-/* ---------- Priority queue ---------- */
-
-.bi-priority-list {
-  display: grid;
-  gap: 9px;
-}
-
-.bi-priority-row {
-  min-height: 48px;
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #1f2937;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-}
-
-.bi-priority-row:hover {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-}
-
-.bi-priority-row > div {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.bi-priority-row svg {
-  color: #2563eb;
-  flex-shrink: 0;
-}
-
-.bi-priority-row span {
-  color: #374151;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.bi-priority-row strong {
-  color: #111827;
-  font-size: 17px;
-  font-weight: 750;
-}
-
-/* ---------- Product list ---------- */
-
-.bi-product-list {
-  display: grid;
-  gap: 10px;
-}
-
-.bi-product-row {
-  min-height: 52px;
-  padding: 9px 0;
-  border-bottom: 1px solid #f3f4f6;
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) minmax(120px, 0.5fr);
-  align-items: center;
-  gap: 12px;
-}
-
-.bi-product-row:last-child {
-  border-bottom: 0;
-}
-
-.bi-product-row > span:first-child {
-  width: 26px;
-  height: 26px;
+.msdash-action-icon {
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   background: #eff6ff;
   color: #2563eb;
   display: grid;
   place-items: center;
-  font-size: 12px;
+}
+
+.msdash-action-row strong {
+  color: #111827;
+  font-size: 13px;
   font-weight: 750;
 }
 
-.bi-product-row strong {
-  color: #111827;
-  font-size: 14px;
-}
-
-.bi-product-row p {
-  margin: 3px 0 0;
+.msdash-action-row p {
+  margin: 2px 0 0;
   color: #6b7280;
   font-size: 12px;
 }
 
-.bi-product-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: #eef2ff;
-  overflow: hidden;
+.msdash-action-row > span {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 750;
 }
 
-.bi-product-bar span {
-  height: 100%;
-  border-radius: inherit;
-  background: #2563eb;
-  display: block;
-}
+/* ---------- Activity ---------- */
 
-/* ---------- Recent activity ---------- */
-
-.bi-activity-list {
+.msdash-activity-list {
+  max-height: 336px;
+  overflow-y: auto;
+  padding: 10px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
-.bi-activity-row {
+.msdash-activity-row {
+  min-height: 50px;
+  padding: 8px 9px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f3f4f6;
+  gap: 9px;
 }
 
-.bi-activity-row:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
-.bi-activity-row > span {
-  width: 8px;
-  height: 8px;
+.msdash-activity-row > span {
+  width: 7px;
+  height: 7px;
   margin-top: 6px;
   border-radius: 999px;
   background: #2563eb;
   flex-shrink: 0;
 }
 
-.bi-activity-row strong {
+.msdash-activity-row strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.msdash-activity-row p {
+  margin: 2px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* ---------- Empty/loading ---------- */
+
+.msdash-empty-state,
+.msdash-empty-canvas,
+.msdash-state-card {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.msdash-empty-state {
+  min-height: 170px;
+}
+
+.msdash-empty-canvas,
+.msdash-state-card {
+  min-height: 440px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.msdash-empty-state svg,
+.msdash-empty-canvas svg,
+.msdash-state-card svg {
+  color: #2563eb;
+  font-size: 30px;
+}
+
+.msdash-empty-state h2,
+.msdash-empty-canvas h2,
+.msdash-state-card h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 22px;
+}
+
+.msdash-empty-state p,
+.msdash-empty-canvas p,
+.msdash-state-card p {
+  max-width: 360px;
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* ---------- Customize drawer ---------- */
+
+.msdash-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: rgba(15, 23, 42, 0.28);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.msdash-customize-drawer {
+  width: min(420px, 100vw);
+  height: 100vh;
+  padding: 18px;
+  background: #ffffff;
+  box-shadow: -18px 0 60px rgba(15, 23, 42, 0.18);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 14px;
+}
+
+.msdash-drawer-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.msdash-drawer-header span {
+  display: block;
+  margin-bottom: 4px;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.msdash-drawer-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 20px;
+}
+
+.msdash-drawer-header p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.msdash-widget-list {
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.msdash-widget-toggle {
+  width: 100%;
+  min-height: 66px;
+  margin-left: 0;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #111827;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.msdash-widget-toggle:hover {
+  background: #f9fafb;
+  transform: none;
+}
+
+.msdash-widget-toggle.active {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.msdash-widget-toggle > span {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+}
+
+.msdash-widget-toggle strong {
+  display: block;
   color: #111827;
   font-size: 13px;
 }
 
-.bi-activity-row p {
+.msdash-widget-toggle p {
   margin: 3px 0 0;
   color: #6b7280;
   font-size: 12px;
 }
 
-/* ---------- Feature strip ---------- */
-
-.bi-feature-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
-  gap: 14px;
-}
-
-.bi-feature-strip article {
-  padding: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #ffffff;
-  display: flex;
-  gap: 11px;
-  align-items: flex-start;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.bi-feature-strip svg {
-  width: 34px;
-  height: 34px;
-  padding: 8px;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #2563eb;
-  flex-shrink: 0;
-}
-
-.bi-feature-strip strong {
-  display: block;
-  color: #111827;
-  font-size: 13px;
-}
-
-.bi-feature-strip p {
-  margin: 4px 0 0;
+.msdash-widget-toggle em {
   color: #6b7280;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-/* ---------- Legacy generic dashboard helpers kept for other pages ---------- */
-
-.dashboard-metric-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.dashboard-metric-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.dashboard-metric-card span {
-  display: block;
-  margin-bottom: 6px;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.dashboard-metric-card strong {
-  color: #111827;
-  font-size: 24px;
+  font-size: 11px;
+  font-style: normal;
   font-weight: 750;
 }
 
-.metric-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-size: 19px;
+.msdash-drawer-footer {
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.metric-blue .metric-icon {
-  background: #eff6ff;
-  color: #2563eb;
-}
+/* ---------- Backwards compatibility cleanup ---------- */
 
-.metric-green .metric-icon {
-  background: #ecfdf5;
-  color: #16a34a;
-}
-
-.metric-purple .metric-icon {
-  background: #f5f3ff;
-  color: #7c3aed;
-}
-
-.metric-orange .metric-icon {
-  background: #fff7ed;
-  color: #d97706;
-}
-
-.metric-red .metric-icon {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
+.ops-dashboard-page,
+.bi-dashboard-page,
+.bi-dashboard-shell {
+  background: transparent;
+  color: #111827;
 }
 
 /* ---------- Responsive ---------- */
 
-@media (max-width: 1220px) {
-  .bi-main-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+@media (max-width: 1320px) {
+  .msdash-kpi-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .bi-priority-card {
-    grid-column: span 2;
+  .msdash-span-8,
+  .msdash-span-6,
+  .msdash-span-4 {
+    grid-column: span 6;
   }
 }
 
-@media (max-width: 980px) {
-  .bi-dashboard-header,
-  .bi-kpi-grid,
-  .bi-main-grid,
-  .bi-feature-strip {
+@media (max-width: 900px) {
+  .msdash-command-bar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .msdash-command-actions {
+    justify-content: flex-start;
+  }
+
+  .msdash-kpi-strip,
+  .msdash-report-grid {
     grid-template-columns: 1fr;
   }
 
-  .bi-dashboard-header {
-    display: grid;
+  .msdash-span-8,
+  .msdash-span-6,
+  .msdash-span-4 {
+    grid-column: span 1;
   }
 
-  .bi-refresh-button {
-    width: fit-content;
-  }
-
-  .bi-chart-card-large,
-  .bi-chart-card-wide,
-  .bi-activity-panel,
-  .bi-priority-card {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  .bi-kpi-grid {
-    display: grid;
-  }
-}
-
-@media (max-width: 620px) {
-  .bi-kpi-card,
-  .bi-feature-strip article {
+  .msdash-filter-bar {
+    align-items: flex-start;
     flex-direction: column;
   }
 
-  .bi-product-row {
-    grid-template-columns: 30px 1fr;
+  .msdash-filter-bar > div:first-child {
+    padding-right: 0;
+    border-right: 0;
   }
 
-  .bi-product-bar {
+  .msdash-widget-count {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .msdash-chart-body,
+  .msdash-chart-body.large,
+  .msdash-chart-body.compact,
+  .msdash-chart-body.top-products {
+    padding: 10px;
+  }
+
+  .msdash-action-row {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .msdash-action-row > span {
     grid-column: 2;
+  }
+
+  .msdash-drawer-footer {
+    flex-direction: column;
+  }
+
+  .msdash-drawer-footer button {
+    width: 100%;
   }
 }

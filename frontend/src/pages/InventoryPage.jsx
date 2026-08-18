@@ -7,14 +7,16 @@ import {
   FiBox,
   FiClock,
   FiExternalLink,
+  FiFilter,
   FiMinusCircle,
   FiPackage,
   FiRefreshCw,
-  FiShoppingCart,
+  FiSearch,
+  FiShield,
   FiSliders,
   FiX,
-  FiShield,
 } from "react-icons/fi";
+
 import apiClient from "../api/apiClient";
 import { useAuth } from "../context/AuthContext";
 import "../styles/inventory.css";
@@ -24,6 +26,7 @@ const initialFormData = {
   quantity_change: "",
   reason: "",
 };
+
 const STOCK_SNAPSHOT_LIMIT = 8;
 
 function InventoryPage() {
@@ -81,9 +84,12 @@ function InventoryPage() {
     }
   }
 
+  async function refreshInventoryPage() {
+    await Promise.all([fetchInventoryMovements(), fetchProducts()]);
+  }
+
   useEffect(() => {
-    fetchInventoryMovements();
-    fetchProducts();
+    refreshInventoryPage();
   }, []);
 
   function handleChange(event) {
@@ -140,8 +146,7 @@ function InventoryPage() {
       setIsAdjustmentFormOpen(false);
       setSuccessMessage("Inventory adjustment created successfully.");
 
-      await fetchInventoryMovements();
-      await fetchProducts();
+      await refreshInventoryPage();
     } catch (error) {
       setCreateError(
         error.response?.data?.message || "Failed to create inventory adjustment."
@@ -204,11 +209,11 @@ function InventoryPage() {
     const stockLevel = getStockLevel(product);
 
     if (stockLevel === "out") {
-      return "Out of Stock";
+      return "Out of stock";
     }
 
     if (stockLevel === "low") {
-      return "Low Stock";
+      return "Low stock";
     }
 
     return "Healthy";
@@ -218,46 +223,46 @@ function InventoryPage() {
     const stockLevel = getStockLevel(product);
 
     if (stockLevel === "out") {
-      return "badge badge-danger";
+      return "inventory-status-pill status-out";
     }
 
     if (stockLevel === "low") {
-      return "badge badge-warning";
+      return "inventory-status-pill status-low";
     }
 
-    return "badge badge-success";
+    return "inventory-status-pill status-healthy";
   }
 
   function getMovementBadgeClass(type) {
     const movementType = String(type || "").toLowerCase();
 
     if (movementType === "sale") {
-      return "badge badge-warning";
+      return "inventory-movement-pill type-sale";
     }
 
     if (movementType === "adjustment" || movementType === "approved_adjustment") {
-      return "badge badge-info";
+      return "inventory-movement-pill type-adjustment";
     }
 
     if (movementType === "purchase_receive") {
-      return "badge badge-success";
+      return "inventory-movement-pill type-receive";
     }
 
-    return "badge badge-success";
+    return "inventory-movement-pill type-default";
   }
 
   function getQuantityClass(quantityChange) {
     const quantity = Number(quantityChange || 0);
 
     if (quantity > 0) {
-      return "quantity-pill quantity-positive";
+      return "inventory-quantity-pill quantity-positive";
     }
 
     if (quantity < 0) {
-      return "quantity-pill quantity-negative";
+      return "inventory-quantity-pill quantity-negative";
     }
 
-    return "quantity-pill";
+    return "inventory-quantity-pill";
   }
 
   const totalProducts = products.length;
@@ -285,7 +290,7 @@ function InventoryPage() {
     .sort((a, b) => {
       return Number(a.stock_quantity || 0) - Number(b.stock_quantity || 0);
     })
-    .slice(0, 6);
+    .slice(0, 5);
 
   const remainingAlertCount =
     outOfStockProducts.length + lowStockProducts.length - alertProducts.length;
@@ -314,7 +319,7 @@ function InventoryPage() {
 
   const remainingStockSnapshotCount =
     stockSnapshotProducts.length - displayedStockSnapshotProducts.length;
-  
+
   const totalMovements = inventoryMovements.length;
 
   const stockIncreases = inventoryMovements.filter((movement) => {
@@ -330,7 +335,10 @@ function InventoryPage() {
   });
 
   const adjustmentMovements = inventoryMovements.filter((movement) => {
-    return movement.movement_type === "adjustment";
+    return (
+      movement.movement_type === "adjustment" ||
+      movement.movement_type === "approved_adjustment"
+    );
   });
 
   const latestMovement = [...inventoryMovements].sort((a, b) => {
@@ -396,137 +404,168 @@ function InventoryPage() {
   }
 
   return (
-    <section>
-      <div className="page-header">
+    <section className="inventory-page">
+      <header className="inventory-command-bar">
         <div>
+          <span className="inventory-eyebrow">Stock control</span>
           <h1>Inventory</h1>
           <p>
-            Monitor stock health, review inventory alerts, and track every stock
-            movement.
+            Monitor stock health, review reorder risk, and track every stock
+            movement created by sales, purchasing, approvals, and adjustments.
           </p>
         </div>
 
-        <div className="page-actions">
-          <Link to="/products" className="secondary-button page-link-button">
-            Manage Products
+        <div className="inventory-command-actions">
+          <button
+            type="button"
+            className="inventory-secondary-command"
+            onClick={refreshInventoryPage}
+            disabled={loading || productsLoading}
+          >
+            <FiRefreshCw />
+            Refresh
+          </button>
+
+          <Link to="/products" className="inventory-secondary-command">
+            Manage products
             <FiExternalLink />
           </Link>
 
-          <Link to="/approvals" className="secondary-button page-link-button">
+          <Link to="/approvals" className="inventory-secondary-command">
             <FiShield />
-            Request Adjustment
+            Request adjustment
           </Link>
 
           {isAdmin && (
-            <button type="button" onClick={handleOpenAdjustmentForm}>
-              + Direct Adjustment
+            <button
+              type="button"
+              className="inventory-primary-command"
+              onClick={handleOpenAdjustmentForm}
+            >
+              <FiSliders />
+              Direct adjustment
             </button>
           )}
         </div>
-      </div>
+      </header>
 
       {!isAdmin && (
-        <p className="message info-message">
-          You can view inventory status and movement history. To request a stock
-          change, use Request Adjustment. Stock will only change after Admin approval.
+        <p className="inventory-info-message">
+          You can view inventory status and movement history. Use Request
+          adjustment for stock changes. Stock changes are applied after Admin
+          approval.
         </p>
       )}
 
-      {productError && <p className="message error-message">{productError}</p>}
-
-      {successMessage && (
-        <p className="message success-message">{successMessage}</p>
+      {(productError || successMessage) && (
+        <div className="inventory-message-stack">
+          {productError && <p className="message error-message">{productError}</p>}
+          {successMessage && (
+            <p className="message success-message">{successMessage}</p>
+          )}
+        </div>
       )}
 
-      {/* Inventory Metrics */}
-      <div className="dashboard-metric-grid">
-        <article className="dashboard-metric-card metric-blue">
-          <div className="metric-icon">
+      <section className="inventory-kpi-strip" aria-label="Inventory metrics">
+        <article className="inventory-kpi-card">
+          <div className="inventory-kpi-icon">
             <FiBox />
           </div>
 
           <div>
-            <span>Total Products</span>
+            <span>Total products</span>
             <strong>{productsLoading ? "..." : totalProducts}</strong>
+            <p>Catalogue items</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-purple">
-          <div className="metric-icon">
+        <article className="inventory-kpi-card">
+          <div className="inventory-kpi-icon">
             <FiPackage />
           </div>
 
           <div>
-            <span>Total Stock Units</span>
+            <span>Stock units</span>
             <strong>{productsLoading ? "..." : totalStockUnits}</strong>
+            <p>Units on hand</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-orange">
-          <div className="metric-icon">
+        <article className="inventory-kpi-card warning">
+          <div className="inventory-kpi-icon">
             <FiAlertTriangle />
           </div>
 
           <div>
-            <span>Low Stock Items</span>
+            <span>Low stock</span>
             <strong>{productsLoading ? "..." : lowStockProducts.length}</strong>
+            <p>Below reorder level</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-red">
-          <div className="metric-icon">
+        <article className="inventory-kpi-card danger">
+          <div className="inventory-kpi-icon">
             <FiMinusCircle />
           </div>
 
           <div>
-            <span>Out of Stock</span>
+            <span>Out of stock</span>
             <strong>{productsLoading ? "..." : outOfStockProducts.length}</strong>
+            <p>Critical items</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-green">
-          <div className="metric-icon">
+        <article className="inventory-kpi-card">
+          <div className="inventory-kpi-icon">
             <FiArchive />
           </div>
 
           <div>
-            <span>Inventory Value</span>
+            <span>Inventory value</span>
             <strong>{productsLoading ? "..." : formatCurrency(inventoryValue)}</strong>
+            <p>Price × stock</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-blue">
-          <div className="metric-icon">
+        <article className="inventory-kpi-card">
+          <div className="inventory-kpi-icon">
             <FiClock />
           </div>
 
           <div>
-            <span>Latest Movement</span>
+            <span>Latest movement</span>
             <strong>
               {latestMovement ? formatShortDate(latestMovement.created_at) : "-"}
             </strong>
+            <p>Most recent stock event</p>
           </div>
         </article>
-      </div>
+      </section>
 
-      {/* Inventory control overview */}
-      <div className="inventory-control-grid">
-        <section className="panel inventory-alert-panel">
-          <div className="panel-header inventory-alert-header">
+      <div className="inventory-overview-grid">
+        <section className="inventory-alert-panel">
+          <div className="inventory-panel-header">
             <div>
+              <span>Reorder attention</span>
               <h2>
                 <FiAlertTriangle />
-                Reorder Attention ({outOfStockProducts.length + lowStockProducts.length})
+                {outOfStockProducts.length + lowStockProducts.length} products need attention
               </h2>
-              <p>Products that are below their reorder point or out of stock.</p>
+              <p>Products that are below reorder point or out of stock.</p>
             </div>
           </div>
 
-          <div className="panel-body">
+          <div className="inventory-alert-list">
             {productsLoading ? (
-              <p>Loading stock alerts...</p>
+              <div className="inventory-empty-inline">
+                <FiPackage />
+                <div>
+                  <strong>Loading stock alerts</strong>
+                  <p>Checking current stock levels.</p>
+                </div>
+              </div>
             ) : alertProducts.length === 0 ? (
-              <div className="compact-empty-state">
+              <div className="inventory-empty-inline">
                 <FiPackage />
                 <div>
                   <strong>Stock levels look healthy</strong>
@@ -535,47 +574,35 @@ function InventoryPage() {
               </div>
             ) : (
               <>
-                <div className="compact-alert-list">
-                  {alertProducts.map((product) => {
-                    const stockQuantity = Number(product.stock_quantity || 0);
-                    const lowStockLevel = Number(product.low_stock_level || 0);
-                    const isOutOfStock = stockQuantity <= 0;
+                {alertProducts.map((product) => {
+                  const stockQuantity = Number(product.stock_quantity || 0);
+                  const lowStockLevel = Number(product.low_stock_level || 0);
+                  const isOutOfStock = stockQuantity <= 0;
 
-                    return (
-                      <div
-                        key={product.id}
-                        className={
-                          isOutOfStock
-                            ? "compact-alert-row critical-alert"
-                            : "compact-alert-row low-stock-alert"
-                        }
-                      >
-                        <div>
-                          <strong>{product.name}</strong>
-                          <p>
-                            {product.sku} · Reorder point: {lowStockLevel}
-                          </p>
-                        </div>
-
-                        <div className="compact-alert-status">
-                          <span>On hand: {stockQuantity}</span>
-                          <span
-                            className={
-                              isOutOfStock
-                                ? "badge badge-danger"
-                                : "badge badge-warning"
-                            }
-                          >
-                            {isOutOfStock ? "Out of Stock" : "Low Stock"}
-                          </span>
-                        </div>
+                  return (
+                    <article
+                      key={product.id}
+                      className={
+                        isOutOfStock
+                          ? "inventory-alert-row critical"
+                          : "inventory-alert-row warning"
+                      }
+                    >
+                      <div>
+                        <strong>{product.name}</strong>
+                        <p>{product.sku} · Reorder point {lowStockLevel}</p>
                       </div>
-                    );
-                  })}
-                </div>
+
+                      <div>
+                        <span>On hand: {stockQuantity}</span>
+                        <strong>{isOutOfStock ? "Out" : "Low"}</strong>
+                      </div>
+                    </article>
+                  );
+                })}
 
                 {remainingAlertCount > 0 && (
-                  <p className="alert-more-text">
+                  <p className="inventory-more-text">
                     + {remainingAlertCount} more product(s) need attention.
                   </p>
                 )}
@@ -584,90 +611,93 @@ function InventoryPage() {
           </div>
         </section>
 
-        <section className="panel inventory-rules-panel">
-          <div className="panel-header">
+        <section className="inventory-rules-card">
+          <div className="inventory-panel-header">
             <div>
+              <span>Control rules</span>
               <h2>
                 <FiSliders />
-                Inventory Control Rules
+                Stock movement policy
               </h2>
-              <p>How stock changes are controlled in this system.</p>
+              <p>How stock changes are controlled in this ERP.</p>
             </div>
           </div>
 
-          <div className="panel-body">
-            <div className="inventory-rule-list">
-              <div className="inventory-rule-item">
-                <FiPackage />
-                <div>
-                  <strong>Products store item details</strong>
-                  <p>Name, SKU, category, price, stock level, and reorder point.</p>
-                </div>
+          <div className="inventory-rule-list">
+            <article>
+              <FiPackage />
+              <div>
+                <strong>Products hold catalogue data</strong>
+                <p>Name, SKU, category, price, current stock, and reorder point.</p>
               </div>
+            </article>
 
-              <div className="inventory-rule-item">
-                <FiActivity />
-                <div>
-                  <strong>Inventory records tracked stock changes</strong>
-                  <p>
-                    Sales deductions, purchase receiving, approved adjustments, and Admin
-                    adjustments create movement history.
-                  </p>
-                </div>
+            <article>
+              <FiActivity />
+              <div>
+                <strong>Movements create the stock history</strong>
+                <p>Sales, purchase receiving, approved changes, and Admin corrections are traceable.</p>
               </div>
+            </article>
 
-              <div className="inventory-rule-item">
-                <FiShoppingCart />
-                <div>
-                  <strong>Sales orders deduct stock automatically</strong>
-                  <p>Outbound stock movements are created when orders are placed.</p>
-                </div>
+            <article>
+              <FiShield />
+              <div>
+                <strong>Staff requests need approval</strong>
+                <p>Non-admin users request changes through the approval workflow.</p>
               </div>
-            </div>
+            </article>
           </div>
         </section>
       </div>
 
-      {/* Stock snapshot card */}
-      <section className="table-card stock-snapshot-card">
-        <div className="table-card-header">
+      <section className="inventory-workspace">
+        <div className="inventory-workspace-header">
           <div>
-            <h2>Priority Stock Snapshot</h2>
+            <span>Stock snapshot</span>
+            <h2>Priority stock items</h2>
             <p>
-              Read-only view of the most urgent stock items, sorted by stock status and
-              quantity on hand.
+              Read-only stock view sorted by stock status and quantity on hand.
             </p>
           </div>
 
-          <Link to="/products" className="secondary-button page-link-button">
-            Manage Products
+          <Link to="/products" className="inventory-secondary-command">
+            Manage products
             <FiExternalLink />
           </Link>
         </div>
 
-        <div className="panel-body">
+        <div className="inventory-table-area">
           {productsLoading ? (
-            <p>Loading current stock snapshot...</p>
+            <div className="inventory-empty-state">
+              <FiBox />
+              <h3>Loading stock snapshot</h3>
+              <p>Please wait while product stock data is loaded.</p>
+            </div>
           ) : productError ? (
-            <p className="message error-message">{productError}</p>
+            <div className="inventory-empty-state">
+              <FiAlertTriangle />
+              <h3>Could not load stock data</h3>
+              <p>{productError}</p>
+            </div>
           ) : products.length === 0 ? (
-            <div className="empty-state">
+            <div className="inventory-empty-state">
               <FiBox />
               <h3>No products found</h3>
-              <p>Create products first to start tracking inventory stock levels.</p>
+              <p>Create products first to start tracking stock levels.</p>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table>
+            <div className="inventory-table-wrapper">
+              <table className="inventory-table">
                 <thead>
                   <tr>
                     <th>Product</th>
                     <th>SKU</th>
                     <th>Category</th>
-                    <th>On Hand</th>
-                    <th>Low Stock Level</th>
+                    <th>On hand</th>
+                    <th>Reorder level</th>
                     <th>Status</th>
-                    <th>Est. Retail Value</th>
+                    <th>Est. retail value</th>
                   </tr>
                 </thead>
 
@@ -684,7 +714,7 @@ function InventoryPage() {
                         </td>
 
                         <td>
-                          <span className="code-pill">{product.sku}</span>
+                          <span className="inventory-code-pill">{product.sku}</span>
                         </td>
 
                         <td>{product.category || "-"}</td>
@@ -709,39 +739,40 @@ function InventoryPage() {
                   })}
                 </tbody>
               </table>
+
               {remainingStockSnapshotCount > 0 && (
-                <p className="snapshot-more-text">
-                  Showing the top {STOCK_SNAPSHOT_LIMIT} stock priority items.{" "}
-                  {remainingStockSnapshotCount} more product(s) are available on the Products
-                  page.
+                <p className="inventory-more-text">
+                  Showing the top {STOCK_SNAPSHOT_LIMIT} priority stock items.{" "}
+                  {remainingStockSnapshotCount} more product(s) are available on
+                  the Products page.
                 </p>
               )}
             </div>
           )}
         </div>
       </section>
-      
-      {/* Inventory movement Table */}
-      <div className="table-card">
-        <div className="table-card-header">
+
+      <section className="inventory-workspace">
+        <div className="inventory-workspace-header">
           <div>
-            <h2>Movement History</h2>
+            <span>Movement history</span>
+            <h2>Inventory movements</h2>
             <p>
               {loading
                 ? "Loading inventory movements..."
                 : `Showing ${displayedMovements.length} of ${inventoryMovements.length} movements.`}
             </p>
 
-            <div className="movement-stat-strip">
+            <div className="inventory-stat-strip">
               <span>
                 <strong>{totalMovements}</strong> total
               </span>
 
-              <span className="positive-stat">
+              <span className="positive">
                 <strong>{stockIncreases.length}</strong> increases
               </span>
 
-              <span className="negative-stat">
+              <span className="negative">
                 <strong>{stockDecreases.length}</strong> decreases
               </span>
 
@@ -758,28 +789,31 @@ function InventoryPage() {
           <button
             type="button"
             onClick={fetchInventoryMovements}
-            className="secondary-button"
+            className="inventory-secondary-command"
           >
             <FiRefreshCw />
             Refresh
           </button>
         </div>
 
-        <div className="table-toolbar inventory-table-toolbar">
-          <input
-            type="text"
-            placeholder="Search by product, SKU, type, reason, or user..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            aria-label="Search inventory movements"
-          />
+        <div className="inventory-toolbar">
+          <div className="inventory-search-field">
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Search by product, SKU, type, reason, or user"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search inventory movements"
+            />
+          </div>
 
           <select
             value={movementTypeFilter}
             onChange={(event) => setMovementTypeFilter(event.target.value)}
             aria-label="Filter inventory movements by type"
           >
-            <option value="all">All Types</option>
+            <option value="all">All types</option>
             {movementTypeOptions.map((type) => (
               <option key={type} value={type}>
                 {formatMovementType(type)}
@@ -792,10 +826,10 @@ function InventoryPage() {
             onChange={(event) => setSortOption(event.target.value)}
             aria-label="Sort inventory movements"
           >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="quantity-desc">Quantity High-Low</option>
-            <option value="quantity-asc">Quantity Low-High</option>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="quantity-desc">Quantity high-low</option>
+            <option value="quantity-asc">Quantity low-high</option>
             <option value="product-asc">Product A-Z</option>
           </select>
 
@@ -803,57 +837,68 @@ function InventoryPage() {
             <button
               type="button"
               onClick={resetInventoryFilters}
-              className="secondary-button"
+              className="inventory-secondary-command"
             >
+              <FiFilter />
               Reset
             </button>
           )}
         </div>
 
-        <div className="panel-body">
+        <div className="inventory-table-area">
           {loading ? (
-            <p>Loading inventory movements...</p>
+            <div className="inventory-empty-state">
+              <FiActivity />
+              <h3>Loading movement history</h3>
+              <p>Please wait while inventory movements are loaded.</p>
+            </div>
           ) : error ? (
-            <div>
-              <p className="message error-message">{error}</p>
+            <div className="inventory-empty-state">
+              <FiAlertTriangle />
+              <h3>Could not load movements</h3>
+              <p>{error}</p>
 
-              <button type="button" onClick={fetchInventoryMovements}>
-                Try Again
+              <button
+                type="button"
+                onClick={fetchInventoryMovements}
+                className="inventory-primary-command"
+              >
+                Try again
               </button>
             </div>
           ) : inventoryMovements.length === 0 ? (
-            <div className="empty-state">
+            <div className="inventory-empty-state">
               <FiBox />
               <h3>No inventory movements found</h3>
-              <p>Sales orders and manual adjustments will appear here.</p>
+              <p>Sales fulfilment, receiving, and adjustments will appear here.</p>
             </div>
           ) : displayedMovements.length === 0 ? (
-            <div className="empty-state">
-              <FiActivity />
-              <h3>No matching movements found</h3>
+            <div className="inventory-empty-state">
+              <FiFilter />
+              <h3>No matching movements</h3>
               <p>Try changing your search, movement type, or sort option.</p>
 
               <button
                 type="button"
                 onClick={resetInventoryFilters}
-                className="secondary-button"
+                className="inventory-secondary-command"
               >
-                Reset Filters
+                Reset filters
               </button>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table>
+            <div className="inventory-table-wrapper">
+              <table className="inventory-table movement-table">
                 <thead>
                   <tr>
                     <th>Product</th>
                     <th>SKU</th>
                     <th>Type</th>
-                    <th>Quantity Change</th>
+                    <th>Quantity change</th>
                     <th>Reason</th>
-                    <th>Sales Order</th>
-                    <th>Created By</th>
-                    <th>Created At</th>
+                    <th>Sales order</th>
+                    <th>Created by</th>
+                    <th>Created at</th>
                   </tr>
                 </thead>
 
@@ -865,15 +910,11 @@ function InventoryPage() {
                       </td>
 
                       <td>
-                        <span className="code-pill">{movement.sku}</span>
+                        <span className="inventory-code-pill">{movement.sku}</span>
                       </td>
 
                       <td>
-                        <span
-                          className={getMovementBadgeClass(
-                            movement.movement_type
-                          )}
-                        >
+                        <span className={getMovementBadgeClass(movement.movement_type)}>
                           {formatMovementType(movement.movement_type)}
                         </span>
                       </td>
@@ -890,7 +931,7 @@ function InventoryPage() {
 
                       <td>
                         {movement.related_sales_order_id ? (
-                          <span className="code-pill">
+                          <span className="inventory-code-pill">
                             SO-
                             {String(movement.related_sales_order_id).padStart(
                               4,
@@ -911,15 +952,15 @@ function InventoryPage() {
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Adjustment form modal */}
       {isAdjustmentFormOpen && (
         <div className="modal-backdrop">
           <section className="modal-card inventory-adjustment-modal">
-            <div className="modal-header">
+            <div className="inventory-modal-header">
               <div>
-                <h2>Create Inventory Adjustment</h2>
+                <span>Inventory adjustment</span>
+                <h2>Create direct adjustment</h2>
                 <p>
                   Manually increase or decrease stock for inventory correction.
                 </p>
@@ -927,7 +968,7 @@ function InventoryPage() {
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="inventory-icon-button"
                 onClick={handleCloseAdjustmentForm}
                 aria-label="Close inventory adjustment form"
               >
@@ -935,8 +976,8 @@ function InventoryPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateAdjustment} className="form-grid">
-              <div className="form-field full-width">
+            <form onSubmit={handleCreateAdjustment} className="inventory-form-grid">
+              <div className="form-field inventory-form-full">
                 <label htmlFor="product_id">Product</label>
                 <select
                   id="product_id"
@@ -956,7 +997,7 @@ function InventoryPage() {
               </div>
 
               <div className="form-field">
-                <label htmlFor="quantity_change">Quantity Change</label>
+                <label htmlFor="quantity_change">Quantity change</label>
                 <input
                   id="quantity_change"
                   name="quantity_change"
@@ -968,7 +1009,7 @@ function InventoryPage() {
                 />
               </div>
 
-              <div className="adjustment-help-card">
+              <div className="inventory-adjustment-help-card">
                 <strong>How quantity change works</strong>
                 <p>
                   Use a positive number for received stock or corrections. Use a
@@ -976,7 +1017,7 @@ function InventoryPage() {
                 </p>
               </div>
 
-              <div className="form-field full-width">
+              <div className="form-field inventory-form-full">
                 <label htmlFor="reason">Reason</label>
                 <textarea
                   id="reason"
@@ -989,14 +1030,14 @@ function InventoryPage() {
               </div>
 
               {createError && (
-                <p className="message error-message full-width">
+                <p className="message error-message inventory-form-full">
                   {createError}
                 </p>
               )}
 
-              <div className="form-actions">
+              <div className="inventory-form-actions inventory-form-full">
                 <button type="submit" disabled={creating}>
-                  {creating ? "Creating..." : "Create Adjustment"}
+                  {creating ? "Creating..." : "Create adjustment"}
                 </button>
 
                 <button

@@ -3,14 +3,25 @@ import {
   FiActivity,
   FiAlertTriangle,
   FiBarChart2,
-  FiCpu,
-  FiDollarSign,
-  FiRefreshCw,
-  FiTrendingUp,
   FiCheckCircle,
+  FiClock,
+  FiCpu,
+  FiRefreshCw,
   FiShield,
+  FiTrendingUp,
   FiUsers,
+  FiXCircle,
 } from "react-icons/fi";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 import apiClient from "../api/apiClient";
 import "../styles/aiAnalytics.css";
 
@@ -108,17 +119,16 @@ function AiAnalyticsPage() {
   }
 
   async function refreshAiAnalytics() {
-    await checkAiHealth();
-    await fetchSalesForecast();
-    await fetchAuditAnomalies();
-    await fetchCustomerActivityPredictions();
+    await Promise.all([
+      checkAiHealth(),
+      fetchSalesForecast(),
+      fetchAuditAnomalies(),
+      fetchCustomerActivityPredictions(),
+    ]);
   }
 
   useEffect(() => {
-    checkAiHealth();
-    fetchSalesForecast();
-    fetchAuditAnomalies();
-    fetchCustomerActivityPredictions();
+    refreshAiAnalytics();
   }, []);
 
   function formatCurrency(value) {
@@ -136,10 +146,57 @@ function AiAnalyticsPage() {
     return new Date(value).toLocaleDateString();
   }
 
+  function formatChartDate(value) {
+    if (!value) {
+      return "-";
+    }
+
+    return new Date(value).toLocaleDateString("en-AU", {
+      day: "2-digit",
+      month: "short",
+    });
+  }
+
+  function formatLabel(value) {
+    if (!value) {
+      return "-";
+    }
+
+    return String(value)
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  function ForecastTooltip({ active, payload, label }) {
+    if (!active || !payload?.length) {
+      return null;
+    }
+
+    return (
+      <div className="ai-chart-tooltip">
+        <span>{label}</span>
+        <strong>{formatCurrency(payload[0].value)}</strong>
+      </div>
+    );
+  }
+
   const isConnected = Boolean(aiStatus?.connected);
+  const isRefreshing =
+    checking || forecastLoading || anomalyLoading || customerActivityLoading;
+
   const forecastResult = forecastData?.result;
   const forecastItems = forecastResult?.forecast || [];
-  const trainingData = forecastResult?.training_data || forecastData?.salesHistory || [];
+  const trainingData =
+    forecastResult?.training_data || forecastData?.salesHistory || [];
+
+  const forecastChartData = forecastItems.map((item) => ({
+    date: formatChartDate(item.date),
+    fullDate: formatDate(item.date),
+    predictedSales: Number(item.predicted_sales || 0),
+  }));
 
   const totalPredictedSales = forecastItems.reduce((sum, item) => {
     return sum + Number(item.predicted_sales || 0);
@@ -147,11 +204,6 @@ function AiAnalyticsPage() {
 
   const averagePredictedSales =
     forecastItems.length > 0 ? totalPredictedSales / forecastItems.length : 0;
-
-  const maxPredictedSales = Math.max(
-    ...forecastItems.map((item) => Number(item.predicted_sales || 0)),
-    1
-  );
 
   const anomalyResult = anomalyData?.result;
   const anomalies = anomalyResult?.anomalies || [];
@@ -163,14 +215,14 @@ function AiAnalyticsPage() {
 
   function getSeverityBadgeClass(severity) {
     if (severity === "high") {
-      return "badge badge-danger";
+      return "ai-severity-pill severity-high";
     }
 
     if (severity === "medium") {
-      return "badge badge-warning";
+      return "ai-severity-pill severity-medium";
     }
 
-    return "badge badge-info";
+    return "ai-severity-pill severity-low";
   }
 
   const customerActivityResult = customerActivityData?.result;
@@ -183,19 +235,19 @@ function AiAnalyticsPage() {
 
   function getCustomerActivityBadgeClass(status) {
     if (status === "active") {
-      return "badge badge-success";
+      return "ai-customer-status-pill customer-active";
     }
 
     if (status === "at_risk") {
-      return "badge badge-warning";
+      return "ai-customer-status-pill customer-risk";
     }
 
-    return "badge badge-danger";
+    return "ai-customer-status-pill customer-inactive";
   }
 
   function formatActivityStatus(status) {
     if (status === "at_risk") {
-      return "At Risk";
+      return "At risk";
     }
 
     if (status === "active") {
@@ -209,167 +261,211 @@ function AiAnalyticsPage() {
     return "-";
   }
 
+  const atRiskCustomers = customerPredictions.filter((customer) => {
+    return customer.activity_status === "at_risk";
+  });
+
+  const highlightedCustomers =
+    atRiskCustomers.length > 0
+      ? atRiskCustomers.slice(0, 4)
+      : customerPredictions.slice(0, 4);
+
   return (
-    <section>
-      <div className="ai-hero">
-        <div className="ai-hero-main">
-          <span className="hero-kicker">Intelligence Hub</span>
-
-          <h1>AI Insights for Operations</h1>
-
+    <section className="ai-page">
+      <header className="ai-command-bar">
+        <div>
+          <span className="ai-eyebrow">Intelligence hub</span>
+          <h1>AI analytics</h1>
           <p>
-            Forecast sales, detect suspicious activity, and identify customer activity
-            risk using data from the ERP workflow.
+            Review AI-assisted sales forecasting, audit anomaly detection, and
+            customer activity prediction from operational ERP data.
           </p>
-
-          <div className="ai-hero-actions">
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={refreshAiAnalytics}
-              disabled={
-                checking ||
-                forecastLoading ||
-                anomalyLoading ||
-                customerActivityLoading
-              }
-            >
-              <FiRefreshCw />
-              {checking || forecastLoading || anomalyLoading || customerActivityLoading
-                ? "Refreshing..."
-                : "Refresh Insights"}
-            </button>
-
-            <span className={isConnected ? "ai-live-pill connected" : "ai-live-pill offline"}>
-              {healthLoading ? "Checking AI Service" : isConnected ? "AI Service Live" : "AI Service Offline"}
-            </span>
-          </div>
         </div>
 
-        <div className="ai-hero-panel">
-          <div className="ai-service-mini-card">
-            <div
-              className={`ai-connection-icon ${
-                isConnected ? "ai-connected" : "ai-disconnected"
-              }`}
-            >
-              {isConnected ? <FiCpu /> : <FiAlertTriangle />}
-            </div>
+        <div className="ai-command-actions">
+          <span
+            className={
+              isConnected
+                ? "ai-service-pill connected"
+                : "ai-service-pill offline"
+            }
+          >
+            {healthLoading
+              ? "Checking service"
+              : isConnected
+              ? "AI service live"
+              : "AI service offline"}
+          </span>
 
-            <div>
-              <span>Python FastAPI Service</span>
-              <strong>
-                {healthLoading
-                  ? "Checking..."
-                  : isConnected
-                  ? "Connected"
-                  : "Offline"}
-              </strong>
-              <p>{aiStatus?.aiServiceUrl || "Service URL unavailable"}</p>
-            </div>
-          </div>
+          <button
+            type="button"
+            className="ai-secondary-command"
+            onClick={refreshAiAnalytics}
+            disabled={isRefreshing}
+          >
+            <FiRefreshCw />
+            {isRefreshing ? "Refreshing..." : "Refresh insights"}
+          </button>
         </div>
-      </div>
+      </header>
 
-      {healthError && <p className="message error-message">{healthError}</p>}
-      {forecastError && <p className="message error-message">{forecastError}</p>}
-      {anomalyError && <p className="message error-message">{anomalyError}</p>}
-      {customerActivityError && (
-        <p className="message error-message">{customerActivityError}</p>
+      {(healthError || forecastError || anomalyError || customerActivityError) && (
+        <div className="ai-message-stack">
+          {healthError && <p className="message error-message">{healthError}</p>}
+          {forecastError && (
+            <p className="message error-message">{forecastError}</p>
+          )}
+          {anomalyError && <p className="message error-message">{anomalyError}</p>}
+          {customerActivityError && (
+            <p className="message error-message">{customerActivityError}</p>
+          )}
+        </div>
       )}
 
-      <div className="ai-module-grid">
-        <article className="ai-module-card">
-          <div className="ai-module-icon sales">
+      <section className="ai-kpi-strip" aria-label="AI analytics metrics">
+        <article
+          className={isConnected ? "ai-kpi-card success" : "ai-kpi-card danger"}
+        >
+          <div className="ai-kpi-icon">
+            {isConnected ? <FiCpu /> : <FiAlertTriangle />}
+          </div>
+
+          <div>
+            <span>AI service</span>
+            <strong>
+              {healthLoading ? "..." : isConnected ? "Connected" : "Offline"}
+            </strong>
+            <p>{aiStatus?.aiServiceUrl || "Service URL unavailable"}</p>
+          </div>
+        </article>
+
+        <article className="ai-kpi-card">
+          <div className="ai-kpi-icon">
             <FiTrendingUp />
           </div>
 
           <div>
-            <span>Sales Forecast</span>
-            <strong>{formatCurrency(totalPredictedSales)}</strong>
-            <p>Predicted 7-day revenue</p>
+            <span>7-day forecast</span>
+            <strong>
+              {forecastLoading ? "..." : formatCurrency(totalPredictedSales)}
+            </strong>
+            <p>{forecastItems.length || 0} forecast day(s)</p>
           </div>
         </article>
 
-        <article className="ai-module-card">
-          <div className="ai-module-icon security">
+        <article className="ai-kpi-card">
+          <div className="ai-kpi-icon">
+            <FiBarChart2 />
+          </div>
+
+          <div>
+            <span>Average daily forecast</span>
+            <strong>
+              {forecastLoading ? "..." : formatCurrency(averagePredictedSales)}
+            </strong>
+            <p>{trainingData.length || 0} training point(s)</p>
+          </div>
+        </article>
+
+        <article className="ai-kpi-card danger">
+          <div className="ai-kpi-icon">
             <FiShield />
           </div>
 
           <div>
-            <span>Anomaly Detection</span>
-            <strong>{anomalySummary.high}</strong>
-            <p>High severity findings</p>
+            <span>High anomalies</span>
+            <strong>{anomalyLoading ? "..." : anomalySummary.high}</strong>
+            <p>{anomalies.length || 0} total finding(s)</p>
           </div>
         </article>
 
-        <article className="ai-module-card">
-          <div className="ai-module-icon customers">
+        <article className="ai-kpi-card warning">
+          <div className="ai-kpi-icon">
             <FiUsers />
           </div>
 
           <div>
-            <span>Customer Risk</span>
-            <strong>{customerActivitySummary.at_risk}</strong>
-            <p>Customers marked at risk</p>
+            <span>Customers at risk</span>
+            <strong>
+              {customerActivityLoading
+                ? "..."
+                : customerActivitySummary.at_risk}
+            </strong>
+            <p>{customerActivityResult?.customers_analysed || 0} analysed</p>
           </div>
         </article>
 
-        <article className="ai-module-card">
-          <div className="ai-module-icon model">
+        <article className="ai-kpi-card info">
+          <div className="ai-kpi-icon">
             <FiActivity />
           </div>
 
           <div>
-            <span>AI Models</span>
+            <span>AI modules</span>
             <strong>3</strong>
-            <p>Forecasting, anomaly, activity</p>
+            <p>Forecast, anomaly, customer risk</p>
           </div>
         </article>
-      </div>
+      </section>
 
-      {healthError && <p className="message error-message">{healthError}</p>}
-      {forecastError && <p className="message error-message">{forecastError}</p>}
-      {anomalyError && <p className="message error-message">{anomalyError}</p>}
-      {customerActivityError && (
-        <p className="message error-message">{customerActivityError}</p>
-      )}
+      <section className="ai-status-strip">
+        <article>
+          <span>Service connection</span>
+          <strong>Python FastAPI service</strong>
+          <p>
+            React calls the Node/Express backend, which forwards AI requests to
+            the Python service.
+          </p>
+        </article>
 
-      <section className="table-card ai-status-card">
-        <div className="table-card-header">
+        <article>
+          <span>Decision support</span>
+          <strong>Operational AI modules</strong>
+          <p>
+            Forecast sales, review suspicious audit patterns, and classify
+            customer activity risk.
+          </p>
+        </article>
+      </section>
+
+      <section className="ai-panel ai-forecast-panel">
+        <div className="ai-panel-header">
           <div>
-            <h2>Sales Forecast</h2>
+            <span>Sales forecasting</span>
+            <h2>7-day revenue forecast</h2>
             <p>
-              Forecast future daily sales using historical completed sales
-              orders.
+              A line chart is better here than progress bars because this is a
+              time-series forecast.
             </p>
           </div>
 
           <button
             type="button"
-            className="secondary-button"
+            className="ai-secondary-command"
             onClick={() => fetchSalesForecast(7)}
             disabled={forecastLoading}
           >
             <FiBarChart2 />
-            {forecastLoading ? "Generating..." : "Generate Forecast"}
+            {forecastLoading ? "Generating..." : "Generate forecast"}
           </button>
         </div>
 
-        <div className="panel-body">
+        <div className="ai-panel-body">
           {forecastLoading ? (
-            <p>Generating sales forecast...</p>
+            <div className="ai-loading-state">
+              <FiBarChart2 />
+              <h3>Generating forecast</h3>
+              <p>Please wait while the AI service analyses sales history.</p>
+            </div>
           ) : forecastError ? (
-            <div className="empty-state">
+            <div className="ai-empty-state">
               <FiAlertTriangle />
               <h3>Forecast unavailable</h3>
               <p>{forecastError}</p>
-              <p>
-                At least two different sales dates are required for forecasting.
-              </p>
+              <p>At least two different sales dates are required for forecasting.</p>
             </div>
           ) : forecastItems.length === 0 ? (
-            <div className="empty-state">
+            <div className="ai-empty-state">
               <FiBarChart2 />
               <h3>No forecast data available</h3>
               <p>Create completed sales orders on at least two dates.</p>
@@ -378,224 +474,326 @@ function AiAnalyticsPage() {
             <>
               <div className="ai-forecast-summary">
                 <article>
-                  <span>History Points</span>
+                  <span>History points</span>
                   <strong>{forecastResult?.history_points || 0}</strong>
                 </article>
 
                 <article>
-                  <span>Forecast Days</span>
+                  <span>Forecast days</span>
                   <strong>{forecastResult?.forecast_days || 7}</strong>
                 </article>
 
                 <article>
-                  <span>Model Used</span>
-                  <strong>{forecastResult?.model}</strong>
+                  <span>Model used</span>
+                  <strong>{forecastResult?.model || "-"}</strong>
                 </article>
               </div>
 
-              <div className="ai-forecast-chart">
-                {forecastItems.map((item) => {
-                  const predictedSales = Number(item.predicted_sales || 0);
-                  const barWidth = Math.max(
-                    (predictedSales / maxPredictedSales) * 100,
-                    4
-                  );
+              <div className="ai-line-chart-card">
+                <ResponsiveContainer width="100%" height={260}>
+                  <AreaChart
+                    data={forecastChartData}
+                    margin={{ top: 12, right: 18, left: 0, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id="forecastSalesGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.28} />
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
 
-                  return (
-                    <div className="ai-forecast-row" key={item.date}>
-                      <span>{formatDate(item.date)}</span>
-
-                      <div className="ai-forecast-bar-track">
-                        <div
-                          className="ai-forecast-bar"
-                          style={{ width: `${barWidth}%` }}
-                        />
-                      </div>
-
-                      <strong>{formatCurrency(predictedSales)}</strong>
-                    </div>
-                  );
-                })}
+                    <CartesianGrid stroke="#e5e7eb" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: "#64748b" }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: "#64748b" }}
+                      tickFormatter={(value) => `$${Number(value).toLocaleString()}`}
+                      width={78}
+                    />
+                    <Tooltip content={<ForecastTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="predictedSales"
+                      stroke="#2563eb"
+                      strokeWidth={3}
+                      fill="url(#forecastSalesGradient)"
+                      dot={{ r: 3, strokeWidth: 2, fill: "#ffffff" }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </>
           )}
         </div>
       </section>
 
-      <section className="table-card ai-status-card">
-        <div className="table-card-header">
-          <div>
-            <h2>Audit Log Anomaly Detection</h2>
-            <p>
-              Analyse recent audit logs for suspicious patterns such as repeated
-              failed logins, risky actions, and unusual activity.
-            </p>
+      <section className="ai-insight-grid">
+        <article className="ai-panel">
+          <div className="ai-panel-header">
+            <div>
+              <span>Audit anomaly detection</span>
+              <h2>Security findings</h2>
+              <p>Analyse recent audit logs for suspicious patterns.</p>
+            </div>
+
+            <button
+              type="button"
+              className="ai-secondary-command"
+              onClick={() => fetchAuditAnomalies(100)}
+              disabled={anomalyLoading}
+            >
+              <FiShield />
+              {anomalyLoading ? "Analysing..." : "Analyse logs"}
+            </button>
           </div>
 
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => fetchAuditAnomalies(100)}
-            disabled={anomalyLoading}
-          >
-            <FiShield />
-            {anomalyLoading ? "Analysing..." : "Analyse Logs"}
-          </button>
-        </div>
-
-        <div className="panel-body">
-          {anomalyLoading ? (
-            <p>Analysing audit logs...</p>
-          ) : anomalyError ? (
-            <div className="empty-state">
-              <FiAlertTriangle />
-              <h3>Anomaly detection unavailable</h3>
-              <p>{anomalyError}</p>
-            </div>
-          ) : anomalies.length === 0 ? (
-            <div className="empty-state">
-              <FiCheckCircle />
-              <h3>No suspicious activity detected</h3>
-              <p>
-                The AI service analysed recent audit logs and did not find suspicious
-                patterns based on the current detection rules.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="ai-anomaly-summary">
-                <article className="severity-high">
-                  <span>High</span>
-                  <strong>{anomalySummary.high}</strong>
-                </article>
-
-                <article className="severity-medium">
-                  <span>Medium</span>
-                  <strong>{anomalySummary.medium}</strong>
-                </article>
-
-                <article className="severity-low">
-                  <span>Low</span>
-                  <strong>{anomalySummary.low}</strong>
-                </article>
-
-                <article>
-                  <span>Logs Analysed</span>
-                  <strong>{anomalyResult?.logs_analysed || 0}</strong>
-                </article>
+          <div className="ai-panel-body">
+            {anomalyLoading ? (
+              <div className="ai-loading-state compact">
+                <FiShield />
+                <h3>Analysing audit logs</h3>
+                <p>Please wait while recent audit events are reviewed.</p>
               </div>
-
-              <div className="ai-anomaly-list">
-                {anomalies.map((anomaly, index) => (
-                  <article className="ai-anomaly-card" key={`${anomaly.type}-${index}`}>
-                    <div className="ai-anomaly-card-header">
-                      <div>
-                        <span className={getSeverityBadgeClass(anomaly.severity)}>
-                          {String(anomaly.severity).toUpperCase()}
-                        </span>
-                        <h3>{anomaly.title}</h3>
-                      </div>
-
-                      <FiAlertTriangle />
-                    </div>
-
-                    <p>{anomaly.description}</p>
-
-                    {anomaly.evidence && (
-                      <div className="ai-anomaly-evidence">
-                        <strong>Evidence</strong>
-
-                        {Object.entries(anomaly.evidence).map(([key, value]) => (
-                          <span key={key}>
-                            {key.replaceAll("_", " ")}: {String(value)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {anomaly.recommendation && (
-                      <p className="ai-anomaly-recommendation">
-                        <strong>Recommendation:</strong> {anomaly.recommendation}
-                      </p>
-                    )}
+            ) : anomalyError ? (
+              <div className="ai-empty-state compact">
+                <FiAlertTriangle />
+                <h3>Anomaly detection unavailable</h3>
+                <p>{anomalyError}</p>
+              </div>
+            ) : anomalies.length === 0 ? (
+              <div className="ai-empty-state compact">
+                <FiCheckCircle />
+                <h3>No suspicious activity detected</h3>
+                <p>
+                  The AI service did not find suspicious patterns in the current
+                  audit dataset.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="ai-anomaly-summary">
+                  <article className="severity-high">
+                    <span>High</span>
+                    <strong>{anomalySummary.high}</strong>
                   </article>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </section>
 
-      <section className="table-card ai-status-card">
-        <div className="table-card-header">
-          <div>
-            <h2>Customer Activity Prediction</h2>
-            <p>
-              Analyse customer order history and classify customers as active, at
-              risk, or inactive.
-            </p>
+                  <article className="severity-medium">
+                    <span>Medium</span>
+                    <strong>{anomalySummary.medium}</strong>
+                  </article>
+
+                  <article className="severity-low">
+                    <span>Low</span>
+                    <strong>{anomalySummary.low}</strong>
+                  </article>
+
+                  <article>
+                    <span>Analysed</span>
+                    <strong>{anomalyResult?.logs_analysed || 0}</strong>
+                  </article>
+                </div>
+
+                <div className="ai-anomaly-list">
+                  {anomalies.slice(0, 4).map((anomaly, index) => (
+                    <article
+                      className="ai-anomaly-card"
+                      key={`${anomaly.type}-${index}`}
+                    >
+                      <span className={getSeverityBadgeClass(anomaly.severity)}>
+                        {String(anomaly.severity).toUpperCase()}
+                      </span>
+
+                      <h3>{anomaly.title}</h3>
+                      <p>{anomaly.description}</p>
+
+                      {anomaly.recommendation && (
+                        <p className="ai-anomaly-recommendation">
+                          <strong>Recommendation:</strong>{" "}
+                          {anomaly.recommendation}
+                        </p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </article>
+
+        <article className="ai-panel">
+          <div className="ai-panel-header">
+            <div>
+              <span>Customer activity prediction</span>
+              <h2>Customer risk view</h2>
+              <p>Classify customers as active, at risk, or inactive.</p>
+            </div>
+
+            <button
+              type="button"
+              className="ai-secondary-command"
+              onClick={fetchCustomerActivityPredictions}
+              disabled={customerActivityLoading}
+            >
+              <FiUsers />
+              {customerActivityLoading ? "Predicting..." : "Predict activity"}
+            </button>
           </div>
 
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={fetchCustomerActivityPredictions}
-            disabled={customerActivityLoading}
-          >
-            <FiUsers />
-            {customerActivityLoading ? "Predicting..." : "Predict Activity"}
-          </button>
-        </div>
-
-        <div className="panel-body">
-          {customerActivityLoading ? (
-            <p>Analysing customer activity...</p>
-          ) : customerActivityError ? (
-            <div className="empty-state">
-              <FiAlertTriangle />
-              <h3>Customer prediction unavailable</h3>
-              <p>{customerActivityError}</p>
-            </div>
-          ) : customerPredictions.length === 0 ? (
-            <div className="empty-state">
-              <FiUsers />
-              <h3>No customer activity data available</h3>
-              <p>Create customers and sales orders to generate predictions.</p>
-            </div>
-          ) : (
-            <>
-              <div className="ai-customer-summary">
-                <article className="customer-active">
-                  <span>Active</span>
-                  <strong>{customerActivitySummary.active}</strong>
-                </article>
-
-                <article className="customer-risk">
-                  <span>At Risk</span>
-                  <strong>{customerActivitySummary.at_risk}</strong>
-                </article>
-
-                <article className="customer-inactive">
-                  <span>Inactive</span>
-                  <strong>{customerActivitySummary.inactive}</strong>
-                </article>
-
-                <article>
-                  <span>Customers Analysed</span>
-                  <strong>{customerActivityResult?.customers_analysed || 0}</strong>
-                </article>
+          <div className="ai-panel-body">
+            {customerActivityLoading ? (
+              <div className="ai-loading-state compact">
+                <FiUsers />
+                <h3>Analysing customers</h3>
+                <p>Please wait while customer activity is predicted.</p>
               </div>
+            ) : customerActivityError ? (
+              <div className="ai-empty-state compact">
+                <FiAlertTriangle />
+                <h3>Customer prediction unavailable</h3>
+                <p>{customerActivityError}</p>
+              </div>
+            ) : customerPredictions.length === 0 ? (
+              <div className="ai-empty-state compact">
+                <FiUsers />
+                <h3>No customer activity data available</h3>
+                <p>Create customers and sales orders to generate predictions.</p>
+              </div>
+            ) : (
+              <>
+                <div className="ai-customer-summary">
+                  <article className="customer-active">
+                    <span>Active</span>
+                    <strong>{customerActivitySummary.active}</strong>
+                  </article>
 
-              <div className="table-wrapper">
-                <table>
+                  <article className="customer-risk">
+                    <span>At risk</span>
+                    <strong>{customerActivitySummary.at_risk}</strong>
+                  </article>
+
+                  <article className="customer-inactive">
+                    <span>Inactive</span>
+                    <strong>{customerActivitySummary.inactive}</strong>
+                  </article>
+
+                  <article>
+                    <span>Analysed</span>
+                    <strong>{customerActivityResult?.customers_analysed || 0}</strong>
+                  </article>
+                </div>
+
+                <div className="ai-risk-list">
+                  {highlightedCustomers.map((customer) => (
+                    <article
+                      className="ai-risk-card"
+                      key={`risk-${customer.customer_id}`}
+                    >
+                      <div>
+                        <span
+                          className={getCustomerActivityBadgeClass(
+                            customer.activity_status
+                          )}
+                        >
+                          {formatActivityStatus(customer.activity_status)}
+                        </span>
+
+                        <h3>{customer.customer_name}</h3>
+                        <p>{customer.customer_email || "-"}</p>
+                      </div>
+
+                      <strong>{customer.risk_score}/100</strong>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </article>
+      </section>
+
+      <section className="ai-data-grid">
+        <article className="ai-panel">
+          <div className="ai-panel-header">
+            <div>
+              <span>Training data</span>
+              <h2>Sales history used</h2>
+              <p>Daily sales totals collected from completed sales orders.</p>
+            </div>
+          </div>
+
+          <div className="ai-panel-body">
+            {trainingData.length === 0 ? (
+              <div className="ai-empty-state small">
+                <FiBarChart2 />
+                <h3>No training data available</h3>
+                <p>Completed sales orders will appear here.</p>
+              </div>
+            ) : (
+              <div className="ai-table-wrapper limited">
+                <table className="ai-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Total sales</th>
+                      <th>Order count</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {trainingData.map((item) => (
+                      <tr key={item.date || item.sale_date}>
+                        <td>{formatDate(item.date || item.sale_date)}</td>
+                        <td>{formatCurrency(item.total_sales)}</td>
+                        <td>{item.order_count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </article>
+
+        <article className="ai-panel">
+          <div className="ai-panel-header">
+            <div>
+              <span>Customer predictions</span>
+              <h2>Activity prediction table</h2>
+              <p>Customer activity classification and recommendation output.</p>
+            </div>
+          </div>
+
+          <div className="ai-panel-body">
+            {customerPredictions.length === 0 ? (
+              <div className="ai-empty-state small">
+                <FiUsers />
+                <h3>No prediction table yet</h3>
+                <p>Customer predictions will appear when the model has data.</p>
+              </div>
+            ) : (
+              <div className="ai-table-wrapper limited">
+                <table className="ai-table customer-table">
                   <thead>
                     <tr>
                       <th>Customer</th>
                       <th>Status</th>
-                      <th>Risk Score</th>
+                      <th>Risk score</th>
                       <th>Orders</th>
-                      <th>Total Spent</th>
-                      <th>Last Order</th>
+                      <th>Total spent</th>
+                      <th>Last order</th>
                       <th>Recommendation</th>
                     </tr>
                   </thead>
@@ -604,12 +802,10 @@ function AiAnalyticsPage() {
                     {customerPredictions.map((customer) => (
                       <tr key={customer.customer_id}>
                         <td>
-                          <div>
-                            <strong>{customer.customer_name}</strong>
-                            <p className="table-subtext">
-                              {customer.customer_email || "-"}
-                            </p>
-                          </div>
+                          <strong>{customer.customer_name}</strong>
+                          <p className="table-subtext">
+                            {customer.customer_email || "-"}
+                          </p>
                         </td>
 
                         <td>
@@ -635,120 +831,9 @@ function AiAnalyticsPage() {
                   </tbody>
                 </table>
               </div>
-
-              <div className="ai-customer-risk-list">
-                {customerPredictions.slice(0, 3).map((customer) => (
-                  <article
-                    className="ai-customer-risk-card"
-                    key={`risk-${customer.customer_id}`}
-                  >
-                    <div>
-                      <span
-                        className={getCustomerActivityBadgeClass(
-                          customer.activity_status
-                        )}
-                      >
-                        {formatActivityStatus(customer.activity_status)}
-                      </span>
-
-                      <h3>{customer.customer_name}</h3>
-                      <p>Risk score: {customer.risk_score}/100</p>
-                    </div>
-
-                    <ul>
-                      {customer.risk_reasons.map((reason) => (
-                        <li key={reason}>{reason}</li>
-                      ))}
-                    </ul>
-                  </article>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </section>
-
-      <section className="table-card">
-        <div className="table-card-header">
-          <div>
-            <h2>Training Data Used</h2>
-            <p>
-              Daily sales totals collected from completed sales orders in the
-              ERP database.
-            </p>
+            )}
           </div>
-        </div>
-
-        <div className="panel-body">
-          {trainingData.length === 0 ? (
-            <p>No training data available yet.</p>
-          ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Total Sales</th>
-                    <th>Order Count</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {trainingData.map((item) => (
-                    <tr key={item.date || item.sale_date}>
-                      <td>{formatDate(item.date || item.sale_date)}</td>
-                      <td>{formatCurrency(item.total_sales)}</td>
-                      <td>{item.order_count}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="table-card">
-        <div className="table-card-header">
-          <div>
-            <h2>AI Modules Summary</h2>
-            <p>
-              The system combines operational ERP data with a separate Python AI
-              service for decision-support insights.
-            </p>
-          </div>
-        </div>
-
-        <div className="panel-body">
-          <div className="ai-feature-grid">
-            <article className="ai-feature-card">
-              <FiTrendingUp />
-              <h3>Sales Forecasting</h3>
-              <p>
-                Uses historical completed sales orders to predict short-term sales
-                trends.
-              </p>
-            </article>
-
-            <article className="ai-feature-card">
-              <FiAlertTriangle />
-              <h3>Audit Anomaly Detection</h3>
-              <p>
-                Reviews audit logs for suspicious behaviour such as repeated failed
-                logins and risky actions.
-              </p>
-            </article>
-
-            <article className="ai-feature-card">
-              <FiUsers />
-              <h3>Customer Activity Prediction</h3>
-              <p>
-                Classifies customers as active, at risk, or inactive based on order
-                behaviour.
-              </p>
-            </article>
-          </div>
-        </div>
+        </article>
       </section>
     </section>
   );

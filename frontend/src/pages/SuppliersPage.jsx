@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
 import {
+  FiEdit2,
+  FiFilter,
+  FiMail,
+  FiMapPin,
+  FiPhone,
+  FiPlus,
   FiRefreshCw,
   FiSearch,
+  FiTrash2,
   FiTruck,
+  FiUser,
   FiX,
 } from "react-icons/fi";
+
 import apiClient from "../api/apiClient";
 import ConfirmModal from "../components/ConfirmModal";
+import "../styles/suppliers.css";
 
 const initialFormData = {
   name: "",
@@ -186,6 +196,14 @@ function SuppliersPage() {
     return new Date(value).toLocaleString();
   }
 
+  function formatShortDate(value) {
+    if (!value) {
+      return "-";
+    }
+
+    return new Date(value).toLocaleDateString();
+  }
+
   function formatLabel(value) {
     if (!value) {
       return "-";
@@ -214,10 +232,10 @@ function SuppliersPage() {
 
   function getStatusBadgeClass(status) {
     if (status === "active") {
-      return "badge badge-success";
+      return "suppliers-status-pill status-active";
     }
 
-    return "badge badge-danger";
+    return "suppliers-status-pill status-inactive";
   }
 
   const displayedSuppliers = suppliers
@@ -262,46 +280,358 @@ function SuppliersPage() {
     setSortOption("newest");
   }
 
+  const totalSuppliers = suppliers.length;
+
+  const activeSuppliers = suppliers.filter((supplier) => {
+    return supplier.status === "active";
+  });
+
+  const inactiveSuppliers = suppliers.filter((supplier) => {
+    return supplier.status === "inactive";
+  });
+
+  const suppliersWithContactPerson = suppliers.filter((supplier) => {
+    return Boolean(supplier.contact_person);
+  });
+
+  const suppliersWithEmail = suppliers.filter((supplier) => {
+    return Boolean(supplier.email);
+  });
+
+  const suppliersWithPhone = suppliers.filter((supplier) => {
+    return Boolean(supplier.phone);
+  });
+
+  const latestSupplier = [...suppliers].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  })[0];
+
   return (
-    <section>
-      <div className="page-header">
+    <section className="suppliers-page">
+      <header className="suppliers-command-bar">
         <div>
+          <span className="suppliers-eyebrow">Vendor directory</span>
           <h1>Suppliers</h1>
           <p>
-            Manage supplier records, contact details, and purchasing
-            relationships.
+            Manage supplier records, contact details, purchasing relationships,
+            and supplier status for procurement workflows.
           </p>
         </div>
 
-        <div className="page-actions">
-          <button type="button" onClick={handleOpenCreateForm}>
-            + New Supplier
+        <div className="suppliers-command-actions">
+          <button
+            type="button"
+            className="suppliers-secondary-command"
+            onClick={fetchSuppliers}
+            disabled={loading}
+          >
+            <FiRefreshCw />
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+
+          <button
+            type="button"
+            className="suppliers-primary-command"
+            onClick={handleOpenCreateForm}
+          >
+            <FiPlus />
+            New supplier
           </button>
         </div>
-      </div>
+      </header>
 
-      {successMessage && (
-        <p className="message success-message">{successMessage}</p>
+      {(successMessage || deleteError || error) && (
+        <div className="suppliers-message-stack">
+          {deleteError && <p className="message error-message">{deleteError}</p>}
+          {error && <p className="message error-message">{error}</p>}
+          {successMessage && (
+            <p className="message success-message">{successMessage}</p>
+          )}
+        </div>
       )}
+
+      <section className="suppliers-kpi-strip" aria-label="Supplier metrics">
+        <article className="suppliers-kpi-card">
+          <div className="suppliers-kpi-icon">
+            <FiTruck />
+          </div>
+
+          <div>
+            <span>Total suppliers</span>
+            <strong>{totalSuppliers}</strong>
+            <p>Vendor records</p>
+          </div>
+        </article>
+
+        <article className="suppliers-kpi-card success">
+          <div className="suppliers-kpi-icon">
+            <FiTruck />
+          </div>
+
+          <div>
+            <span>Active suppliers</span>
+            <strong>{activeSuppliers.length}</strong>
+            <p>Available for purchasing</p>
+          </div>
+        </article>
+
+        <article className="suppliers-kpi-card danger">
+          <div className="suppliers-kpi-icon">
+            <FiTruck />
+          </div>
+
+          <div>
+            <span>Inactive suppliers</span>
+            <strong>{inactiveSuppliers.length}</strong>
+            <p>Not currently active</p>
+          </div>
+        </article>
+
+        <article className="suppliers-kpi-card">
+          <div className="suppliers-kpi-icon">
+            <FiUser />
+          </div>
+
+          <div>
+            <span>Contact people</span>
+            <strong>{suppliersWithContactPerson.length}</strong>
+            <p>Named contacts</p>
+          </div>
+        </article>
+
+        <article className="suppliers-kpi-card">
+          <div className="suppliers-kpi-icon">
+            <FiMail />
+          </div>
+
+          <div>
+            <span>Email records</span>
+            <strong>{suppliersWithEmail.length}</strong>
+            <p>Suppliers with email</p>
+          </div>
+        </article>
+
+        <article className="suppliers-kpi-card">
+          <div className="suppliers-kpi-icon">
+            <FiPhone />
+          </div>
+
+          <div>
+            <span>Phone records</span>
+            <strong>{suppliersWithPhone.length}</strong>
+            <p>Suppliers with phone</p>
+          </div>
+        </article>
+      </section>
+
+      <section className="suppliers-workspace">
+        <div className="suppliers-workspace-header">
+          <div>
+            <span>Supplier directory</span>
+            <h2>Supplier records</h2>
+            <p>
+              {loading
+                ? "Loading suppliers..."
+                : `Showing ${displayedSuppliers.length} of ${suppliers.length} suppliers.`}
+              {latestSupplier
+                ? ` Latest supplier: ${formatShortDate(latestSupplier.created_at)}.`
+                : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className="suppliers-toolbar">
+          <div className="suppliers-search-field">
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Search by name, email, phone, contact person, or address"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search suppliers"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            aria-label="Filter suppliers by status"
+          >
+            <option value="all">All statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {formatLabel(status)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={sortOption}
+            onChange={(event) => setSortOption(event.target.value)}
+            aria-label="Sort suppliers"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+          </select>
+
+          {hasActiveSupplierFilters && (
+            <button
+              type="button"
+              onClick={resetSupplierFilters}
+              className="suppliers-secondary-command"
+            >
+              <FiFilter />
+              Reset
+            </button>
+          )}
+        </div>
+
+        <div className="suppliers-table-area">
+          {loading ? (
+            <div className="suppliers-empty-state">
+              <FiTruck />
+              <h3>Loading suppliers</h3>
+              <p>Please wait while supplier records are loaded.</p>
+            </div>
+          ) : error ? (
+            <div className="suppliers-empty-state">
+              <FiTruck />
+              <h3>Could not load suppliers</h3>
+              <p>{error}</p>
+
+              <button
+                type="button"
+                onClick={fetchSuppliers}
+                className="suppliers-primary-command"
+              >
+                Try again
+              </button>
+            </div>
+          ) : suppliers.length === 0 ? (
+            <div className="suppliers-empty-state">
+              <FiTruck />
+              <h3>No suppliers found</h3>
+              <p>Create your first supplier using the command bar above.</p>
+
+              <button
+                type="button"
+                onClick={handleOpenCreateForm}
+                className="suppliers-primary-command"
+              >
+                <FiPlus />
+                New supplier
+              </button>
+            </div>
+          ) : displayedSuppliers.length === 0 ? (
+            <div className="suppliers-empty-state">
+              <FiSearch />
+              <h3>No matching suppliers</h3>
+              <p>Try changing your search, status filter, or sort option.</p>
+
+              <button
+                type="button"
+                onClick={resetSupplierFilters}
+                className="suppliers-secondary-command"
+              >
+                Reset search
+              </button>
+            </div>
+          ) : (
+            <div className="suppliers-table-wrapper">
+              <table className="suppliers-table">
+                <thead>
+                  <tr>
+                    <th>Supplier</th>
+                    <th>Contact person</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Status</th>
+                    <th>Created at</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {displayedSuppliers.map((supplier) => (
+                    <tr key={supplier.id}>
+                      <td>
+                        <div className="supplier-cell">
+                          <span className="supplier-avatar">
+                            {getInitials(supplier.name)}
+                          </span>
+
+                          <strong>{supplier.name}</strong>
+                        </div>
+                      </td>
+
+                      <td>{supplier.contact_person || "-"}</td>
+                      <td>{supplier.email || "-"}</td>
+                      <td>{supplier.phone || "-"}</td>
+                      <td>{supplier.address || "-"}</td>
+
+                      <td>
+                        <span className={getStatusBadgeClass(supplier.status)}>
+                          {formatLabel(supplier.status)}
+                        </span>
+                      </td>
+
+                      <td>{formatDate(supplier.created_at)}</td>
+
+                      <td>
+                        <div className="suppliers-table-actions">
+                          <button
+                            type="button"
+                            onClick={() => handleEditSupplier(supplier)}
+                            className="suppliers-icon-action"
+                          >
+                            <FiEdit2 />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSupplier(supplier)}
+                            disabled={deletingSupplierId === supplier.id}
+                            className="suppliers-icon-action danger"
+                          >
+                            <FiTrash2 />
+                            <span>
+                              {deletingSupplierId === supplier.id
+                                ? "Deleting"
+                                : "Delete"}
+                            </span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
 
       {isSupplierFormOpen && (
         <div className="modal-backdrop">
-          <section className="modal-card customer-form-modal">
-            <div className="modal-header">
+          <section className="modal-card supplier-form-modal">
+            <div className="suppliers-modal-header">
               <div>
-                <h2>
-                  {editingSupplierId ? "Edit Supplier" : "Create Supplier"}
-                </h2>
+                <span>Supplier record</span>
+                <h2>{editingSupplierId ? "Edit supplier" : "Create supplier"}</h2>
                 <p>
                   {editingSupplierId
                     ? "Update an existing supplier record."
-                    : "Add a new supplier to the ERP system."}
+                    : "Add a new supplier to the ERP vendor directory."}
                 </p>
               </div>
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="suppliers-icon-button"
                 onClick={handleCloseSupplierForm}
                 aria-label="Close supplier form"
               >
@@ -309,9 +639,9 @@ function SuppliersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitSupplier} className="form-grid">
+            <form onSubmit={handleSubmitSupplier} className="suppliers-form-grid">
               <div className="form-field">
-                <label htmlFor="name">Supplier Name</label>
+                <label htmlFor="name">Supplier name</label>
                 <input
                   id="name"
                   name="name"
@@ -323,7 +653,7 @@ function SuppliersPage() {
               </div>
 
               <div className="form-field">
-                <label htmlFor="contact_person">Contact Person</label>
+                <label htmlFor="contact_person">Contact person</label>
                 <input
                   id="contact_person"
                   name="contact_person"
@@ -371,7 +701,7 @@ function SuppliersPage() {
                 </select>
               </div>
 
-              <div className="form-field full-width">
+              <div className="form-field suppliers-form-full">
                 <label htmlFor="address">Address</label>
                 <textarea
                   id="address"
@@ -383,20 +713,20 @@ function SuppliersPage() {
               </div>
 
               {formError && (
-                <p className="message error-message full-width">
+                <p className="message error-message suppliers-form-full">
                   {formError}
                 </p>
               )}
 
-              <div className="form-actions">
+              <div className="suppliers-form-actions suppliers-form-full">
                 <button type="submit" disabled={saving}>
                   {saving
                     ? editingSupplierId
                       ? "Updating..."
                       : "Creating..."
                     : editingSupplierId
-                    ? "Update Supplier"
-                    : "Create Supplier"}
+                    ? "Update supplier"
+                    : "Create supplier"}
                 </button>
 
                 <button
@@ -411,177 +741,6 @@ function SuppliersPage() {
           </section>
         </div>
       )}
-
-      <div className="table-card">
-        <div className="table-card-header">
-          <div>
-            <h2>Supplier Directory</h2>
-            <p>
-              {loading
-                ? "Loading suppliers..."
-                : `Showing ${displayedSuppliers.length} of ${suppliers.length} suppliers.`}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchSuppliers}
-            className="secondary-button"
-            disabled={loading}
-          >
-            <FiRefreshCw />
-            {loading ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-
-        <div className="table-toolbar customers-table-toolbar">
-          <div className="toolbar-input-with-icon">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Search by name, email, phone, contact person, or address..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              aria-label="Search suppliers"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            aria-label="Filter suppliers by status"
-          >
-            <option value="all">All Statuses</option>
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {formatLabel(status)}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={sortOption}
-            onChange={(event) => setSortOption(event.target.value)}
-            aria-label="Sort suppliers"
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="name-asc">Name A-Z</option>
-            <option value="name-desc">Name Z-A</option>
-          </select>
-
-          {hasActiveSupplierFilters && (
-            <button
-              type="button"
-              onClick={resetSupplierFilters}
-              className="secondary-button"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-
-        <div className="panel-body">
-          {deleteError && <p className="message error-message">{deleteError}</p>}
-
-          {loading ? (
-            <p>Loading suppliers...</p>
-          ) : error ? (
-            <div>
-              <p className="message error-message">{error}</p>
-
-              <button type="button" onClick={fetchSuppliers}>
-                Try Again
-              </button>
-            </div>
-          ) : suppliers.length === 0 ? (
-            <div className="empty-state">
-              <FiTruck />
-              <h3>No suppliers found</h3>
-              <p>Create your first supplier using the New Supplier button.</p>
-            </div>
-          ) : displayedSuppliers.length === 0 ? (
-            <div className="empty-state">
-              <FiSearch />
-              <h3>No matching suppliers found</h3>
-              <p>Try changing your search, status filter, or sort option.</p>
-
-              <button
-                type="button"
-                onClick={resetSupplierFilters}
-                className="secondary-button"
-              >
-                Reset Search
-              </button>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Supplier</th>
-                    <th>Contact Person</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Status</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {displayedSuppliers.map((supplier) => (
-                    <tr key={supplier.id}>
-                      <td>
-                        <div className="customer-cell">
-                          <span className="customer-avatar">
-                            {getInitials(supplier.name)}
-                          </span>
-
-                          <strong>{supplier.name}</strong>
-                        </div>
-                      </td>
-
-                      <td>{supplier.contact_person || "-"}</td>
-                      <td>{supplier.email || "-"}</td>
-                      <td>{supplier.phone || "-"}</td>
-                      <td>
-                        <span className={getStatusBadgeClass(supplier.status)}>
-                          {formatLabel(supplier.status)}
-                        </span>
-                      </td>
-                      <td>{formatDate(supplier.created_at)}</td>
-
-                      <td>
-                        <div className="table-actions">
-                          <button
-                            type="button"
-                            onClick={() => handleEditSupplier(supplier)}
-                            className="secondary-button"
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSupplier(supplier)}
-                            disabled={deletingSupplierId === supplier.id}
-                            className="danger-button"
-                          >
-                            {deletingSupplierId === supplier.id
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
 
       <ConfirmModal
         isOpen={Boolean(supplierToDelete)}

@@ -3,6 +3,7 @@ import {
   FiAlertTriangle,
   FiCheckCircle,
   FiClock,
+  FiFilter,
   FiPlus,
   FiRefreshCw,
   FiSearch,
@@ -12,11 +13,13 @@ import {
   FiUsers,
   FiX,
 } from "react-icons/fi";
+
 import apiClient from "../api/apiClient";
 import { useAuth } from "../context/AuthContext";
 import "../styles/users.css";
 
 const roleOptions = ["Admin", "Staff"];
+
 const initialCreateUserForm = {
   name: "",
   email: "",
@@ -134,24 +137,24 @@ function UsersPage() {
 
   function getRoleBadgeClass(role) {
     if (role === "Admin") {
-      return "badge badge-info";
+      return "users-role-pill role-admin";
     }
 
-    return "badge badge-success";
+    return "users-role-pill role-staff";
   }
 
   function getStatusBadgeClass(status) {
     const normalisedStatus = String(status || "").toLowerCase();
 
     if (normalisedStatus === "active") {
-      return "badge badge-success";
+      return "users-status-pill status-active";
     }
 
     if (normalisedStatus === "inactive" || normalisedStatus === "disabled") {
-      return "badge badge-danger";
+      return "users-status-pill status-inactive";
     }
 
-    return "badge badge-warning";
+    return "users-status-pill status-pending";
   }
 
   function openCreateUserModal() {
@@ -230,14 +233,14 @@ function UsersPage() {
 
   function getAccountSetupBadgeClass(user) {
     if (!user.last_login_at) {
-      return "badge badge-warning";
+      return "users-setup-pill setup-warning";
     }
 
     if (user.must_change_password) {
-      return "badge badge-info";
+      return "users-setup-pill setup-info";
     }
 
-    return "badge badge-success";
+    return "users-setup-pill setup-success";
   }
 
   const totalUsers = users.length;
@@ -247,6 +250,11 @@ function UsersPage() {
 
   const activeUsers = users.filter((user) => {
     return String(user.status || "").toLowerCase() === "active";
+  });
+
+  const inactiveUsers = users.filter((user) => {
+    const status = String(user.status || "").toLowerCase();
+    return status === "inactive" || status === "disabled";
   });
 
   const latestUser = [...users].sort((a, b) => {
@@ -300,118 +308,145 @@ function UsersPage() {
   const usersNeverLoggedIn = users.filter((user) => !user.last_login_at);
 
   return (
-    <section>
-      <div className="page-header">
+    <section className="users-page">
+      <header className="users-command-bar">
         <div>
+          <span className="users-eyebrow">Team access</span>
           <h1>Users</h1>
           <p>
-            View system users, monitor account status, and manage user roles.
+            Create internal staff accounts, review account status, and manage
+            Admin or Staff access for the CoreFlow staff portal.
           </p>
         </div>
 
-        <div className="page-actions">
-          <button
-            type="button"
-            onClick={openCreateUserModal}
-            className="primary-button"
-          >
-            <FiPlus />
-            Create User
-          </button>
-
+        <div className="users-command-actions">
           <button
             type="button"
             onClick={fetchUsers}
-            className="secondary-button"
+            className="users-secondary-command"
             disabled={loading}
           >
             <FiRefreshCw />
             {loading ? "Refreshing..." : "Refresh"}
           </button>
-        </div>
-      </div>
 
-      {error && <p className="message error-message">{error}</p>}
-      {updateError && <p className="message error-message">{updateError}</p>}
-      {successMessage && (
-        <p className="message success-message">{successMessage}</p>
+          <button
+            type="button"
+            onClick={openCreateUserModal}
+            className="users-primary-command"
+          >
+            <FiPlus />
+            Create user
+          </button>
+        </div>
+      </header>
+
+      {(error || updateError || successMessage) && (
+        <div className="users-message-stack">
+          {error && <p className="message error-message">{error}</p>}
+          {updateError && <p className="message error-message">{updateError}</p>}
+          {successMessage && (
+            <p className="message success-message">{successMessage}</p>
+          )}
+        </div>
       )}
 
-      <div className="dashboard-metric-grid">
-        <article className="dashboard-metric-card metric-blue">
-          <div className="metric-icon">
+      <section className="users-kpi-strip" aria-label="User access metrics">
+        <article className="users-kpi-card">
+          <div className="users-kpi-icon">
             <FiUsers />
           </div>
 
           <div>
-            <span>Total Users</span>
+            <span>Total users</span>
             <strong>{loading ? "..." : totalUsers}</strong>
+            <p>Internal accounts</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-purple">
-          <div className="metric-icon">
+        <article className="users-kpi-card info">
+          <div className="users-kpi-icon">
             <FiShield />
           </div>
 
           <div>
-            <span>Admin Users</span>
+            <span>Admins</span>
             <strong>{loading ? "..." : adminUsers.length}</strong>
+            <p>Privileged access</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-green">
-          <div className="metric-icon">
+        <article className="users-kpi-card success">
+          <div className="users-kpi-icon">
             <FiUser />
           </div>
 
           <div>
-            <span>Staff Users</span>
+            <span>Staff</span>
             <strong>{loading ? "..." : staffUsers.length}</strong>
+            <p>Operational access</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-orange">
-          <div className="metric-icon">
+        <article className="users-kpi-card success">
+          <div className="users-kpi-icon">
             <FiUserCheck />
           </div>
 
           <div>
-            <span>Active Users</span>
+            <span>Active users</span>
             <strong>{loading ? "..." : activeUsers.length}</strong>
+            <p>Can access system</p>
           </div>
         </article>
 
-        <article className="dashboard-metric-card metric-orange">
-          <div className="metric-icon">
+        <article className="users-kpi-card warning">
+          <div className="users-kpi-icon">
             <FiClock />
           </div>
 
           <div>
-            <span>Never Accessed</span>
+            <span>Never accessed</span>
             <strong>{loading ? "..." : usersNeverLoggedIn.length}</strong>
+            <p>Created, not logged in</p>
           </div>
         </article>
-      </div>
 
-      <div className="table-card">
-        <div className="table-card-header">
+        <article className="users-kpi-card danger">
+          <div className="users-kpi-icon">
+            <FiAlertTriangle />
+          </div>
+
           <div>
-            <h2>User Accounts</h2>
+            <span>Inactive</span>
+            <strong>{loading ? "..." : inactiveUsers.length}</strong>
+            <p>Disabled accounts</p>
+          </div>
+        </article>
+      </section>
+
+      <section className="users-workspace">
+        <div className="users-workspace-header">
+          <div>
+            <span>Access register</span>
+            <h2>User accounts</h2>
             <p>
               {loading
                 ? "Loading users..."
                 : `Showing ${displayedUsers.length} of ${users.length} users.`}
+              {latestUser
+                ? ` Latest user: ${formatShortDate(latestUser.created_at)}.`
+                : ""}
             </p>
           </div>
         </div>
 
-        <div className="table-toolbar users-table-toolbar">
-          <div className="toolbar-input-with-icon">
+        <div className="users-toolbar">
+          <div className="users-search-field">
             <FiSearch />
             <input
               type="text"
-              placeholder="Search by name, email, role, or status..."
+              placeholder="Search by name, email, role, or status"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               aria-label="Search users"
@@ -423,7 +458,7 @@ function UsersPage() {
             onChange={(event) => setRoleFilter(event.target.value)}
             aria-label="Filter users by role"
           >
-            <option value="all">All Roles</option>
+            <option value="all">All roles</option>
             {roleOptions.map((role) => (
               <option key={role} value={role}>
                 {role}
@@ -436,7 +471,7 @@ function UsersPage() {
             onChange={(event) => setStatusFilter(event.target.value)}
             aria-label="Filter users by status"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">All statuses</option>
             {statusOptions.map((status) => (
               <option key={status} value={status}>
                 {formatLabel(status)}
@@ -449,8 +484,8 @@ function UsersPage() {
             onChange={(event) => setSortOption(event.target.value)}
             aria-label="Sort users"
           >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
             <option value="name-asc">Name A-Z</option>
             <option value="name-desc">Name Z-A</option>
             <option value="role-asc">Role A-Z</option>
@@ -460,57 +495,77 @@ function UsersPage() {
             <button
               type="button"
               onClick={resetUserFilters}
-              className="secondary-button"
+              className="users-secondary-command"
             >
+              <FiFilter />
               Reset
             </button>
           )}
         </div>
 
-        <div className="panel-body">
+        <div className="users-table-area">
           {loading ? (
-            <p>Loading users...</p>
+            <div className="users-empty-state">
+              <FiUsers />
+              <h3>Loading users</h3>
+              <p>Please wait while user access records are loaded.</p>
+            </div>
           ) : error ? (
-            <div>
-              <p className="message error-message">{error}</p>
+            <div className="users-empty-state">
+              <FiAlertTriangle />
+              <h3>Could not load users</h3>
+              <p>{error}</p>
 
-              <button type="button" onClick={fetchUsers}>
-                Try Again
+              <button
+                type="button"
+                onClick={fetchUsers}
+                className="users-primary-command"
+              >
+                Try again
               </button>
             </div>
           ) : users.length === 0 ? (
-            <div className="empty-state">
+            <div className="users-empty-state">
               <FiUsers />
               <h3>No users found</h3>
-              <p>Registered users will appear here.</p>
+              <p>Create the first internal account using the command bar.</p>
+
+              <button
+                type="button"
+                onClick={openCreateUserModal}
+                className="users-primary-command"
+              >
+                <FiPlus />
+                Create user
+              </button>
             </div>
           ) : displayedUsers.length === 0 ? (
-            <div className="empty-state">
+            <div className="users-empty-state">
               <FiAlertTriangle />
-              <h3>No matching users found</h3>
+              <h3>No matching users</h3>
               <p>Try changing your search, role filter, or status filter.</p>
 
               <button
                 type="button"
                 onClick={resetUserFilters}
-                className="secondary-button"
+                className="users-secondary-command"
               >
-                Reset Filters
+                Reset filters
               </button>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table>
+            <div className="users-table-wrapper">
+              <table className="users-table">
                 <thead>
                   <tr>
                     <th>User</th>
                     <th>Email</th>
-                    <th>Current Role</th>
+                    <th>Current role</th>
                     <th>Status</th>
-                    <th>Account Setup</th>
-                    <th>Last Login</th>
-                    <th>Created At</th>
-                    <th>Update Role</th>
+                    <th>Account setup</th>
+                    <th>Last login</th>
+                    <th>Created at</th>
+                    <th>Update role</th>
                   </tr>
                 </thead>
 
@@ -530,7 +585,6 @@ function UsersPage() {
 
                             <div>
                               <strong>{user.name}</strong>
-
                               {isCurrentUser && <span>You</span>}
                             </div>
                           </div>
@@ -557,7 +611,6 @@ function UsersPage() {
                         </td>
 
                         <td>{formatDate(user.last_login_at)}</td>
-
                         <td>{formatDate(user.created_at)}</td>
 
                         <td>
@@ -581,9 +634,10 @@ function UsersPage() {
                               disabled={
                                 updatingUserId === user.id || roleUnchanged
                               }
+                              className="users-icon-action"
                             >
                               {updatingUserId === user.id
-                                ? "Updating..."
+                                ? "Updating"
                                 : "Update"}
                             </button>
                           </div>
@@ -596,30 +650,31 @@ function UsersPage() {
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {isCreateUserModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal-card create-user-modal">
-            <div className="modal-header">
+          <div className="modal-card users-create-user-modal">
+            <div className="users-modal-header">
               <div>
-                <h2>Create User</h2>
-                <p>Add a new internal ERP account.</p>
+                <span>Internal account</span>
+                <h2>Create user</h2>
+                <p>Add a new internal CoreFlow staff account.</p>
               </div>
 
               <button
                 type="button"
                 onClick={closeCreateUserModal}
-                className="icon-button"
+                className="users-icon-button"
                 aria-label="Close create user form"
               >
                 <FiX />
               </button>
             </div>
 
-            <form onSubmit={handleCreateUserSubmit} className="form-grid">
+            <form onSubmit={handleCreateUserSubmit} className="users-form-grid">
               <div className="form-field">
-                <label htmlFor="create-name">Full Name</label>
+                <label htmlFor="create-name">Full name</label>
                 <input
                   id="create-name"
                   name="name"
@@ -662,7 +717,7 @@ function UsersPage() {
               </div>
 
               <div className="form-field">
-                <label htmlFor="create-password">Temporary Password</label>
+                <label htmlFor="create-password">Temporary password</label>
                 <input
                   id="create-password"
                   name="password"
@@ -676,7 +731,7 @@ function UsersPage() {
               </div>
 
               <div className="form-field">
-                <label htmlFor="create-confirm-password">Confirm Password</label>
+                <label htmlFor="create-confirm-password">Confirm password</label>
                 <input
                   id="create-confirm-password"
                   name="confirmPassword"
@@ -690,18 +745,18 @@ function UsersPage() {
               </div>
 
               {createUserError && (
-                <p className="message error-message form-full-width">
+                <p className="message error-message users-form-full">
                   {createUserError}
                 </p>
               )}
 
-              <p className="auth-note form-full-width">
+              <p className="users-auth-note users-form-full">
                 Create a temporary password and share it with the staff member
-                securely. In production, this would be replaced with an invitation or
-                password reset flow.
+                securely. In production, this would be replaced with an
+                invitation or password reset flow.
               </p>
 
-              <div className="modal-actions form-full-width">
+              <div className="users-form-actions users-form-full">
                 <button
                   type="button"
                   onClick={closeCreateUserModal}
@@ -716,7 +771,7 @@ function UsersPage() {
                   className="primary-button"
                   disabled={isCreatingUser}
                 >
-                  {isCreatingUser ? "Creating..." : "Create User"}
+                  {isCreatingUser ? "Creating..." : "Create user"}
                 </button>
               </div>
             </form>

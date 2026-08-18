@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import {
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiClock,
+  FiDollarSign,
   FiDownload,
   FiEye,
+  FiFilter,
   FiPackage,
   FiPlus,
   FiRefreshCw,
@@ -11,6 +16,7 @@ import {
   FiTruck,
   FiX,
 } from "react-icons/fi";
+
 import apiClient from "../api/apiClient";
 import "../styles/purchaseOrders.css";
 
@@ -229,22 +235,22 @@ function PurchaseOrdersPage() {
 
   function getStatusBadgeClass(status) {
     if (status === "received") {
-      return "badge badge-success";
+      return "po-status-pill status-received";
     }
 
     if (status === "supplier_delivered") {
-      return "badge badge-info";
+      return "po-status-pill status-supplier-delivered";
     }
 
     if (status === "ordered") {
-      return "badge badge-warning";
+      return "po-status-pill status-ordered";
     }
 
     if (status === "cancelled") {
-      return "badge badge-danger";
+      return "po-status-pill status-cancelled";
     }
 
-    return "badge badge-warning";
+    return "po-status-pill status-draft";
   }
 
   function canReceivePurchaseOrder(order) {
@@ -387,8 +393,28 @@ function PurchaseOrdersPage() {
     ...new Set([
       ...purchaseOrders.map((order) => order.status).filter(Boolean),
       ...staffStatusOptions,
+      "supplier_delivered",
+      "received",
     ]),
   ].sort();
+
+  const totalPurchaseOrders = purchaseOrders.length;
+  const draftCount = purchaseOrders.filter((order) => order.status === "draft").length;
+  const orderedCount = purchaseOrders.filter((order) => order.status === "ordered").length;
+  const supplierDeliveredCount = purchaseOrders.filter(
+    (order) => order.status === "supplier_delivered"
+  ).length;
+  const receivedCount = purchaseOrders.filter((order) => order.status === "received").length;
+  const pendingReceiptCount = purchaseOrders.filter((order) =>
+    canReceivePurchaseOrder(order)
+  ).length;
+  const procurementValue = purchaseOrders.reduce((total, order) => {
+    return total + Number(order.total_amount || 0);
+  }, 0);
+
+  const latestPurchaseOrder = [...purchaseOrders].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  })[0];
 
   const displayedPurchaseOrders = purchaseOrders
     .filter((order) => {
@@ -430,55 +456,400 @@ function PurchaseOrdersPage() {
     setSortOption("newest");
   }
 
+  const isDetailModalOpen =
+    Boolean(selectedPurchaseOrder) || detailLoading || Boolean(detailError);
+
   return (
-    <section>
-      <div className="page-header">
+    <section className="po-page">
+      <header className="po-command-bar">
         <div>
-          <h1>Purchase Orders</h1>
+          <span className="po-eyebrow">Procurement</span>
+          <h1>Purchase orders</h1>
           <p>
-            Create and track supplier purchase orders before receiving stock
-            into inventory.
+            Create supplier purchase orders, track supplier delivery, and receive
+            stock into inventory when orders arrive.
           </p>
         </div>
 
-        <div className="page-actions">
+        <div className="po-command-actions">
+          <button
+            type="button"
+            className="po-secondary-command"
+            onClick={fetchPageData}
+            disabled={loading}
+          >
+            <FiRefreshCw />
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+
           <button
             type="button"
             onClick={handleExportPurchaseOrders}
-            className="secondary-button"
+            className="po-secondary-command"
           >
             <FiDownload />
             Export CSV
           </button>
 
-          <button type="button" onClick={handleOpenForm}>
+          <button
+            type="button"
+            onClick={handleOpenForm}
+            className="po-primary-command"
+          >
             <FiPlus />
-            New Purchase Order
+            New purchase order
           </button>
         </div>
-      </div>
+      </header>
 
-      {error && <p className="message error-message">{error}</p>}
-
-      {successMessage && (
-        <p className="message success-message">{successMessage}</p>
+      {(error || successMessage) && (
+        <div className="po-message-stack">
+          {error && <p className="message error-message">{error}</p>}
+          {successMessage && (
+            <p className="message success-message">{successMessage}</p>
+          )}
+        </div>
       )}
+
+      <section className="po-kpi-strip" aria-label="Purchase order metrics">
+        <article className="po-kpi-card">
+          <div className="po-kpi-icon">
+            <FiShoppingBag />
+          </div>
+
+          <div>
+            <span>Total POs</span>
+            <strong>{totalPurchaseOrders}</strong>
+            <p>Purchase order records</p>
+          </div>
+        </article>
+
+        <article className="po-kpi-card">
+          <div className="po-kpi-icon">
+            <FiDollarSign />
+          </div>
+
+          <div>
+            <span>Procurement value</span>
+            <strong>{formatCurrency(procurementValue)}</strong>
+            <p>Total PO value</p>
+          </div>
+        </article>
+
+        <article className="po-kpi-card">
+          <div className="po-kpi-icon">
+            <FiPackage />
+          </div>
+
+          <div>
+            <span>Draft</span>
+            <strong>{draftCount}</strong>
+            <p>Not yet ordered</p>
+          </div>
+        </article>
+
+        <article className="po-kpi-card warning">
+          <div className="po-kpi-icon">
+            <FiTruck />
+          </div>
+
+          <div>
+            <span>Ordered</span>
+            <strong>{orderedCount}</strong>
+            <p>Sent to supplier</p>
+          </div>
+        </article>
+
+        <article className="po-kpi-card info">
+          <div className="po-kpi-icon">
+            <FiClock />
+          </div>
+
+          <div>
+            <span>Supplier delivered</span>
+            <strong>{supplierDeliveredCount}</strong>
+            <p>Awaiting staff receipt</p>
+          </div>
+        </article>
+
+        <article className="po-kpi-card success">
+          <div className="po-kpi-icon">
+            <FiCheckCircle />
+          </div>
+
+          <div>
+            <span>Received</span>
+            <strong>{receivedCount}</strong>
+            <p>Stock updated</p>
+          </div>
+        </article>
+      </section>
+
+      <section className="po-workspace">
+        <div className="po-workspace-header">
+          <div>
+            <span>Purchase order workspace</span>
+            <h2>Purchase order list</h2>
+            <p>
+              {loading
+                ? "Loading purchase orders..."
+                : `Showing ${displayedPurchaseOrders.length} of ${purchaseOrders.length} purchase orders.`}
+              {latestPurchaseOrder
+                ? ` Latest PO: ${formatDate(latestPurchaseOrder.created_at)}.`
+                : ""}
+            </p>
+          </div>
+
+          <div className="po-workspace-summary">
+            <span>{pendingReceiptCount}</span>
+            <p>ready to receive</p>
+          </div>
+        </div>
+
+        <div className="po-toolbar">
+          <div className="po-search-field">
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Search by supplier, status, creator, or ID"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search purchase orders"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            aria-label="Filter purchase orders by status"
+          >
+            <option value="all">All statuses</option>
+            {filterStatusOptions.map((status) => (
+              <option key={status} value={status}>
+                {formatLabel(status)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={sortOption}
+            onChange={(event) => setSortOption(event.target.value)}
+            aria-label="Sort purchase orders"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="total-desc">Total high-low</option>
+            <option value="total-asc">Total low-high</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="po-secondary-command"
+            >
+              <FiFilter />
+              Reset
+            </button>
+          )}
+        </div>
+
+        <div className="po-table-area">
+          {loading ? (
+            <div className="po-empty-state">
+              <FiShoppingBag />
+              <h3>Loading purchase orders</h3>
+              <p>Please wait while procurement data is loaded.</p>
+            </div>
+          ) : error ? (
+            <div className="po-empty-state">
+              <FiAlertTriangle />
+              <h3>Could not load purchase orders</h3>
+              <p>{error}</p>
+
+              <button
+                type="button"
+                onClick={fetchPageData}
+                className="po-primary-command"
+              >
+                Try again
+              </button>
+            </div>
+          ) : purchaseOrders.length === 0 ? (
+            <div className="po-empty-state">
+              <FiShoppingBag />
+              <h3>No purchase orders found</h3>
+              <p>Create your first supplier purchase order using the command bar.</p>
+
+              <button
+                type="button"
+                onClick={handleOpenForm}
+                className="po-primary-command"
+              >
+                <FiPlus />
+                New purchase order
+              </button>
+            </div>
+          ) : displayedPurchaseOrders.length === 0 ? (
+            <div className="po-empty-state">
+              <FiSearch />
+              <h3>No matching purchase orders</h3>
+              <p>Try changing your search, status filter, or sort option.</p>
+
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="po-secondary-command"
+              >
+                Reset filters
+              </button>
+            </div>
+          ) : (
+            <div className="po-table-wrapper">
+              <table className="po-table">
+                <thead>
+                  <tr>
+                    <th>PO</th>
+                    <th>Supplier</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Expected delivery</th>
+                    <th>Created by</th>
+                    <th>Created at</th>
+                    <th>Update status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {displayedPurchaseOrders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className={order.status === "received" ? "po-received-row" : ""}
+                    >
+                      <td>
+                        <span className="po-code-pill">
+                          PO-{String(order.id).padStart(4, "0")}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="po-supplier-cell">
+                          <span>
+                            <FiTruck />
+                          </span>
+
+                          <strong>{order.supplier_name}</strong>
+                        </div>
+                      </td>
+
+                      <td>
+                        <span className={getStatusBadgeClass(order.status)}>
+                          {formatLabel(order.status)}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="po-item-count-pill">
+                          <FiPackage />
+                          {order.item_count}
+                        </span>
+                      </td>
+
+                      <td>
+                        <strong>{formatCurrency(order.total_amount)}</strong>
+                      </td>
+
+                      <td>{formatDate(order.expected_delivery_date)}</td>
+                      <td>{order.created_by_name || "-"}</td>
+                      <td>{formatDateTime(order.created_at)}</td>
+
+                      <td>
+                        <select
+                          className="po-status-select"
+                          value={order.status === "received" ? "received" : order.status}
+                          onChange={(event) =>
+                            handleUpdateStatus(order.id, event.target.value)
+                          }
+                          disabled={
+                            updatingStatusId === order.id ||
+                            receivingOrderId === order.id ||
+                            order.status === "received" ||
+                            order.status === "supplier_delivered"
+                          }
+                        >
+                          {staffStatusOptions.map((status) => (
+                            <option key={status} value={status}>
+                              {formatLabel(status)}
+                            </option>
+                          ))}
+
+                          {order.status === "received" && (
+                            <option value="received">Received</option>
+                          )}
+
+                          {order.status === "supplier_delivered" && (
+                            <option value="supplier_delivered">
+                              Supplier delivered
+                            </option>
+                          )}
+                        </select>
+                      </td>
+
+                      <td>
+                        <div className="po-table-actions">
+                          <button
+                            type="button"
+                            onClick={() => handleViewPurchaseOrder(order.id)}
+                            className="po-icon-action"
+                          >
+                            <FiEye />
+                            <span>View</span>
+                          </button>
+
+                          {canReceivePurchaseOrder(order) && (
+                            <button
+                              type="button"
+                              onClick={() => handleReceivePurchaseOrder(order.id)}
+                              className="po-icon-action success"
+                              disabled={receivingOrderId === order.id}
+                            >
+                              <FiCheckCircle />
+                              <span>
+                                {receivingOrderId === order.id
+                                  ? "Receiving"
+                                  : "Receive"}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
 
       {isFormOpen && (
         <div className="modal-backdrop">
           <section className="modal-card purchase-order-form-modal">
-            <div className="modal-header">
+            <div className="po-modal-header">
               <div>
-                <h2>Create Purchase Order</h2>
+                <span>Purchase order</span>
+                <h2>Create purchase order</h2>
                 <p>
                   Select a supplier, add products, and record expected purchase
-                  cost.
+                  cost. Stock increases only after receiving.
                 </p>
               </div>
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="po-icon-button"
                 onClick={handleCloseForm}
                 aria-label="Close purchase order form"
               >
@@ -486,7 +857,7 @@ function PurchaseOrdersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitPurchaseOrder} className="form-grid">
+            <form onSubmit={handleSubmitPurchaseOrder} className="po-form-grid">
               <div className="form-field">
                 <label htmlFor="supplier_id">Supplier</label>
                 <select
@@ -523,7 +894,7 @@ function PurchaseOrdersPage() {
 
               <div className="form-field">
                 <label htmlFor="expected_delivery_date">
-                  Expected Delivery Date
+                  Expected delivery date
                 </label>
                 <input
                   id="expected_delivery_date"
@@ -534,7 +905,7 @@ function PurchaseOrdersPage() {
                 />
               </div>
 
-              <div className="form-field full-width">
+              <div className="form-field po-form-full">
                 <label htmlFor="notes">Notes</label>
                 <textarea
                   id="notes"
@@ -546,20 +917,20 @@ function PurchaseOrdersPage() {
                 />
               </div>
 
-              <div className="form-full-width purchase-order-items-section">
-                <div className="section-heading-row">
+              <div className="po-items-section po-form-full">
+                <div className="po-section-heading-row">
                   <div>
-                    <h3>Order Items</h3>
+                    <h3>Order items</h3>
                     <p>Add one or more products for this purchase order.</p>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleAddItem}
-                    className="secondary-button"
+                    className="po-secondary-command"
                   >
                     <FiPlus />
-                    Add Item
+                    Add item
                   </button>
                 </div>
 
@@ -569,7 +940,7 @@ function PurchaseOrdersPage() {
                     (Number(item.unit_cost) || 0);
 
                   return (
-                    <div className="purchase-order-item-row" key={index}>
+                    <div className="po-item-row" key={index}>
                       <div className="form-field">
                         <label htmlFor={`product-${index}`}>Product</label>
                         <select
@@ -612,7 +983,7 @@ function PurchaseOrdersPage() {
                       </div>
 
                       <div className="form-field">
-                        <label htmlFor={`unit-cost-${index}`}>Unit Cost</label>
+                        <label htmlFor={`unit-cost-${index}`}>Unit cost</label>
                         <input
                           id={`unit-cost-${index}`}
                           type="number"
@@ -630,14 +1001,14 @@ function PurchaseOrdersPage() {
                         />
                       </div>
 
-                      <div className="line-total-preview">
-                        <span>Line Total</span>
+                      <div className="po-line-total-preview">
+                        <span>Line total</span>
                         <strong>{formatCurrency(lineTotal)}</strong>
                       </div>
 
                       <button
                         type="button"
-                        className="icon-button"
+                        className="po-icon-button"
                         onClick={() => handleRemoveItem(index)}
                         disabled={formData.items.length === 1}
                         aria-label="Remove purchase order item"
@@ -649,7 +1020,7 @@ function PurchaseOrdersPage() {
                 })}
               </div>
 
-              <div className="form-full-width purchase-order-total-preview">
+              <div className="po-total-preview po-form-full">
                 <div>
                   <span>Subtotal</span>
                   <strong>{formatCurrency(previewSubtotal)}</strong>
@@ -667,19 +1038,17 @@ function PurchaseOrdersPage() {
               </div>
 
               {formError && (
-                <p className="message error-message form-full-width">
-                  {formError}
-                </p>
+                <p className="message error-message po-form-full">{formError}</p>
               )}
 
-              <p className="auth-note form-full-width">
-                Creating a purchase order does not increase stock yet. Stock
-                will increase only when receiving is added in the next issue.
+              <p className="po-auth-note po-form-full">
+                Creating a purchase order does not increase stock. Stock is
+                updated only after the order is received by staff.
               </p>
 
-              <div className="form-actions">
+              <div className="po-form-actions po-form-full">
                 <button type="submit" disabled={saving}>
-                  {saving ? "Creating..." : "Create Purchase Order"}
+                  {saving ? "Creating..." : "Create purchase order"}
                 </button>
 
                 <button
@@ -695,18 +1064,23 @@ function PurchaseOrdersPage() {
         </div>
       )}
 
-      {(selectedPurchaseOrder || detailLoading || detailError) && (
+      {isDetailModalOpen && (
         <div className="modal-backdrop">
           <section className="modal-card purchase-order-detail-modal">
-            <div className="modal-header">
+            <div className="po-modal-header">
               <div>
-                <h2>Purchase Order Details</h2>
-                <p>Review supplier, totals, status, and ordered items.</p>
+                <span>Purchase order details</span>
+                <h2>
+                  {selectedPurchaseOrder
+                    ? `PO-${String(selectedPurchaseOrder.id).padStart(4, "0")}`
+                    : "Purchase order details"}
+                </h2>
+                <p>Review supplier, totals, status, delivery, and ordered items.</p>
               </div>
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="po-icon-button"
                 onClick={handleCloseDetails}
                 aria-label="Close purchase order details"
               >
@@ -715,19 +1089,21 @@ function PurchaseOrdersPage() {
             </div>
 
             {detailLoading ? (
-              <p>Loading purchase order details...</p>
+              <div className="po-empty-state compact">
+                <FiShoppingBag />
+                <h3>Loading purchase order details</h3>
+                <p>Please wait while the purchase order detail is loaded.</p>
+              </div>
             ) : detailError ? (
               <p className="message error-message">{detailError}</p>
             ) : (
               selectedPurchaseOrder && (
                 <>
-                  <div className="detail-summary-grid">
+                  <div className="po-detail-summary-grid">
                     <article>
                       <span>Supplier</span>
                       <strong>{selectedPurchaseOrder.supplier_name}</strong>
-                      <p>
-                        {selectedPurchaseOrder.supplier_contact_person || "-"}
-                      </p>
+                      <p>{selectedPurchaseOrder.supplier_contact_person || "-"}</p>
                     </article>
 
                     <article>
@@ -744,19 +1120,27 @@ function PurchaseOrdersPage() {
                     </article>
 
                     <article>
-                      <span>Expected Delivery</span>
+                      <span>Expected delivery</span>
                       <strong>
-                        {formatDate(
-                          selectedPurchaseOrder.expected_delivery_date
-                        )}
+                        {formatDate(selectedPurchaseOrder.expected_delivery_date)}
                       </strong>
                     </article>
 
-                    <article>
+                    <article className="total">
                       <span>Total</span>
                       <strong>
                         {formatCurrency(selectedPurchaseOrder.total_amount)}
                       </strong>
+                    </article>
+
+                    <article>
+                      <span>Supplier delivered</span>
+                      <strong>
+                        {selectedPurchaseOrder.supplier_delivered_at
+                          ? formatDateTime(selectedPurchaseOrder.supplier_delivered_at)
+                          : "-"}
+                      </strong>
+                      <p>{selectedPurchaseOrder.supplier_delivered_by_name || ""}</p>
                     </article>
 
                     <article>
@@ -771,29 +1155,48 @@ function PurchaseOrdersPage() {
                   </div>
 
                   {selectedPurchaseOrder.notes && (
-                    <p className="auth-note">{selectedPurchaseOrder.notes}</p>
+                    <p className="po-auth-note">{selectedPurchaseOrder.notes}</p>
                   )}
 
-                  <div className="table-wrapper">
-                    <table>
+                  {selectedPurchaseOrder.supplier_delivery_note && (
+                    <p className="po-auth-note">
+                      Supplier note: {selectedPurchaseOrder.supplier_delivery_note}
+                    </p>
+                  )}
+
+                  <div className="po-detail-section-header">
+                    <h3>Ordered items</h3>
+                    <p>Products, quantities, unit costs, and line totals.</p>
+                  </div>
+
+                  <div className="po-table-wrapper">
+                    <table className="po-table detail-lines">
                       <thead>
                         <tr>
                           <th>Product</th>
                           <th>SKU</th>
                           <th>Quantity</th>
-                          <th>Unit Cost</th>
-                          <th>Line Total</th>
+                          <th>Unit cost</th>
+                          <th>Line total</th>
                         </tr>
                       </thead>
 
                       <tbody>
                         {selectedPurchaseOrder.items.map((item) => (
                           <tr key={item.id}>
-                            <td>{item.product_name}</td>
-                            <td>{item.product_sku}</td>
+                            <td>
+                              <strong>{item.product_name}</strong>
+                            </td>
+                            <td>
+                              <span className="po-code-pill">
+                                {item.product_sku}
+                              </span>
+                            </td>
                             <td>{item.quantity}</td>
                             <td>{formatCurrency(item.unit_cost)}</td>
-                            <td>{formatCurrency(item.line_total)}</td>
+                            <td>
+                              <strong>{formatCurrency(item.line_total)}</strong>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -805,223 +1208,6 @@ function PurchaseOrdersPage() {
           </section>
         </div>
       )}
-
-      <div className="table-card">
-        <div className="table-card-header">
-          <div>
-            <h2>Purchase Order List</h2>
-            <p>
-              {loading
-                ? "Loading purchase orders..."
-                : `Showing ${displayedPurchaseOrders.length} of ${purchaseOrders.length} purchase orders.`}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchPageData}
-            className="secondary-button"
-            disabled={loading}
-          >
-            <FiRefreshCw />
-            {loading ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-
-        <div className="table-toolbar customers-table-toolbar">
-          <div className="toolbar-input-with-icon">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Search by supplier, status, creator, or ID..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              aria-label="Search purchase orders"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            aria-label="Filter purchase orders by status"
-          >
-            <option value="all">All Statuses</option>
-            {staffStatusOptions.map((status) => (
-              <option key={status} value={status}>
-                {formatLabel(status)}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={sortOption}
-            onChange={(event) => setSortOption(event.target.value)}
-            aria-label="Sort purchase orders"
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="total-desc">Total High-Low</option>
-            <option value="total-asc">Total Low-High</option>
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="secondary-button"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-
-        <div className="panel-body">
-          {loading ? (
-            <p>Loading purchase orders...</p>
-          ) : error ? (
-            <div>
-              <p className="message error-message">{error}</p>
-
-              <button type="button" onClick={fetchPageData}>
-                Try Again
-              </button>
-            </div>
-          ) : purchaseOrders.length === 0 ? (
-            <div className="empty-state">
-              <FiShoppingBag />
-              <h3>No purchase orders found</h3>
-              <p>Create your first purchase order using the button above.</p>
-            </div>
-          ) : displayedPurchaseOrders.length === 0 ? (
-            <div className="empty-state">
-              <FiSearch />
-              <h3>No matching purchase orders found</h3>
-              <p>Try changing your search, status filter, or sort option.</p>
-
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="secondary-button"
-              >
-                Reset Search
-              </button>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>PO</th>
-                    <th>Supplier</th>
-                    <th>Status</th>
-                    <th>Items</th>
-                    <th>Total</th>
-                    <th>Expected Delivery</th>
-                    <th>Created By</th>
-                    <th>Created At</th>
-                    <th>Update Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {displayedPurchaseOrders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className={order.status === "received" ? "purchase-order-received-row" : ""}
-                    >
-                      <td>
-                        <strong>PO-{String(order.id).padStart(4, "0")}</strong>
-                      </td>
-
-                      <td>
-                        <div className="customer-cell">
-                          <span className="customer-avatar">
-                            <FiTruck />
-                          </span>
-
-                          <strong>{order.supplier_name}</strong>
-                        </div>
-                      </td>
-
-                      <td>
-                        <span className={getStatusBadgeClass(order.status)}>
-                          {formatLabel(order.status)}
-                        </span>
-                      </td>
-
-                      <td>
-                        <span className="badge badge-info">
-                          <FiPackage />
-                          {order.item_count}
-                        </span>
-                      </td>
-
-                      <td>{formatCurrency(order.total_amount)}</td>
-                      <td>{formatDate(order.expected_delivery_date)}</td>
-                      <td>{order.created_by_name || "-"}</td>
-                      <td>{formatDateTime(order.created_at)}</td>
-
-                      <td>
-                        <select
-                          value={order.status === "received" ? "received" : order.status}
-                          onChange={(event) =>
-                            handleUpdateStatus(order.id, event.target.value)
-                          }
-                          disabled={
-                            updatingStatusId === order.id ||
-                            receivingOrderId === order.id ||
-                            order.status === "received" ||
-                            order.status === "supplier_delivered"
-                          }
-                        >
-                          {staffStatusOptions.map((status) => (
-                            <option key={status} value={status}>
-                              {formatLabel(status)}
-                            </option>
-                          ))}
-
-                          {order.status === "received" && (
-                            <option value="received">Received</option>
-                          )}
-
-                          {order.status === "supplier_delivered" && (
-                            <option value="supplier_delivered">Supplier Delivered</option>
-                          )}
-                        </select>
-                      </td>
-
-                      <td>
-                        <div className="table-actions">
-                          <button
-                            type="button"
-                            onClick={() => handleViewPurchaseOrder(order.id)}
-                            className="secondary-button"
-                          >
-                            <FiEye />
-                            View
-                          </button>
-
-                          {canReceivePurchaseOrder(order) && (
-                          <button
-                            type="button"
-                            onClick={() => handleReceivePurchaseOrder(order.id)}
-                            className="success-button"
-                            disabled={receivingOrderId === order.id}
-                          >
-                            {receivingOrderId === order.id ? "Receiving..." : "Receive"}
-                          </button>
-                        )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
     </section>
   );
 }
