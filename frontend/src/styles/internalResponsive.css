@@ -1,0 +1,47 @@
+/* =========================================================
+   Staff portal responsive helpers
+   Kept as a separate file because AppLayout imports it.
+   Do not place full page designs here.
+========================================================= */
+
+@media (max-width: 1180px) {
+  .stats-grid,
+  .summary-grid,
+  .metric-grid,
+  .dashboard-summary-grid,
+  .dashboard-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .stats-grid,
+  .summary-grid,
+  .metric-grid,
+  .dashboard-summary-grid,
+  .dashboard-metric-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-grid,
+  .auth-grid,
+  .product-summary-grid,
+  .table-toolbar,
+  .detail-summary-grid,
+  .invoice-table-toolbar,
+  .inventory-table-toolbar,
+  .audit-table-toolbar,
+  .users-table-toolbar,
+  .customers-table-toolbar {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-header,
+  .line-items-header,
+  .inventory-alert-header,
+  .inventory-alert-bottom,
+  .payment-update-control {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+}

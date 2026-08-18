@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import {
+  FiDownload,
+  FiEdit2,
+  FiFilter,
+  FiMail,
+  FiMapPin,
+  FiPhone,
+  FiPlus,
   FiRefreshCw,
   FiSearch,
+  FiTrash2,
   FiUsers,
   FiX,
 } from "react-icons/fi";
+
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
 import ConfirmModal from "../components/ConfirmModal";
+import "../styles/customers.css";
 
 const initialFormData = {
   name: "",
@@ -146,6 +156,8 @@ function CustomersPage() {
       return;
     }
 
+    setCustomerToDelete(null);
+
     try {
       setDeletingCustomerId(customerToDelete.id);
       setFormError("");
@@ -253,52 +265,339 @@ function CustomersPage() {
     setSortOption("newest");
   }
 
+  const totalCustomers = customers.length;
+
+  const customersWithEmail = customers.filter((customer) => {
+    return Boolean(customer.email);
+  });
+
+  const customersWithPhone = customers.filter((customer) => {
+    return Boolean(customer.phone);
+  });
+
+  const customersWithAddress = customers.filter((customer) => {
+    return Boolean(customer.address);
+  });
+
+  const completeContactRecords = customers.filter((customer) => {
+    return Boolean(customer.email && customer.phone);
+  });
+
+  const latestCustomer = [...customers].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at);
+  })[0];
+
   return (
-    <section>
-      <div className="page-header">
+    <section className="customers-page">
+      <header className="customers-command-bar">
         <div>
+          <span className="customers-eyebrow">Customer records</span>
           <h1>Customers</h1>
-          <p>Manage customer records, contact details, and customer history.</p>
+          <p>
+            Manage customer contact records used across sales orders, invoices,
+            customer portal accounts, and customer activity analysis.
+          </p>
         </div>
 
-        <div className="page-actions">
+        <div className="customers-command-actions">
           <button
             type="button"
+            className="customers-secondary-command"
+            onClick={fetchCustomers}
+            disabled={loading}
+          >
+            <FiRefreshCw />
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+
+          <button
+            type="button"
+            className="customers-secondary-command"
             onClick={handleExportCustomers}
             disabled={exporting}
           >
+            <FiDownload />
             {exporting ? "Exporting..." : "Export CSV"}
           </button>
 
-          <button type="button" onClick={handleOpenCreateForm}>
-            + New Customer
+          <button
+            type="button"
+            className="customers-primary-command"
+            onClick={handleOpenCreateForm}
+          >
+            <FiPlus />
+            New customer
           </button>
         </div>
-      </div>
+      </header>
 
-      {exportError && <p className="message error-message">{exportError}</p>}
-      {successMessage && (
-        <p className="message success-message">{successMessage}</p>
+      {(exportError || successMessage || deleteError || error) && (
+        <div className="customers-message-stack">
+          {exportError && <p className="message error-message">{exportError}</p>}
+          {deleteError && <p className="message error-message">{deleteError}</p>}
+          {error && <p className="message error-message">{error}</p>}
+          {successMessage && (
+            <p className="message success-message">{successMessage}</p>
+          )}
+        </div>
       )}
+
+      <section className="customers-kpi-strip" aria-label="Customer metrics">
+        <article className="customers-kpi-card">
+          <div className="customers-kpi-icon">
+            <FiUsers />
+          </div>
+
+          <div>
+            <span>Total customers</span>
+            <strong>{totalCustomers}</strong>
+            <p>Directory records</p>
+          </div>
+        </article>
+
+        <article className="customers-kpi-card">
+          <div className="customers-kpi-icon">
+            <FiMail />
+          </div>
+
+          <div>
+            <span>Email records</span>
+            <strong>{customersWithEmail.length}</strong>
+            <p>Customers with email</p>
+          </div>
+        </article>
+
+        <article className="customers-kpi-card">
+          <div className="customers-kpi-icon">
+            <FiPhone />
+          </div>
+
+          <div>
+            <span>Phone records</span>
+            <strong>{customersWithPhone.length}</strong>
+            <p>Customers with phone</p>
+          </div>
+        </article>
+
+        <article className="customers-kpi-card">
+          <div className="customers-kpi-icon">
+            <FiMapPin />
+          </div>
+
+          <div>
+            <span>Address records</span>
+            <strong>{customersWithAddress.length}</strong>
+            <p>Customers with address</p>
+          </div>
+        </article>
+
+        <article className="customers-kpi-card success">
+          <div className="customers-kpi-icon">
+            <FiUsers />
+          </div>
+
+          <div>
+            <span>Complete contacts</span>
+            <strong>{completeContactRecords.length}</strong>
+            <p>Email and phone</p>
+          </div>
+        </article>
+
+        <article className="customers-kpi-card">
+          <div className="customers-kpi-icon">
+            <FiRefreshCw />
+          </div>
+
+          <div>
+            <span>Latest customer</span>
+            <strong>{latestCustomer ? formatShortDate(latestCustomer.created_at) : "-"}</strong>
+            <p>Most recent record</p>
+          </div>
+        </article>
+      </section>
+
+      <section className="customers-workspace">
+        <div className="customers-workspace-header">
+          <div>
+            <span>Customer directory</span>
+            <h2>Customer records</h2>
+            <p>
+              {loading
+                ? "Loading customers..."
+                : `Showing ${displayedCustomers.length} of ${customers.length} customers.`}
+            </p>
+          </div>
+        </div>
+
+        <div className="customers-toolbar">
+          <div className="customers-search-field">
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Search by name, email, phone, or address"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search customers"
+            />
+          </div>
+
+          <select
+            value={sortOption}
+            onChange={(event) => setSortOption(event.target.value)}
+            aria-label="Sort customers"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+          </select>
+
+          {hasActiveCustomerFilters && (
+            <button
+              type="button"
+              onClick={resetCustomerFilters}
+              className="customers-secondary-command"
+            >
+              <FiFilter />
+              Reset
+            </button>
+          )}
+        </div>
+
+        <div className="customers-table-area">
+          {loading ? (
+            <div className="customers-empty-state">
+              <FiUsers />
+              <h3>Loading customers</h3>
+              <p>Please wait while customer records are loaded.</p>
+            </div>
+          ) : error ? (
+            <div className="customers-empty-state">
+              <FiUsers />
+              <h3>Could not load customers</h3>
+              <p>{error}</p>
+
+              <button
+                type="button"
+                onClick={fetchCustomers}
+                className="customers-primary-command"
+              >
+                Try again
+              </button>
+            </div>
+          ) : customers.length === 0 ? (
+            <div className="customers-empty-state">
+              <FiUsers />
+              <h3>No customers found</h3>
+              <p>Create your first customer using the command bar above.</p>
+
+              <button
+                type="button"
+                onClick={handleOpenCreateForm}
+                className="customers-primary-command"
+              >
+                <FiPlus />
+                New customer
+              </button>
+            </div>
+          ) : displayedCustomers.length === 0 ? (
+            <div className="customers-empty-state">
+              <FiSearch />
+              <h3>No matching customers</h3>
+              <p>Try changing your search or sort option.</p>
+
+              <button
+                type="button"
+                onClick={resetCustomerFilters}
+                className="customers-secondary-command"
+              >
+                Reset search
+              </button>
+            </div>
+          ) : (
+            <div className="customers-table-wrapper">
+              <table className="customers-table">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Created at</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {displayedCustomers.map((customer) => (
+                    <tr key={customer.id}>
+                      <td>
+                        <div className="customer-cell">
+                          <span className="customer-avatar">
+                            {getInitials(customer.name)}
+                          </span>
+
+                          <strong>{customer.name}</strong>
+                        </div>
+                      </td>
+
+                      <td>{customer.email || "-"}</td>
+                      <td>{customer.phone || "-"}</td>
+                      <td>{customer.address || "-"}</td>
+                      <td>{formatDate(customer.created_at)}</td>
+
+                      <td>
+                        <div className="customers-table-actions">
+                          <button
+                            type="button"
+                            onClick={() => handleEditCustomer(customer)}
+                            className="customers-icon-action"
+                          >
+                            <FiEdit2 />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCustomer(customer)}
+                            disabled={deletingCustomerId === customer.id}
+                            className="customers-icon-action danger"
+                          >
+                            <FiTrash2 />
+                            <span>
+                              {deletingCustomerId === customer.id
+                                ? "Deleting"
+                                : "Delete"}
+                            </span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
 
       {isCustomerFormOpen && (
         <div className="modal-backdrop">
           <section className="modal-card customer-form-modal">
-            <div className="modal-header">
+            <div className="customers-modal-header">
               <div>
-                <h2>
-                  {editingCustomerId ? "Edit Customer" : "Create Customer"}
-                </h2>
+                <span>Customer record</span>
+                <h2>{editingCustomerId ? "Edit customer" : "Create customer"}</h2>
                 <p>
                   {editingCustomerId
                     ? "Update an existing customer record."
-                    : "Add a new customer to the ERP system."}
+                    : "Add a new customer to the ERP customer directory."}
                 </p>
               </div>
 
               <button
                 type="button"
-                className="icon-button modal-close-button"
+                className="customers-icon-button"
                 onClick={handleCloseCustomerForm}
                 aria-label="Close customer form"
               >
@@ -306,7 +605,7 @@ function CustomersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitCustomer} className="form-grid">
+            <form onSubmit={handleSubmitCustomer} className="customers-form-grid">
               <div className="form-field">
                 <label htmlFor="name">Name</label>
                 <input
@@ -341,7 +640,7 @@ function CustomersPage() {
                 />
               </div>
 
-              <div className="form-field full-width">
+              <div className="form-field customers-form-full">
                 <label htmlFor="address">Address</label>
                 <textarea
                   id="address"
@@ -353,20 +652,20 @@ function CustomersPage() {
               </div>
 
               {formError && (
-                <p className="message error-message full-width">
+                <p className="message error-message customers-form-full">
                   {formError}
                 </p>
               )}
 
-              <div className="form-actions">
+              <div className="customers-form-actions customers-form-full">
                 <button type="submit" disabled={saving}>
                   {saving
                     ? editingCustomerId
                       ? "Updating..."
                       : "Creating..."
                     : editingCustomerId
-                    ? "Update Customer"
-                    : "Create Customer"}
+                    ? "Update customer"
+                    : "Create customer"}
                 </button>
 
                 <button
@@ -381,158 +680,6 @@ function CustomersPage() {
           </section>
         </div>
       )}
-
-      <div className="table-card">
-        <div className="table-card-header">
-          <div>
-            <h2>Customer Directory</h2>
-            <p>
-              {loading
-                ? "Loading customers..."
-                : `Showing ${displayedCustomers.length} of ${customers.length} customers.`}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchCustomers}
-            className="secondary-button"
-            disabled={loading}
-          >
-            <FiRefreshCw />
-            {loading ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-
-        <div className="table-toolbar customers-table-toolbar">
-          <div className="toolbar-input-with-icon">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Search by name, email, phone, or address..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              aria-label="Search customers"
-            />
-          </div>
-
-          <select
-            value={sortOption}
-            onChange={(event) => setSortOption(event.target.value)}
-            aria-label="Sort customers"
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="name-asc">Name A-Z</option>
-            <option value="name-desc">Name Z-A</option>
-          </select>
-
-          {hasActiveCustomerFilters && (
-            <button
-              type="button"
-              onClick={resetCustomerFilters}
-              className="secondary-button"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-
-        <div className="panel-body">
-          {deleteError && <p className="message error-message">{deleteError}</p>}
-
-          {loading ? (
-            <p>Loading customers...</p>
-          ) : error ? (
-            <div>
-              <p className="message error-message">{error}</p>
-
-              <button type="button" onClick={fetchCustomers}>
-                Try Again
-              </button>
-            </div>
-          ) : customers.length === 0 ? (
-            <div className="empty-state">
-              <FiUsers />
-              <h3>No customers found</h3>
-              <p>Create your first customer using the New Customer button.</p>
-            </div>
-          ) : displayedCustomers.length === 0 ? (
-            <div className="empty-state">
-              <FiSearch />
-              <h3>No matching customers found</h3>
-              <p>Try changing your search or sort option.</p>
-
-              <button
-                type="button"
-                onClick={resetCustomerFilters}
-                className="secondary-button"
-              >
-                Reset Search
-              </button>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Address</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {displayedCustomers.map((customer) => (
-                    <tr key={customer.id}>
-                      <td>
-                        <div className="customer-cell">
-                          <span className="customer-avatar">
-                            {getInitials(customer.name)}
-                          </span>
-
-                          <strong>{customer.name}</strong>
-                        </div>
-                      </td>
-
-                      <td>{customer.email || "-"}</td>
-                      <td>{customer.phone || "-"}</td>
-                      <td>{customer.address || "-"}</td>
-                      <td>{formatDate(customer.created_at)}</td>
-
-                      <td>
-                        <div className="table-actions">
-                          <button
-                            type="button"
-                            onClick={() => handleEditCustomer(customer)}
-                            className="secondary-button"
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCustomer(customer)}
-                            disabled={deletingCustomerId === customer.id}
-                            className="danger-button"
-                          >
-                            {deletingCustomerId === customer.id
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
 
       <ConfirmModal
         isOpen={Boolean(customerToDelete)}

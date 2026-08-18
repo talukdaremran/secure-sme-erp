@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   FiActivity,
   FiArchive,
@@ -16,9 +16,31 @@ import {
   FiUser,
   FiUsers,
   FiLayers,
+  FiTruck,
+  FiShoppingBag,
+  FiShield,
+  FiCpu,
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
-import appIcon from "../assets/favicon.svg";
+// import appIcon from "../assets/favicon.svg";
+import appIcon from "../assets/coreflow-logo.png";
+import "../styles/appShell.css";
+import "../styles/internalResponsive.css";
+
+const pageTitles = {
+  "/dashboard": "Operations Overview",
+  "/ai-analytics": "Intelligence Hub",
+  "/products": "Products",
+  "/customers": "Customers",
+  "/sales-orders": "Sales Fulfilment",
+  "/invoices": "Invoices",
+  "/inventory": "Stock Control",
+  "/audit-logs": "Security Monitor",
+  "/users": "Team Access",
+  "/suppliers": "Suppliers",
+  "/purchase-orders": "Procurement",
+  "/approvals": "Control Centre",
+};
 
 function AppLayout() {
   const navigate = useNavigate();
@@ -203,66 +225,113 @@ function AppLayout() {
     };
   }, [isAccountMenuOpen]);
 
+  const location = useLocation();
+
+  const pageTitle =
+    pageTitles[location.pathname] || "Page Not Found";
+  
+  useEffect(() => {
+    document.title = `${pageTitle} | CoreFlow`;
+  }, [pageTitle]);
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">
-            <img src={appIcon} alt="SME ERP logo" />
+            <img src={appIcon} alt="CoreFlow logo" />
           </div>
 
-          <div>
-            <h2>SME ERP</h2>
-            <p>Secure Business Portal</p>
-          </div>
+          {/* <div>
+            <h2>CoreFlow</h2>
+            <p>Operations Platform</p>
+          </div> */}
         </div>
 
         <nav className="sidebar-nav">
-          {isAdmin && (
-            <NavLink to="/dashboard">
-              <FiBarChart2 />
-              <span>Dashboard</span>
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Command Centre</p>
+
+            {isAdmin && (
+              <NavLink to="/dashboard">
+                <FiBarChart2 />
+                <span>Dashboard</span>
+              </NavLink>
+            )}
+
+            <NavLink to="/ai-analytics">
+              <FiCpu />
+              <span>AI Analytics</span>
             </NavLink>
-          )}
+          </div>
 
-          <NavLink to="/products">
-            <FiBox />
-            <span>Products</span>
-          </NavLink>
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Operations</p>
 
-          <NavLink to="/customers">
-            <FiUsers />
-            <span>Customers</span>
-          </NavLink>
+            <NavLink to="/products">
+              <FiBox />
+              <span>Products</span>
+            </NavLink>
 
-          <NavLink to="/sales-orders">
-            <FiShoppingCart />
-            <span>Sales Orders</span>
-          </NavLink>
+            <NavLink to="/inventory">
+              <FiArchive />
+              <span>Inventory</span>
+            </NavLink>
 
-          <NavLink to="/invoices">
-            <FiFileText />
-            <span>Invoices</span>
-          </NavLink>
+            <NavLink to="/sales-orders">
+              <FiShoppingCart />
+              <span>Sales Orders</span>
+            </NavLink>
 
-          <NavLink to="/inventory">
-            <FiArchive />
-            <span>Inventory</span>
-          </NavLink>
+            <NavLink to="/invoices">
+              <FiFileText />
+              <span>Invoices</span>
+            </NavLink>
+          </div>
 
-          {isAdmin && (
-            <>
-              <NavLink to="/audit-logs">
-                <FiActivity />
-                <span>Audit Logs</span>
-              </NavLink>
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Relationships</p>
 
-              <NavLink to="/users">
-                <FiClipboard />
-                <span>Users</span>
-              </NavLink>
-            </>
-          )}
+            <NavLink to="/customers">
+              <FiUsers />
+              <span>Customers</span>
+            </NavLink>
+
+            <NavLink to="/suppliers">
+              <FiTruck />
+              <span>Suppliers</span>
+            </NavLink>
+
+            <NavLink to="/purchase-orders">
+              <FiShoppingBag />
+              <span>Purchase Orders</span>
+            </NavLink>
+          </div>
+
+          <div className="sidebar-nav-section">
+            <p className="sidebar-nav-label">Security</p>
+
+            <NavLink to="/approvals">
+              <FiShield />
+              <span>
+                {user?.role === "Admin" ? "Approvals" : "Request Adjustment"}
+              </span>
+            </NavLink>
+
+            {isAdmin && (
+              <>
+                <NavLink to="/audit-logs">
+                  <FiActivity />
+                  <span>Audit Logs</span>
+                </NavLink>
+
+                <NavLink to="/users">
+                  <FiClipboard />
+                  <span>Users</span>
+                </NavLink>
+              </>
+            )}
+          </div>
         </nav>
 
         <div className="sidebar-footer">
@@ -279,7 +348,7 @@ function AppLayout() {
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
 
-                <div>
+                <div className="user-name-role">
                   <strong>{user.name}</strong>
                   <span>{user.role}</span>
                 </div>
@@ -369,7 +438,7 @@ function AppLayout() {
                     <span>Profile</span>
                   </button>
 
-                  <button
+                  {/* <button
                     type="button"
                     disabled
                     onMouseEnter={handleCloseSideMenus}
@@ -377,7 +446,7 @@ function AppLayout() {
                     <FiSettings />
                     <span>Settings</span>
                     <small>Soon</small>
-                  </button>
+                  </button> */}
 
                   <div className="account-menu-divider" />
 
@@ -447,26 +516,6 @@ function AppLayout() {
       </aside>
 
       <div className="content-shell">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Secure SME ERP</p>
-            <h1>Business Management System</h1>
-          </div>
-
-          {user && (
-            <button
-              type="button"
-              className="topbar-user topbar-account-button"
-              onClick={handleOpenProfile}
-            >
-              <span>{user.role}</span>
-              <div className="topbar-avatar">
-                {user.name?.charAt(0).toUpperCase()}
-              </div>
-            </button>
-          )}
-        </header>
-
         <main className="main-content">
           <Outlet />
         </main>

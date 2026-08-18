@@ -1,0 +1,29 @@
+<svg width="520" height="128" viewBox="0 0 520 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="coreflowLogoTitle">
+  <title id="coreflowLogoTitle">CoreFlow logo</title>
+  <defs>
+    <linearGradient id="coreflowBlueA" x1="22" y1="16" x2="100" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1D4ED8"/>
+      <stop offset="0.52" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#0F46C7"/>
+    </linearGradient>
+    <linearGradient id="coreflowBlueB" x1="42" y1="108" x2="108" y2="66" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F46C7"/>
+      <stop offset="1" stop-color="#1E7BFF"/>
+    </linearGradient>
+    <linearGradient id="coreflowTeal" x1="48" y1="58" x2="104" y2="45" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F8EA3"/>
+      <stop offset="1" stop-color="#22D3C5"/>
+    </linearGradient>
+  </defs>
+
+  <g>
+    <path d="M26 39C26 35.1 28 31.5 31.3 29.4L55.6 13.8C59.4 11.4 64.2 11.4 68 13.8L96 31.7H61.8C59.4 31.7 57.1 32.4 55.1 33.7L39.7 43.6C36.5 45.7 34.6 49.2 34.6 53V85.6C34.6 91.3 38.6 96.2 44.1 97.4L32.9 104.5C29.8 106.5 25.8 104.3 25.8 100.6L26 39Z" fill="url(#coreflowBlueA)"/>
+    <path d="M46.5 55.8C49.4 50.9 54.2 47.4 59.8 46.5L100.6 39.8C103.6 39.3 106.3 41.6 106.3 44.7V56.5C106.3 61.1 102.6 64.8 98 64.8H48.4L46.5 55.8Z" fill="url(#coreflowTeal)"/>
+    <path d="M42.8 104.1L61.5 88.4C63.6 86.6 66.3 85.6 69.1 85.6H103C107.6 85.6 111.4 89.3 111.4 94V104.1C111.4 108.8 107.6 112.5 103 112.5H64.8C62.4 112.5 60 113.3 58.1 114.7L48.8 121.4C46.3 123.2 42.8 121.4 42.8 118.3V104.1Z" fill="url(#coreflowBlueB)"/>
+    <path d="M42.9 76.4L58.1 65.7H104.2C108.2 65.7 111.4 68.9 111.4 72.9V75.8C111.4 79.8 108.2 83 104.2 83H55.7C52.9 83 50.2 84 48 85.8L36.7 95.3L42.9 76.4Z" fill="#1263E8"/>
+  </g>
+
+  <text x="148" y="82" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-2.3">
+    <tspan fill="#0B1F5B">Core</tspan><tspan fill="#1668F2">Flow</tspan>
+  </text>
+</svg>

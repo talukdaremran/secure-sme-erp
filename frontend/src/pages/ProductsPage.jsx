@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import {
   FiAlertTriangle,
+  FiDownload,
+  FiEdit2,
+  FiFilter,
   FiPackage,
+  FiPlus,
+  FiRefreshCw,
+  FiSearch,
+  FiTrash2,
   FiTrendingDown,
   FiX,
 } from "react-icons/fi";
@@ -9,6 +16,7 @@ import {
 import apiClient from "../api/apiClient";
 import { exportCSV } from "../utils/exportCSV";
 import ConfirmModal from "../components/ConfirmModal";
+import "../styles/products.css";
 
 const initialFormData = {
   name: "",
@@ -16,18 +24,18 @@ const initialFormData = {
   category: "",
   price: "",
   low_stock_level: "",
+  image_url: "",
 };
 
 function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
   const [editingProductId, setEditingProductId] = useState(null);
-  
+
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
 
   const [productToDelete, setProductToDelete] = useState(null);
-
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -71,6 +79,15 @@ function ProductsPage() {
     }));
   }
 
+  function openCreateProductForm() {
+    setEditingProductId(null);
+    setFormData(initialFormData);
+    setFormError("");
+    setDeleteError("");
+    setSuccessMessage("");
+    setIsProductFormOpen(true);
+  }
+
   function handleEditProduct(product) {
     setEditingProductId(product.id);
     setFormError("");
@@ -83,11 +100,10 @@ function ProductsPage() {
       category: product.category || "",
       price: product.price || "",
       low_stock_level: product.low_stock_level || 0,
+      image_url: product.image_url || "",
     });
 
     setIsProductFormOpen(true);
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleCancelEdit() {
@@ -113,6 +129,7 @@ function ProductsPage() {
         category: formData.category || null,
         price: Number(formData.price),
         low_stock_level: Number(formData.low_stock_level || 0),
+        image_url: formData.image_url || null,
       };
 
       if (editingProductId) {
@@ -210,20 +227,20 @@ function ProductsPage() {
     if (stockLevel === "out") {
       return {
         label: "Out of stock",
-        className: "badge badge-danger",
+        className: "products-status-pill status-out",
       };
     }
 
     if (stockLevel === "low") {
       return {
         label: "Low stock",
-        className: "badge badge-warning",
+        className: "products-status-pill status-low",
       };
     }
 
     return {
       label: "In stock",
-      className: "badge badge-success",
+      className: "products-status-pill status-in",
     };
   }
 
@@ -232,6 +249,37 @@ function ProductsPage() {
       style: "currency",
       currency: "AUD",
     }).format(Number(value || 0));
+  }
+
+  function getProductInitials(productName) {
+    if (!productName) {
+      return "P";
+    }
+
+    return productName
+      .split(" ")
+      .slice(0, 2)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("");
+  }
+
+  function renderProductThumbnail(product) {
+    if (product.image_url) {
+      return (
+        <img
+          src={product.image_url}
+          alt={product.name}
+          className="product-thumbnail"
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+            event.currentTarget.nextElementSibling.style.display = "grid";
+          }}
+        />
+      );
+    }
+
+    return null;
   }
 
   const totalProducts = products.length;
@@ -257,15 +305,13 @@ function ProductsPage() {
 
   const alertProducts = [...outOfStockProducts, ...lowStockProducts]
     .sort((a, b) => Number(a.stock_quantity || 0) - Number(b.stock_quantity || 0))
-    .slice(0, 6);
+    .slice(0, 4);
 
   const remainingAlertCount =
     outOfStockProducts.length + lowStockProducts.length - alertProducts.length;
 
   const categoryOptions = [
-    ...new Set(
-      products.map((product) => product.category || "Uncategorised")
-    ),
+    ...new Set(products.map((product) => product.category || "Uncategorised")),
   ].sort();
 
   const displayedProducts = products
@@ -321,49 +367,394 @@ function ProductsPage() {
   }
 
   return (
-    <section>
-      <div className="page-header">
+    <section className="products-page">
+      <header className="products-command-bar">
         <div>
+          <span className="products-eyebrow">Inventory catalogue</span>
           <h1>Products</h1>
           <p>
-            Manage product details, pricing, and low stock thresholds. Stock changes are handled from Inventory.
+            Manage product records, pricing, catalogue images, and low-stock
+            thresholds. Stock quantities are updated through inventory movements.
           </p>
         </div>
 
-        {/* Add new Product button */}
-        <div className="page-actions">
-          <button type="button" onClick={handleExportProducts} disabled={exporting}>
+        <div className="products-command-actions">
+          <button
+            type="button"
+            className="products-secondary-command"
+            onClick={fetchProducts}
+            disabled={loading}
+          >
+            <FiRefreshCw />
+            Refresh
+          </button>
+
+          <button
+            type="button"
+            className="products-secondary-command"
+            onClick={handleExportProducts}
+            disabled={exporting}
+          >
+            <FiDownload />
             {exporting ? "Exporting..." : "Export CSV"}
           </button>
 
           <button
             type="button"
-            onClick={() => {
-              setEditingProductId(null);
-              setFormData(initialFormData);
-              setFormError("");
-              setIsProductFormOpen(true);
-            }}
+            className="products-primary-command"
+            onClick={openCreateProductForm}
           >
-            + New Product
+            <FiPlus />
+            New product
           </button>
         </div>
-      </div>
+      </header>
 
-      {exportError && <p className="message error-message">{exportError}</p>}
-      {successMessage && <p className="message success-message">{successMessage}</p>}
+      {(exportError || successMessage) && (
+        <div className="products-message-stack">
+          {exportError && <p className="message error-message">{exportError}</p>}
+          {successMessage && (
+            <p className="message success-message">{successMessage}</p>
+          )}
+        </div>
+      )}
 
-      {/* Add New Product Modal Form */}
+      <section className="products-kpi-strip" aria-label="Product summary">
+        <article className="products-kpi-card">
+          <span>Total products</span>
+          <strong>{totalProducts}</strong>
+          <p>Catalogue records</p>
+        </article>
+
+        <article className="products-kpi-card">
+          <span>In stock</span>
+          <strong>{inStockProducts.length}</strong>
+          <p>Available products</p>
+        </article>
+
+        <article className="products-kpi-card warning">
+          <span>Low stock</span>
+          <strong>{lowStockProducts.length}</strong>
+          <p>Below threshold</p>
+        </article>
+
+        <article className="products-kpi-card danger">
+          <span>Out of stock</span>
+          <strong>{outOfStockProducts.length}</strong>
+          <p>Needs action</p>
+        </article>
+
+        <article className="products-kpi-card">
+          <span>Inventory value</span>
+          <strong>{formatCurrency(inventoryValue)}</strong>
+          <p>Price × stock</p>
+        </article>
+      </section>
+
+      {(outOfStockProducts.length > 0 || lowStockProducts.length > 0) && (
+        <section className="products-alert-panel">
+          <div className="products-alert-header">
+            <div>
+              <span>Stock alerts</span>
+              <h2>
+                <FiAlertTriangle />
+                {outOfStockProducts.length + lowStockProducts.length} products need attention
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className="products-secondary-command"
+              onClick={() => {
+                setStockFilter("out");
+                setSearchQuery("");
+                setCategoryFilter("all");
+              }}
+            >
+              View critical
+            </button>
+          </div>
+
+          <div className="products-alert-list">
+            {alertProducts.map((product) => {
+              const stockQuantity = Number(product.stock_quantity || 0);
+              const isOutOfStock = stockQuantity <= 0;
+              const StatusIcon = isOutOfStock ? FiAlertTriangle : FiTrendingDown;
+
+              return (
+                <article
+                  key={product.id}
+                  className={
+                    isOutOfStock
+                      ? "products-alert-row critical"
+                      : "products-alert-row warning"
+                  }
+                >
+                  <StatusIcon />
+
+                  <div>
+                    <strong>{product.name}</strong>
+                    <p>
+                      {product.sku} · Stock {stockQuantity} · Reorder level{" "}
+                      {product.low_stock_level}
+                    </p>
+                  </div>
+
+                  <span>{isOutOfStock ? "Critical" : "Low"}</span>
+                </article>
+              );
+            })}
+
+            {remainingAlertCount > 0 && (
+              <article className="products-alert-row muted">
+                <FiPackage />
+
+                <div>
+                  <strong>{remainingAlertCount} more product(s)</strong>
+                  <p>Use the table filters to review all stock alerts.</p>
+                </div>
+              </article>
+            )}
+          </div>
+        </section>
+      )}
+
+      <section className="products-workspace">
+        <div className="products-workspace-header">
+          <div>
+            <span>Product list</span>
+            <h2>All products</h2>
+            <p>
+              {loading
+                ? "Loading products..."
+                : `Showing ${displayedProducts.length} of ${products.length} products.`}
+            </p>
+          </div>
+        </div>
+
+        <div className="products-toolbar">
+          <div className="products-search-field">
+            <FiSearch />
+            <input
+              type="text"
+              placeholder="Search by name, SKU, or category"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search products"
+            />
+          </div>
+
+          <select
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            aria-label="Filter products by category"
+          >
+            <option value="all">All categories</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={stockFilter}
+            onChange={(event) => setStockFilter(event.target.value)}
+            aria-label="Filter products by stock status"
+          >
+            <option value="all">All stock</option>
+            <option value="in">In stock</option>
+            <option value="low">Low stock</option>
+            <option value="out">Out of stock</option>
+          </select>
+
+          <select
+            value={sortOption}
+            onChange={(event) => setSortOption(event.target.value)}
+            aria-label="Sort products"
+          >
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+            <option value="price-asc">Price low-high</option>
+            <option value="price-desc">Price high-low</option>
+            <option value="stock-asc">Stock low-high</option>
+            <option value="stock-desc">Stock high-low</option>
+          </select>
+
+          {hasActiveProductFilters && (
+            <button
+              type="button"
+              onClick={resetProductFilters}
+              className="products-secondary-command"
+            >
+              <FiFilter />
+              Reset
+            </button>
+          )}
+        </div>
+
+        <div className="products-table-area">
+          {deleteError && <p className="message error-message">{deleteError}</p>}
+
+          {loading ? (
+            <div className="products-empty-state">
+              <FiPackage />
+              <h3>Loading products</h3>
+              <p>Please wait while the catalogue is loaded.</p>
+            </div>
+          ) : error ? (
+            <div className="products-empty-state">
+              <FiAlertTriangle />
+              <h3>Could not load products</h3>
+              <p>{error}</p>
+
+              <button
+                type="button"
+                onClick={fetchProducts}
+                className="products-primary-command"
+              >
+                Try again
+              </button>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="products-empty-state">
+              <FiPackage />
+              <h3>No products found</h3>
+              <p>Create your first product to start managing the catalogue.</p>
+
+              <button
+                type="button"
+                onClick={openCreateProductForm}
+                className="products-primary-command"
+              >
+                <FiPlus />
+                New product
+              </button>
+            </div>
+          ) : displayedProducts.length === 0 ? (
+            <div className="products-empty-state">
+              <FiFilter />
+              <h3>No matching products</h3>
+              <p>Try changing your search, category, stock filter, or sort option.</p>
+
+              <button
+                type="button"
+                onClick={resetProductFilters}
+                className="products-secondary-command"
+              >
+                Reset filters
+              </button>
+            </div>
+          ) : (
+            <div className="products-table-wrapper">
+              <table className="products-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>SKU</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Reorder level</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {displayedProducts.map((product) => {
+                    const stockStatus = getStockStatus(product);
+
+                    return (
+                      <tr key={product.id}>
+                        <td>
+                          <div className="product-name-cell">
+                            <div className="product-thumb-frame">
+                              {renderProductThumbnail(product)}
+
+                              <div
+                                className="product-thumbnail-fallback"
+                                style={{
+                                  display: product.image_url ? "none" : "grid",
+                                }}
+                              >
+                                {getProductInitials(product.name)}
+                              </div>
+                            </div>
+
+                            <div>
+                              <strong>{product.name}</strong>
+                              <p>{product.category || "Uncategorised"}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td>
+                          <span className="product-code-pill">{product.sku}</span>
+                        </td>
+
+                        <td>{product.category || "-"}</td>
+                        <td>{formatCurrency(product.price)}</td>
+
+                        <td>
+                          <div className="products-stock-cell">
+                            <strong>{product.stock_quantity}</strong>
+                            <span className={stockStatus.className}>
+                              {stockStatus.label}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td>{product.low_stock_level}</td>
+
+                        <td>
+                          <div className="products-table-actions">
+                            <button
+                              type="button"
+                              onClick={() => handleEditProduct(product)}
+                              className="products-icon-action"
+                              aria-label={`Edit ${product.name}`}
+                            >
+                              <FiEdit2 />
+                              <span>Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProduct(product)}
+                              disabled={deletingProductId === product.id}
+                              className="products-icon-action danger"
+                              aria-label={`Delete ${product.name}`}
+                            >
+                              <FiTrash2 />
+                              <span>
+                                {deletingProductId === product.id
+                                  ? "Deleting"
+                                  : "Delete"}
+                              </span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
+
       {isProductFormOpen && (
         <div className="modal-backdrop">
           <section className="modal-card product-form-modal">
-            <div className="modal-header">
+            <div className="products-modal-header">
               <div>
-                <h2>{editingProductId ? "Edit Product" : "Add New Product"}</h2>
+                <span>Product record</span>
+                <h2>{editingProductId ? "Edit product" : "New product"}</h2>
                 <p>
                   {editingProductId
-                    ? "Update product details, pricing, and stock information."
-                    : "Add a new product to the ERP inventory."}
+                    ? "Update product details, pricing, and catalogue image."
+                    : "Create a new product record. Opening stock is added from Inventory."}
                 </p>
               </div>
 
@@ -377,9 +768,9 @@ function ProductsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitProduct} className="form-grid">
+            <form onSubmit={handleSubmitProduct} className="products-form-grid">
               <div className="form-field">
-                <label htmlFor="name">Product Name</label>
+                <label htmlFor="name">Product name</label>
                 <input
                   id="name"
                   name="name"
@@ -427,8 +818,33 @@ function ProductsPage() {
                 />
               </div>
 
-              <div className="form-field stock-managed-note">
-                <label>Stock Quantity</label>
+              <div className="form-field products-form-full">
+                <label htmlFor="image_url">Product image URL</label>
+                <input
+                  id="image_url"
+                  name="image_url"
+                  type="url"
+                  value={formData.image_url}
+                  onChange={handleChange}
+                  placeholder="https://example.com/product-image.jpg"
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="low_stock_level">Low stock level</label>
+                <input
+                  id="low_stock_level"
+                  name="low_stock_level"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.low_stock_level}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Stock quantity</label>
 
                 <div className="readonly-stock-box">
                   {editingProductId ? (
@@ -449,32 +865,21 @@ function ProductsPage() {
                 </div>
               </div>
 
-              <div className="form-field">
-                <label htmlFor="low_stock_level">Low Stock Level</label>
-                <input
-                  id="low_stock_level"
-                  name="low_stock_level"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.low_stock_level}
-                  onChange={handleChange}
-                />
-              </div>
-
               {formError && (
-                <p className="message error-message full-width">{formError}</p>
+                <p className="message error-message products-form-full">
+                  {formError}
+                </p>
               )}
 
-              <div className="form-actions">
+              <div className="products-form-actions products-form-full">
                 <button type="submit" disabled={saving}>
                   {saving
                     ? editingProductId
                       ? "Updating..."
                       : "Creating..."
                     : editingProductId
-                    ? "Update Product"
-                    : "Create Product"}
+                    ? "Update product"
+                    : "Create product"}
                 </button>
 
                 <button
@@ -490,288 +895,6 @@ function ProductsPage() {
         </div>
       )}
 
-      {/* Products-only summary cards */}
-      <div className="product-summary-grid">
-        <article className="product-summary-card">
-          <span>Total Products</span>
-          <strong>{totalProducts}</strong>
-        </article>
-
-        <article className="product-summary-card">
-          <span>In Stock</span>
-          <strong>{inStockProducts.length}</strong>
-        </article>
-
-        <article className="product-summary-card warning-card">
-          <span>Low Stock</span>
-          <strong>{lowStockProducts.length}</strong>
-        </article>
-
-        <article className="product-summary-card danger-card">
-          <span>Out of Stock</span>
-          <strong>{outOfStockProducts.length}</strong>
-        </article>
-
-        <article className="product-summary-card">
-          <span>Inventory Value</span>
-          <strong>{formatCurrency(inventoryValue)}</strong>
-        </article>
-      </div>
-
-      {/* stock alert section */}
-      <section className="panel product-alert-panel">
-        <div className="panel-header product-alert-header">
-          <div>
-            <h2>
-              <FiAlertTriangle />
-              Stock Alerts ({outOfStockProducts.length + lowStockProducts.length})
-            </h2>
-            <p>Critical and low stock products that need attention.</p>
-          </div>
-        </div>
-
-        <div className="panel-body">
-          {alertProducts.length === 0 ? (
-            <div className="empty-state">
-              <FiPackage />
-              <h3>Stock levels look healthy</h3>
-              <p>No products are currently low stock or out of stock.</p>
-            </div>
-          ) : (
-            <>
-              <div className="product-alert-list">
-                {alertProducts.map((product) => {
-                  const stockQuantity = Number(product.stock_quantity || 0);
-                  const isOutOfStock = stockQuantity <= 0;
-
-                  const StatusIcon = isOutOfStock
-                    ? FiAlertTriangle
-                    : FiTrendingDown;
-
-                  return (
-                    <div
-                      key={product.id}
-                      className={
-                        isOutOfStock
-                          ? "product-alert-item critical-alert"
-                          : "product-alert-item low-stock-alert"
-                      }
-                    >
-                      <div className="product-alert-top">
-                        <div>
-                          <strong>{product.name}</strong>
-                          <p>{product.sku}</p>
-                        </div>
-
-                        <StatusIcon />
-                      </div>
-
-                      <div className="product-alert-bottom">
-                        <span>Stock: {stockQuantity}</span>
-
-                        <span
-                          className={
-                            isOutOfStock
-                              ? "badge badge-danger"
-                              : "badge badge-warning"
-                          }
-                        >
-                          {isOutOfStock ? "Critical" : "Low Stock"}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {remainingAlertCount > 0 && (
-                <p className="alert-more-text">
-                  + {remainingAlertCount} more product(s) need attention. Check the
-                  product table for full details.
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      </section>
-      
-      {/* Products Table */}
-      <div className="table-card">
-        <div className="table-card-header">
-          <div>
-            <h2>All Products</h2>
-            <p>
-              {loading
-                ? "Loading products..."
-                : `Showing ${displayedProducts.length} of ${products.length} products.`}
-            </p>
-          </div>
-        </div>
-
-        <div className="table-toolbar">
-          <input
-            type="text"
-            placeholder="Search by name, SKU, or category..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            aria-label="Search products"
-          />
-
-          <select
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            aria-label="Filter products by category"
-          >
-            <option value="all">All Categories</option>
-            {categoryOptions.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={stockFilter}
-            onChange={(event) => setStockFilter(event.target.value)}
-            aria-label="Filter products by stock status"
-          >
-            <option value="all">All Stock</option>
-            <option value="in">In Stock</option>
-            <option value="low">Low Stock</option>
-            <option value="out">Out of Stock</option>
-          </select>
-
-          <select
-            value={sortOption}
-            onChange={(event) => setSortOption(event.target.value)}
-            aria-label="Sort products"
-          >
-            <option value="name-asc">Name A-Z</option>
-            <option value="name-desc">Name Z-A</option>
-            <option value="price-asc">Price Low-High</option>
-            <option value="price-desc">Price High-Low</option>
-            <option value="stock-asc">Stock Low-High</option>
-            <option value="stock-desc">Stock High-Low</option>
-          </select>
-
-          {hasActiveProductFilters && (
-            <button
-              type="button"
-              onClick={resetProductFilters}
-              className="secondary-button"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-
-        <div className="panel-body">
-          {deleteError && <p className="message error-message">{deleteError}</p>}
-
-          {loading ? (
-            <p>Loading products...</p>
-          ) : error ? (
-            <div>
-              <p className="message error-message">{error}</p>
-
-              <button type="button" onClick={fetchProducts}>
-                Try Again
-              </button>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="empty-state">
-              <h3>No products found</h3>
-              <p>Create your first product using the form above.</p>
-            </div>
-          ) : displayedProducts.length === 0 ? (
-            <div className="empty-state">
-              <h3>No matching products found</h3>
-              <p>Try changing your search, category, stock filter, or sort option.</p>
-              <button
-                type="button"
-                onClick={resetProductFilters}
-                className="secondary-button"
-              >
-                Reset Filters
-              </button>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>SKU</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Low Stock Level</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {displayedProducts.map((product) => {
-                    const stockStatus = getStockStatus(product);
-
-                    return (
-                      <tr key={product.id}>
-                        <td>
-                          <strong>{product.name}</strong>
-                        </td>
-
-                        <td>
-                          <span className="code-pill">{product.sku}</span>
-                        </td>
-
-                        <td>{product.category || "-"}</td>
-
-                        <td>{formatCurrency(product.price)}</td>
-
-                        <td>
-                          <div className="stock-cell">
-                            <strong>{product.stock_quantity}</strong>
-                            <span className={stockStatus.className}>
-                              {stockStatus.label}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td>{product.low_stock_level}</td>
-
-                        <td>
-                          <div className="table-actions">
-                            <button
-                              type="button"
-                              onClick={() => handleEditProduct(product)}
-                              className="secondary-button"
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteProduct(product)}
-                              disabled={deletingProductId === product.id}
-                              className="danger-button"
-                            >
-                              {deletingProductId === product.id
-                                ? "Deleting..."
-                                : "Delete"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Confirm Delete modal */}
       <ConfirmModal
         isOpen={Boolean(productToDelete)}
         title="Delete product?"
