@@ -35,13 +35,13 @@ import apiClient from "../api/apiClient";
 import "../styles/dashboard.css";
 
 const chartColors = {
-  blue: "#38bdf8",
-  cyan: "#22d3ee",
-  purple: "#a855f7",
-  pink: "#ec4899",
-  green: "#22c55e",
-  orange: "#f59e0b",
-  red: "#ef4444",
+  blue: "#2563eb",
+  cyan: "#0ea5e9",
+  purple: "#7c3aed",
+  pink: "#db2777",
+  green: "#16a34a",
+  orange: "#d97706",
+  red: "#dc2626",
   slate: "#64748b",
 };
 
@@ -383,23 +383,24 @@ function DashboardPage() {
                       </linearGradient>
                     </defs>
 
-                    <CartesianGrid stroke="#263248" strokeDasharray="3 3" />
+                    <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                     <XAxis
                       dataKey="label"
-                      stroke="#94a3b8"
+                      stroke="#6b7280"
                       tick={{ fontSize: 11 }}
                     />
                     <YAxis
-                      stroke="#94a3b8"
+                      stroke="#6b7280"
                       tick={{ fontSize: 11 }}
                       tickFormatter={(value) => `$${Number(value) / 1000}k`}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: "#111827",
-                        border: "1px solid #334155",
-                        borderRadius: "12px",
-                        color: "#f8fafc",
+                        background: "#ffffff",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "8px",
+                        color: "#111827",
+                        boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
                       }}
                       formatter={(value) => formatCurrency(value)}
                     />
@@ -435,19 +436,20 @@ function DashboardPage() {
               ) : (
                 <ResponsiveContainer width="100%" height={210}>
                   <BarChart data={forecastItems}>
-                    <CartesianGrid stroke="#263248" strokeDasharray="3 3" />
+                    <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                     <XAxis
                       dataKey="label"
-                      stroke="#94a3b8"
+                      stroke="#6b7280"
                       tick={{ fontSize: 11 }}
                     />
                     <YAxis hide />
                     <Tooltip
                       contentStyle={{
-                        background: "#111827",
-                        border: "1px solid #334155",
-                        borderRadius: "12px",
-                        color: "#f8fafc",
+                        background: "#ffffff",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "8px",
+                        color: "#111827",
+                        boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
                       }}
                       formatter={(value) => formatCurrency(value)}
                     />
@@ -525,10 +527,11 @@ function DashboardPage() {
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        background: "#111827",
-                        border: "1px solid #334155",
-                        borderRadius: "12px",
-                        color: "#f8fafc",
+                        background: "#ffffff",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "8px",
+                        color: "#111827",
+                        boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
                       }}
                     />
                   </PieChart>
@@ -550,19 +553,20 @@ function DashboardPage() {
             <div className="bi-chart-body compact">
               <ResponsiveContainer width="100%" height={230}>
                 <BarChart data={purchaseOrderStatusData}>
-                  <CartesianGrid stroke="#263248" strokeDasharray="3 3" />
+                  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                   <XAxis
                     dataKey="label"
-                    stroke="#94a3b8"
+                    stroke="#6b7280"
                     tick={{ fontSize: 11 }}
                   />
                   <YAxis hide />
                   <Tooltip
                     contentStyle={{
-                      background: "#111827",
-                      border: "1px solid #334155",
-                      borderRadius: "12px",
-                      color: "#f8fafc",
+                      background: "#ffffff",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      color: "#111827",
+                      boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
                     }}
                   />
                   <Bar dataKey="count" fill={chartColors.blue} radius={[8, 8, 0, 0]} />
@@ -584,19 +588,20 @@ function DashboardPage() {
             <div className="bi-chart-body compact">
               <ResponsiveContainer width="100%" height={230}>
                 <BarChart data={inventoryRiskData}>
-                  <CartesianGrid stroke="#263248" strokeDasharray="3 3" />
+                  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                   <XAxis
                     dataKey="label"
-                    stroke="#94a3b8"
+                    stroke="#6b7280"
                     tick={{ fontSize: 11 }}
                   />
                   <YAxis hide />
                   <Tooltip
                     contentStyle={{
-                      background: "#111827",
-                      border: "1px solid #334155",
-                      borderRadius: "12px",
-                      color: "#f8fafc",
+                      background: "#ffffff",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      color: "#111827",
+                      boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
                     }}
                   />
                   <Bar dataKey="count" radius={[8, 8, 0, 0]}>
@@ -648,10 +653,11 @@ function DashboardPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: "#111827",
-                      border: "1px solid #334155",
-                      borderRadius: "12px",
-                      color: "#f8fafc",
+                      background: "#ffffff",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      color: "#111827",
+                      boxShadow: "0 12px 30px rgba(15, 23, 42, 0.12)",
                     }}
                   />
                 </PieChart>
